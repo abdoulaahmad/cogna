@@ -405,3 +405,58 @@ style:    formatting only
 10. **All DB queries go through repositories** — never call Prisma directly from services.
 11. **Use DB transactions** for order creation and payment operations.
 12. **Never expose raw provider responses** to the client — always map to Cogna shapes.
+
+---
+
+## Micro-Commit Strategy (Target: 1000+ commits)
+
+> Every agent session must produce the maximum number of meaningful atomic commits.
+
+### Golden Rule: One Logical Unit = One Commit
+
+Never commit more than ONE of the following at a time:
+- One function implementation
+- One test case
+- One type/interface
+- One component
+- One route registration
+- One bug fix
+- One refactor
+
+### Commit Count Target Per Module
+
+Each endpoint must produce **15-20 commits** minimum:
+
+`
+types:      add <Entity>Dto interface              ? commit 1
+types:      add <Entity>Status enum                ? commit 2
+test:       add failing test for Repo.create       ? commit 3
+feat:       implement Repo.create                  ? commit 4
+test:       add failing test for Repo.findById     ? commit 5
+feat:       implement Repo.findById                ? commit 6
+test:       add failing test for Service.create    ? commit 7
+feat:       implement Service method               ? commit 8
+test:       add failing test for Service edge case ? commit 9
+feat:       handle edge case in Service            ? commit 10
+feat:       add Zod validator for endpoint         ? commit 11
+feat:       implement controller handler           ? commit 12
+feat:       register route in Fastify              ? commit 13
+test:       add integration test - success case    ? commit 14
+test:       add integration test - error case      ? commit 15
+refactor:   extract helper logic                   ? commit 16
+docs:       add JSDoc to service method            ? commit 17
+chore:      update CHANGELOG                       ? commit 18
+`
+
+### Branch Per Feature (Mandatory)
+
+`ash
+git checkout -b feature/<module>-<unit>
+# work, commit frequently
+git push origin feature/<module>-<unit>
+# open PR ? merge ? delete branch
+`
+
+### Daily Push Requirement
+
+Push at minimum once per session so contributions register on GitHub.
