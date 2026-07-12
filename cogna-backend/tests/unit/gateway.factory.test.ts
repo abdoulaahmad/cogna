@@ -1,7 +1,12 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
+
+// Mock env before any imports that trigger env validation
+vi.mock('@/config/env', () => ({ env: { PAYSTACK_SECRET_KEY: 'test', MONNIFY_API_KEY: 'test', MONNIFY_SECRET_KEY: 'test', MONNIFY_CONTRACT_CODE: 'test', MONNIFY_BASE_URL: 'https://sandbox.monnify.com', APP_ENV: 'test' } }))
+
 import { getPaymentGateway } from '@/payments/GatewayFactory'
 import { PaystackAdapter }   from '@/payments/PaystackAdapter'
 import { MonnifyAdapter }    from '@/payments/MonnifyAdapter'
+
 
 describe('GatewayFactory', () => {
 
