@@ -1,0 +1,246 @@
+// Prisma Schema — Cogna Platform
+// Database: PostgreSQL | ORM: Prisma
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+enum UserRole {
+  CUSTOMER
+  DEVELOPER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentGateway {
+  PAYSTACK
+  MONNIFY
+}
+
+enum ApiKeyStatus {
+  ACTIVE
+  REVOKED
+}
+
+enum ProviderStatus {
+  ACTIVE
+  INACTIVE
+}
+
+// ─────────────────────────────────────────────
+// AUTHENTICATION
+// ─────────────────────────────────────────────
+
+model User {
+  id             String     @id @default(uuid())
+  fullName       String     @map("full_name")
+  email          String     @unique
+  passwordHash   String     @map("password_hash")
+  role           UserRole   @default(CUSTOMER)
+  emailVerified  Boolean    @default(false) @map("email_verified")
+  status         UserStatus @default(PENDING)
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  refreshTokens  RefreshToken[]
+  apiKeys        ApiKey[]
+  orders         Order[]
+  payments       Payment[]
+  auditLogs      AuditLog[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model ApiKey {
+  id         String       @id @default(uuid())
+  userId     String       @map("user_id")
+  name       String
+  apiKey     String       @unique @map("api_key")
+  status     ApiKeyStatus @default(ACTIVE)
+  lastUsedAt DateTime?    @map("last_used_at")
+  createdAt  DateTime     @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("api_keys")
+}
+
+// ─────────────────────────────────────────────
+// CATALOG
+// ─────────────────────────────────────────────
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String
+  slug        String    @unique
+  description String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  products Product[]
+
+  @@map("categories")
+}
+
+model Provider {
+  id        String         @id @default(uuid())
+  name      String
+  baseUrl   String         @map("base_url")
+  apiKey    String         @map("api_key")       // encrypted
+  apiSecret String?        @map("api_secret")    // optional
+  apiConfig Json?          @map("api_config")    // provider-specific config JSON
+  status    ProviderStatus @default(ACTIVE)
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+
+  products Product[]
+
+  @@map("providers")
+}
+
+model Product {
+  id                  String         @id @default(uuid())
+  providerId          String         @map("provider_id")
+  providerProductId   String         @map("provider_product_id")
+  categoryId          String         @map("category_id")
+  name                String
+  slug                String         @unique
+  description         String?
+  price               Decimal        @db.Decimal(10, 2)
+  currency            String         @default("NGN")
+  deliveryTime        String?        @map("delivery_time")
+  image               String?
+  active              Boolean        @default(true)
+  paymentGateway      PaymentGateway @default(PAYSTACK) @map("payment_gateway")
+  providerApiOverride Json?          @map("provider_api_override") // per-product overrides
+  createdAt           DateTime       @default(now()) @map("created_at")
+  updatedAt           DateTime       @updatedAt @map("updated_at")
+
+  provider Provider  @relation(fields: [providerId], references: [id])
+  category Category  @relation(fields: [categoryId], references: [id])
+  orders   Order[]
+
+  @@index([slug])
+  @@index([categoryId])
+  @@map("products")
+}
+
+// ─────────────────────────────────────────────
+// ORDERS
+// ─────────────────────────────────────────────
+
+model Order {
+  id                String      @id @default(uuid())
+  userId            String      @map("user_id")
+  productId         String      @map("product_id")
+  providerId        String      @map("provider_id")
+  providerOrderId   String?     @map("provider_order_id")
+  status            OrderStatus @default(PENDING)
+  amount            Decimal     @db.Decimal(10, 2)
+  currency          String      @default("NGN")
+  customerEmail     String      @map("customer_email")
+  providerResponse  Json?       @map("provider_response")
+  createdAt         DateTime    @default(now()) @map("created_at")
+  updatedAt         DateTime    @updatedAt @map("updated_at")
+
+  user    User     @relation(fields: [userId], references: [id])
+  product Product  @relation(fields: [productId], references: [id])
+  payment Payment?
+
+  @@index([userId])
+  @@index([status])
+  @@map("orders")
+}
+
+// ─────────────────────────────────────────────
+// PAYMENTS
+// ─────────────────────────────────────────────
+
+model Payment {
+  id               String         @id @default(uuid())
+  orderId          String         @unique @map("order_id")
+  userId           String         @map("user_id")
+  gateway          PaymentGateway
+  gatewayReference String?        @map("gateway_reference") // ref from the gateway
+  reference        String         @unique                   // internal ref
+  amount           Decimal        @db.Decimal(10, 2)
+  currency         String         @default("NGN")
+  status           PaymentStatus  @default(PENDING)
+  metadata         Json?          // gateway-specific response data
+  paidAt           DateTime?      @map("paid_at")
+  createdAt        DateTime       @default(now()) @map("created_at")
+
+  order Order @relation(fields: [orderId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  @@index([reference])
+  @@map("payments")
+}
+
+// ─────────────────────────────────────────────
+// ADMIN / SYSTEM
+// ─────────────────────────────────────────────
+
+model Setting {
+  id    String @id @default(uuid())
+  key   String @unique
+  value String
+
+  @@map("settings")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  action    String
+  entity    String?  // what was affected
+  entityId  String?  @map("entity_id")
+  ipAddress String?  @map("ip_address")
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
