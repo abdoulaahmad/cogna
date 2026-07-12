@@ -1,0 +1,206 @@
+# Frontend UI Specification
+
+## Cogna Platform
+
+Version: 1.0
+
+Framework: Next.js 14+ (App Router)
+
+Styling: Tailwind CSS + shadcn/ui
+
+State: Zustand
+
+---
+
+# Design Style
+
+- Modern
+- Minimal
+- Professional
+- Dark Theme
+- Mobile Responsive
+
+---
+
+# Public Website
+
+## Pages
+
+- Home
+- Products
+- Product Details
+- Checkout
+- Login
+- Register
+- Contact
+- FAQ
+
+---
+
+# Customer Dashboard
+
+## Pages
+
+- Dashboard
+- My Orders
+- Order Details
+- Downloads
+- Profile
+- Settings
+
+---
+
+# Developer Portal
+
+## Pages
+
+- Dashboard
+- API Keys
+- API Documentation
+- Webhooks
+- Usage
+- Orders
+
+---
+
+# Admin Dashboard
+
+## Pages
+
+- Dashboard
+- Orders
+- Products
+- Categories
+- Providers
+- Customers
+- Developers
+- Payments
+- Analytics
+- Settings
+- Audit Logs
+
+---
+
+# Common Components
+
+- Navbar
+- Sidebar
+- Footer
+- Product Card
+- Search Bar
+- Category Filter
+- Order Table
+- Payment Card
+- Statistics Cards
+- Charts
+- Modal
+- Drawer
+- Form Components
+- Buttons
+- Badges
+- Alerts
+- Pagination
+- Loading Spinner
+- Empty States
+
+---
+
+# Dashboard Widgets
+
+## Customer
+
+- Total Orders
+- Active Orders
+- Completed Orders
+- Recent Purchases
+
+---
+
+## Developer
+
+- API Requests
+- Active API Keys
+- Webhooks
+- Usage Statistics
+
+---
+
+## Admin
+
+- Revenue
+- Orders
+- Users
+- Products
+- Payments
+- API Usage
+- Top Products
+- Recent Orders
+
+---
+
+# Navigation
+
+Public
+
+- Home
+- Products
+- API
+- Pricing
+- Contact
+
+Customer
+
+- Dashboard
+- Orders
+- Profile
+
+Developer
+
+- Dashboard
+- API Keys
+- Webhooks
+- Documentation
+
+Admin
+
+- Dashboard
+- Orders
+- Products
+- Users
+- Payments
+- Analytics
+- Settings
+
+---
+
+# Responsive Design
+
+Desktop
+
+Tablet
+
+Mobile
+
+---
+
+# Theme
+
+Primary Color
+
+Secondary Color
+
+Success
+
+Warning
+
+Danger
+
+Background
+
+Typography
+
+Spacing
+
+Border Radius
+
+Icons

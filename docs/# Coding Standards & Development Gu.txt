@@ -1,0 +1,423 @@
+# Coding Standards & Development Guidelines
+
+## Cogna Platform
+
+Version: 1.0
+
+---
+
+# General Principles
+
+- Keep code simple and maintainable.
+- Follow clean architecture principles.
+- Separate business logic from controllers.
+- Never duplicate business logic.
+- Write reusable components and services.
+- Keep functions focused on a single responsibility.
+
+---
+
+# Technology Stack
+
+Frontend
+
+- Next.js 14+ (App Router)
+- TypeScript
+- Tailwind CSS
+- Zustand
+- shadcn/ui
+
+Backend
+
+- Node.js
+- Fastify
+- TypeScript
+- Prisma ORM
+
+Database
+
+- PostgreSQL
+
+---
+
+# Folder Structure
+
+## Frontend
+
+src/
+
+components/
+
+layouts/
+
+pages/
+
+router/
+
+stores/
+
+services/
+
+composables/
+
+assets/
+
+types/
+
+utils/
+
+---
+
+## Backend
+
+src/
+
+config/
+
+middleware/
+
+routes/
+
+controllers/
+
+services/
+
+repositories/
+
+providers/
+
+validators/
+
+jobs/
+
+utils/
+
+types/
+
+---
+
+# Naming Convention
+
+Variables
+
+camelCase
+
+Functions
+
+camelCase
+
+Classes
+
+PascalCase
+
+Interfaces
+
+PascalCase
+
+Enums
+
+PascalCase
+
+Files
+
+kebab-case
+
+Database Tables
+
+snake_case
+
+Database Columns
+
+snake_case
+
+API Routes
+
+kebab-case
+
+---
+
+# API Standard
+
+Base URL
+
+/api/v1
+
+Example
+
+GET /products
+
+POST /orders
+
+GET /orders/{id}
+
+---
+
+# Standard API Response
+
+Success
+
+{
+    "success": true,
+    "message": "Success",
+    "data": {}
+}
+
+Error
+
+{
+    "success": false,
+    "message": "Validation failed",
+    "errors": []
+}
+
+---
+
+# HTTP Status Codes
+
+200 OK
+
+201 Created
+
+204 No Content
+
+400 Bad Request
+
+401 Unauthorized
+
+403 Forbidden
+
+404 Not Found
+
+409 Conflict
+
+422 Validation Error
+
+429 Too Many Requests
+
+500 Internal Server Error
+
+---
+
+# Authentication
+
+Customers
+
+JWT Access Token
+
+Refresh Token
+
+Developers
+
+API Key
+
+Admins
+
+JWT + RBAC
+
+---
+
+# Validation
+
+Use request validation for every endpoint.
+
+Never trust client input.
+
+Return descriptive validation errors.
+
+---
+
+# Database Rules
+
+- UUID primary keys
+- Foreign keys for relationships
+- Use transactions for payments and orders
+- Soft delete where appropriate
+- Never delete financial records
+
+---
+
+# Logging
+
+Log
+
+- Login attempts
+- Payments
+- Orders
+- Provider requests
+- Errors
+- Admin actions
+
+---
+
+# Error Handling
+
+Use centralized error handling.
+
+Never expose internal server errors.
+
+Return consistent JSON responses.
+
+---
+
+# Environment Variables
+
+APP_NAME
+
+APP_ENV
+
+APP_URL
+
+PORT
+
+DATABASE_URL
+
+JWT_SECRET
+
+JWT_REFRESH_SECRET
+
+# Payment Gateways (multi-gateway)
+PAYSTACK_SECRET_KEY
+
+PAYSTACK_PUBLIC_KEY
+
+MONNIFY_API_KEY
+
+MONNIFY_SECRET_KEY
+
+MONNIFY_BASE_URL
+
+# Provider API (per-product/provider, stored in DB not env)
+# AKUNDING credentials stored in providers table, not hardcoded env
+AKUNDING_API_KEY
+
+AKUNDING_BASE_URL
+
+REDIS_URL
+
+SMTP_HOST
+
+SMTP_PORT
+
+SMTP_USER
+
+SMTP_PASSWORD
+
+---
+
+# Git Branches
+
+main
+
+develop
+
+feature/*
+
+bugfix/*
+
+hotfix/*
+
+release/*
+
+---
+
+# Commit Convention
+
+feat:
+
+fix:
+
+refactor:
+
+docs:
+
+style:
+
+test:
+
+chore:
+
+Example
+
+feat: add product synchronization
+
+fix: resolve payment verification issue
+
+docs: update API documentation
+
+---
+
+# Security
+
+- HTTPS only
+- Hash passwords with bcrypt
+- Store secrets in environment variables
+- Enable rate limiting
+- Validate all inputs
+- Sanitize user data
+- Verify webhook signatures
+- Never expose provider credentials
+
+---
+
+# Testing
+
+Unit Tests
+
+Integration Tests
+
+API Tests
+
+Manual UI Testing
+
+---
+
+# Documentation
+
+Maintain
+
+- README
+- API Documentation
+- Changelog
+- Deployment Guide
+
+---
+
+# Development Workflow
+
+1. Design database changes.
+
+2. Update Prisma schema.
+
+3. Generate migrations.
+
+4. Implement services.
+
+5. Implement controllers.
+
+6. Add validation.
+
+7. Write tests.
+
+8. Update documentation.
+
+9. Deploy to staging.
+
+10. Deploy to production.
+
+---
+
+# Code Quality
+
+- Use TypeScript strict mode.
+- Avoid duplicated code.
+- Keep controllers thin.
+- Keep business logic inside services.
+- Use reusable utility functions.
+- Write descriptive variable and function names.
+- Document complex business logic.
+
+---
+
+# Project Goal
+
+Build a scalable, secure, API-first AI subscription marketplace that is easy to maintain, easy to extend, and ready for future integrations with multiple providers, payment gateways, and third-party applications.

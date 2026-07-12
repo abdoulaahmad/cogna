@@ -1,0 +1,387 @@
+# Software Requirements Specification (SRS)
+
+## Project Information
+
+| Field | Value |
+|--------|-------|
+| Project Name | Cogna Platform |
+| Version | 1.0 |
+| Status | Draft |
+| Prepared By | Abdullahi A. Ahmad |
+| Date | July 2026 |
+| Project Type | API-First AI Subscription Marketplace |
+
+---
+
+# 1. Introduction
+
+## 1.1 Purpose
+
+This document defines the software requirements for **Cogna**, an API-first AI subscription marketplace that enables customers and businesses to purchase, manage, and resell premium AI subscriptions through a secure web platform and REST API.
+
+## 1.2 Scope
+
+Cogna provides a centralized platform for selling digital AI subscriptions such as:
+
+- ChatGPT Plus
+- Gemini Pro
+- Claude Pro
+- Cursor Pro
+- Perplexity Pro
+- GitHub Copilot
+- Midjourney
+- Additional AI products
+
+The platform integrates with external providers (initially the Akunding Store Reseller API) to automate subscription fulfillment while exposing its own API for third-party developers.
+
+---
+
+# 2. Product Overview
+
+Cogna consists of four main applications:
+
+- Public Website
+- Customer Dashboard
+- Admin Dashboard
+- Developer Portal
+
+All applications communicate with a centralized backend through a REST API.
+
+---
+
+# 3. Objectives
+
+- Provide a modern marketplace for AI subscriptions.
+- Automate order fulfillment.
+- Offer secure payment processing.
+- Expose REST APIs for developers.
+- Support future reseller providers.
+- Provide centralized administration and analytics.
+
+---
+
+# 4. User Roles
+
+## Visitor
+
+- Browse products
+- Search products
+- View pricing
+- Register
+- Login
+
+## Customer
+
+- Purchase subscriptions
+- View orders
+- Track order status
+- Download completed orders
+- Manage profile
+
+## Developer
+
+- Generate API keys
+- Read API documentation
+- Create orders through API
+- Configure webhooks
+- View API usage
+
+## Administrator
+
+- Manage users
+- Manage products
+- Manage orders
+- Manage payments
+- Manage providers
+- View analytics
+- Configure system settings
+
+---
+
+# 5. Functional Requirements
+
+## Authentication
+
+- User registration
+- Login
+- Logout
+- Password reset
+- Email verification
+- JWT authentication
+- Refresh tokens
+
+## Products
+
+- List products
+- Product details
+- Product search
+- Category filtering
+- Featured products
+
+## Orders
+
+- Create order
+- View order
+- Order history
+- Order tracking
+- Export completed order
+
+## Payments
+
+- Multi-gateway support (Paystack, Monnify — extensible for future gateways)
+- Per-product payment gateway assignment (each product can use a specific gateway)
+- Payment initialization and verification per gateway
+- Payment history
+- Refund management (Admin)
+- Gateway fallback configuration
+
+## Customer Dashboard
+
+- Dashboard overview
+- Orders
+- Profile
+- Notifications
+- Downloads
+- Settings
+
+## Developer Portal
+
+- API key management
+- API documentation
+- Webhooks
+- Usage statistics
+- Order management
+
+## Admin Dashboard
+
+- Dashboard
+- Users
+- Orders
+- Products
+- Payments
+- Providers
+- Customers
+- Developers
+- API Logs
+- Analytics
+- Reports
+- Settings
+
+---
+
+# 6. Non-Functional Requirements
+
+- Responsive user interface
+- HTTPS encryption
+- RESTful API
+- API versioning
+- Role-Based Access Control (RBAC)
+- Rate limiting
+- Audit logging
+- Input validation
+- Secure password hashing
+- High availability
+- Scalable architecture
+
+---
+
+# 7. Technology Stack
+
+## Frontend
+
+- Next.js 14+ (App Router)
+- TypeScript
+- Tailwind CSS
+- Zustand (state management)
+- Axios / Fetch API
+- shadcn/ui (component library)
+
+## Backend
+
+- Node.js
+- Fastify
+- TypeScript
+- Prisma ORM
+- @fastify/swagger / OpenAPI
+- @fastify/jwt
+- @fastify/rate-limit
+
+## Database
+
+- PostgreSQL
+
+## Queue
+
+- Redis
+- BullMQ
+
+---
+
+# 8. Third-Party Integrations
+
+## Payment Gateways (Multi-Gateway)
+
+- Paystack (primary)
+- Monnify (secondary)
+- Architecture supports adding additional gateways without breaking changes
+- Each product can be assigned a specific payment gateway
+- Gateway config stored per-product and in platform settings
+
+## AI Subscription Providers (Per-Product)
+
+- Akunding Store Reseller API (initial provider)
+- Each product stores its own provider_id and provider-specific API config
+- New providers can be added without modifying core order logic
+- Provider credentials are stored per-provider, not globally
+
+---
+
+# 9. System Architecture
+
+```
+Public Website
+        │
+Customer Dashboard
+        │
+Developer Portal
+        │
+Admin Dashboard
+        │
+        ▼
+REST API (Express.js)
+        │
+        ▼
+Prisma ORM
+        │
+        ▼
+PostgreSQL
+        │
+ ┌──────┴────────┐
+ │               │
+Paystack     Akunding API
+```
+
+---
+
+# 10. Database Modules
+
+- Users
+- Roles
+- API Keys
+- Products
+- Categories
+- Providers
+- Orders
+- Payments
+- Notifications
+- Webhooks
+- Settings
+- Audit Logs
+
+---
+
+# 11. API Modules
+
+## Authentication
+
+- Register
+- Login
+- Logout
+- Refresh Token
+
+## Products
+
+- Get Products
+- Get Product Details
+
+## Orders
+
+- Create Order
+- List Orders
+- Get Order
+- Export Order
+
+## Payments
+
+- Verify Payment
+- Payment History
+
+## API Keys
+
+- Create API Key
+- Revoke API Key
+- List API Keys
+
+## Webhooks
+
+- Register Webhook
+- Delete Webhook
+- List Webhooks
+
+---
+
+# 12. Security Requirements
+
+- HTTPS
+- JWT Authentication
+- Refresh Tokens
+- API Key Authentication
+- Password Hashing
+- Rate Limiting
+- RBAC
+- Secure Environment Variables
+- Audit Logs
+- Input Validation
+
+---
+
+# 13. Deployment
+
+## Frontend
+
+- Vercel
+
+## Backend
+
+- Heroku
+
+## Database
+
+- PostgreSQL
+
+---
+
+# 14. Future Enhancements
+
+- Multiple reseller providers
+- Wallet system
+- Coupons
+- Referral system
+- Affiliate program
+- White-label API
+- Mobile application
+- Multi-currency support
+- Multi-language support
+- SDKs for JavaScript, Flutter, PHP, and Python
+
+---
+
+# 15. Success Criteria
+
+The MVP will be considered successful when it can:
+
+- Register and authenticate users.
+- Display products from the provider.
+- Process and verify payments.
+- Create and manage orders.
+- Track order status.
+- Deliver completed subscription details.
+- Provide an admin dashboard.
+- Provide a developer API with API key authentication.
+- Maintain secure and reliable operations.
+
+---
+
+# Project Summary
+
+Cogna is an API-first AI subscription marketplace designed to simplify the purchase and distribution of premium AI subscriptions. The platform includes a public storefront, customer dashboard, developer portal, and administrator dashboard, all powered by a centralized REST API. It integrates with external reseller providers and payment gateways to automate fulfillment while offering secure APIs for third-party developers. The architecture is designed to be scalable, secure, and extensible, enabling future support for multiple providers, white-label integrations, and additional digital products.

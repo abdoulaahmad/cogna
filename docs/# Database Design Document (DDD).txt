@@ -1,0 +1,398 @@
+# Database Design Document (DDD)
+
+# Cogna Platform
+
+Version: 1.0
+
+Database: PostgreSQL
+
+ORM: Prisma
+
+---
+
+# 1. Overview
+
+Cogna uses PostgreSQL as its primary relational database to manage users, products, orders, payments, API consumers, and platform settings.
+
+The database is designed to support:
+
+- Public marketplace
+- Customer dashboard
+- Admin dashboard
+- Developer API
+- Provider integrations
+- Payment processing
+
+---
+
+# 2. Database Principles
+
+- UUID primary keys
+- Foreign key constraints
+- Soft deletes where appropriate
+- Automatic timestamps
+- Indexed searchable fields
+- Transaction-safe order processing
+
+---
+
+# 3. Core Tables
+
+## Authentication
+
+- users
+- refresh_tokens
+- api_keys
+
+---
+
+## Catalog
+
+- categories
+- products
+
+---
+
+## Orders
+
+- orders
+
+---
+
+## Payments
+
+- payments
+
+---
+
+## Provider
+
+- providers
+
+---
+
+## Administration
+
+- settings
+- audit_logs
+
+---
+
+# 4. Table Relationships
+
+User
+│
+├── Orders
+│
+├── Payments
+│
+├── API Keys
+│
+└── Refresh Tokens
+
+Provider
+│
+└── Products
+
+Product
+│
+└── Orders
+
+Order
+│
+└── Payment
+
+---
+
+# 5. Table Definitions
+
+## users
+
+Stores customer, developer, and administrator accounts.
+
+Fields
+
+- id
+- full_name
+- email
+- password_hash
+- role
+- email_verified
+- status
+- created_at
+- updated_at
+
+---
+
+## refresh_tokens
+
+Stores active refresh tokens.
+
+Fields
+
+- id
+- user_id
+- token
+- expires_at
+- created_at
+
+---
+
+## api_keys
+
+Stores developer API credentials.
+
+Fields
+
+- id
+- user_id
+- name
+- api_key
+- status
+- last_used_at
+- created_at
+
+---
+
+## categories
+
+Stores product categories.
+
+Fields
+
+- id
+- name
+- slug
+- description
+
+Examples
+
+- AI Chat
+- Coding
+- Productivity
+- Image Generation
+
+---
+
+## providers
+
+Stores reseller providers.
+
+Fields
+
+- id
+- name
+- base_url
+- api_key              -- encrypted provider API key
+- api_secret           -- optional secret/token
+- api_config           -- JSON: additional config specific to this provider
+- status
+- created_at
+
+Examples
+
+- Akunding
+
+Future
+
+- Provider B
+- Provider C
+
+Note: Each product references a provider by provider_id.
+This enables per-product API routing without a global config.
+
+---
+
+## products
+
+Stores AI products synchronized from providers.
+
+Fields
+
+- id
+- provider_id
+- provider_product_id
+- category_id
+- name
+- slug
+- description
+- price
+- currency
+- delivery_time
+- image
+- active
+- payment_gateway         -- which gateway to use for this product (paystack | monnify)
+- provider_api_override  -- optional JSON: per-product API config overrides
+- created_at
+- updated_at
+
+---
+
+## orders
+
+Stores customer purchases.
+
+Fields
+
+- id
+- user_id
+- product_id
+- provider_id
+- provider_order_id
+- status
+- amount
+- customer_email
+- provider_response
+- created_at
+- updated_at
+
+Status
+
+- Pending
+- Processing
+- Completed
+- Failed
+- Cancelled
+
+---
+
+## payments
+
+Stores payment records.
+
+Fields
+
+- id
+- order_id
+- gateway             -- paystack | monnify
+- gateway_reference   -- reference from the specific gateway
+- reference          -- internal reference
+- amount
+- currency
+- status
+- metadata           -- JSON: gateway-specific response data
+- paid_at
+- created_at
+
+Gateways
+
+- Paystack
+- Monnify
+
+Status
+
+- Pending
+- Paid
+- Failed
+- Refunded
+
+---
+
+## settings
+
+Stores platform configuration.
+
+Fields
+
+- id
+- key
+- value
+
+Examples
+
+- Site Name
+- Support Email
+- Currency
+- Maintenance Mode
+
+---
+
+## audit_logs
+
+Stores administrator actions.
+
+Fields
+
+- id
+- user_id
+- action
+- ip_address
+- created_at
+
+Examples
+
+- User Deleted
+- Product Updated
+- Provider Synced
+- Payment Refunded
+
+---
+
+# 6. Indexes
+
+Create indexes on:
+
+users.email
+
+products.slug
+
+products.category_id
+
+orders.user_id
+
+orders.status
+
+payments.reference
+
+api_keys.api_key
+
+---
+
+# 7. Constraints
+
+- Email must be unique.
+- API keys must be unique.
+- Payment references must be unique.
+- Product slugs must be unique.
+- Orders must reference valid users.
+- Payments must reference valid orders.
+
+---
+
+# 8. Future Tables
+
+These are not required for MVP.
+
+- wallets
+- wallet_transactions
+- coupons
+- coupon_usage
+- referrals
+- affiliates
+- notifications
+- support_tickets
+- webhooks
+- api_logs
+- analytics_events
+- invoices
+
+---
+
+# 9. Database Summary
+
+MVP Tables
+
+1. users
+2. refresh_tokens
+3. api_keys
+4. categories
+5. providers
+6. products
+7. orders
+8. payments
+9. settings
+10. audit_logs
+
+Total: 10 Tables
+
+This schema provides the minimum foundation required to support authentication, AI product catalog management, payments, provider integrations, customer orders, administration, and the public developer API.

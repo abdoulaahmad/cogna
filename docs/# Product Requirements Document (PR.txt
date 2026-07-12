@@ -1,0 +1,218 @@
+# Product Requirements Document (PRD)
+
+# Cogna Platform
+
+Version: 1.0
+Status: Draft
+
+---
+
+# 1. Product Overview
+
+## Description
+
+Cogna is an API-first AI subscription marketplace that allows customers and businesses to purchase, manage, and resell premium AI subscriptions such as ChatGPT Plus, Gemini Pro, Claude Pro, Cursor Pro, Perplexity Pro, GitHub Copilot, and other AI services.
+
+The platform integrates with reseller providers and payment gateways to automate fulfillment while exposing a REST API for developers.
+
+---
+
+# 2. Problem Statement
+
+Purchasing AI subscriptions is often difficult due to payment restrictions, regional availability, and the lack of centralized management.
+
+Businesses that want to resell AI subscriptions also need a secure API instead of integrating directly with multiple providers.
+
+Cogna solves these challenges by providing one secure platform for customers and developers.
+
+---
+
+# 3. Goals
+
+- Simplify AI subscription purchases.
+- Automate order fulfillment.
+- Provide developer-friendly APIs.
+- Support multiple providers.
+- Deliver subscriptions quickly and securely.
+
+---
+
+# 4. Target Users
+
+- Individual customers
+- Students
+- Developers
+- Businesses
+- Resellers
+
+---
+
+# 5. Core Features
+
+## Public Website
+
+- Landing page
+- Product catalog
+- Product details
+- Checkout
+- FAQ
+- Contact
+
+## Customer Dashboard
+
+- Dashboard
+- Orders
+- Downloads
+- Notifications
+- Profile
+- Settings
+
+## Admin Dashboard
+
+- Dashboard
+- Orders
+- Products
+- Users
+- Payments
+- Providers
+- Analytics
+- Settings
+
+## Developer Portal
+
+- API Keys
+- Documentation
+- Usage
+- Webhooks
+- API Playground
+
+---
+
+# 6. User Journey
+
+Visitor
+
+↓
+
+Browse Products
+
+↓
+
+Select Product
+
+↓
+
+Checkout
+
+↓
+
+Payment
+
+↓
+
+Order Created
+
+↓
+
+Provider Fulfillment
+
+↓
+
+Order Completed
+
+↓
+
+Customer Receives Subscription
+
+---
+
+# 7. Success Metrics
+
+- Successful order rate
+- Payment success rate
+- API uptime
+- Customer satisfaction
+- Active users
+- Monthly revenue
+
+---
+
+# 8. MVP Scope
+
+Included
+
+- Authentication
+- Products
+- Orders
+
+## Payments
+
+- Multi-gateway: Paystack + Monnify (extensible)
+- Per-product payment gateway assignment
+- Payment verification per gateway
+- Payment history
+- Refund management (Admin)
+
+## Per-Product Provider API
+
+- Each product is linked to a specific provider and its API config
+- Supports multiple providers simultaneously
+- Provider API key and base URL stored per-provider
+
+- Admin Dashboard
+- Developer API
+- Akunding Integration
+
+Excluded
+
+- Mobile Apps
+- Affiliate System
+- Wallet
+- Referral Program
+- Multiple Providers
+
+---
+
+# 9. Future Roadmap
+
+Phase 2
+
+- Wallet
+- Coupons
+- Referral System
+- Multiple Providers
+
+Phase 3
+
+- White-label API
+- Mobile Applications
+- SDKs
+- Multi-currency
+- Multi-language
+
+---
+
+# 10. Technology
+
+Frontend
+- Next.js 14+ (App Router)
+- TypeScript
+- Tailwind CSS
+- shadcn/ui
+- Zustand
+
+Backend
+- Node.js
+- Fastify
+- TypeScript
+- Prisma ORM
+
+Database
+- PostgreSQL
+
+Queue
+- Redis + BullMQ
+
+Hosting
+- Frontend: Vercel
+- Backend: Railway / Heroku

@@ -1,0 +1,413 @@
+# REST API Specification
+
+## Cogna Platform
+
+Version: 1.0
+
+Protocol: HTTPS
+
+Architecture: REST API
+
+Format: JSON
+
+Authentication: JWT + API Keys
+
+Base URL
+
+https://api.cogna.store/api/v1
+
+---
+
+# API Architecture
+
+Clients
+
+- Website
+- Customer Dashboard
+- Admin Dashboard
+- Developer Applications
+
+↓
+
+Cogna REST API
+
+↓
+
+Business Services
+
+↓
+
+PostgreSQL
+
+↓
+
+Akunding API
+
+---
+
+# Authentication
+
+## Customer Authentication
+
+Uses JWT Access Token and Refresh Token.
+
+Authorization
+
+Authorization: Bearer <access_token>
+
+---
+
+## Developer Authentication
+
+Uses API Key.
+
+Header
+
+X-API-Key: cg_live_xxxxxxxxxxxxxxxxx
+
+---
+
+## Admin Authentication
+
+Uses JWT with Admin role.
+
+---
+
+# Authentication Endpoints
+
+POST /auth/register
+
+Register a new account.
+
+POST /auth/login
+
+Authenticate user.
+
+POST /auth/logout
+
+Logout current session.
+
+POST /auth/refresh
+
+Generate new access token.
+
+GET /auth/me
+
+Return authenticated user.
+
+POST /auth/forgot-password
+
+Send password reset email.
+
+POST /auth/reset-password
+
+Reset password.
+
+---
+
+# Product Endpoints
+
+GET /products
+
+Return all products.
+
+GET /products/{id}
+
+Return product details.
+
+GET /products/category/{slug}
+
+Return products by category.
+
+GET /products/search
+
+Search products.
+
+---
+
+# Order Endpoints
+
+POST /orders
+
+Create order.
+
+GET /orders
+
+Return customer orders.
+
+GET /orders/{id}
+
+Return order details.
+
+GET /orders/{id}/export
+
+Download completed order.
+
+---
+
+# Payment Endpoints
+
+POST /payments/initialize
+
+Initialize payment. Body includes gateway (paystack | monnify) derived from product config.
+If not specified, uses the gateway assigned to the product.
+
+POST /payments/verify
+
+Verify payment. Accepts gateway and reference.
+Routes verification to correct gateway handler.
+
+GET /payments/history
+
+Return payment history.
+
+POST /payments/webhook/paystack
+
+Paystack webhook handler.
+
+POST /payments/webhook/monnify
+
+Monnify webhook handler.
+
+---
+
+# Developer API
+
+GET /developer/api-keys
+
+List API keys.
+
+POST /developer/api-keys
+
+Generate API key.
+
+DELETE /developer/api-keys/{id}
+
+Revoke API key.
+
+GET /developer/usage
+
+API usage statistics.
+
+GET /developer/webhooks
+
+List webhooks.
+
+POST /developer/webhooks
+
+Register webhook.
+
+DELETE /developer/webhooks/{id}
+
+Delete webhook.
+
+---
+
+# Admin Endpoints
+
+GET /admin/dashboard
+
+Dashboard statistics.
+
+GET /admin/users
+
+List users.
+
+GET /admin/orders
+
+List all orders.
+
+GET /admin/products
+
+List products.
+
+POST /admin/products/sync
+
+Synchronize provider products.
+
+GET /admin/payments
+
+List payments.
+
+GET /admin/providers
+
+List providers.
+
+POST /admin/providers
+
+Create provider.
+
+PATCH /admin/providers/{id}
+
+Update provider.
+
+GET /admin/settings
+
+Platform settings.
+
+PATCH /admin/settings
+
+Update settings.
+
+GET /admin/audit-logs
+
+Audit logs.
+
+GET /admin/providers/{id}/config
+
+View per-provider API configuration.
+
+PATCH /admin/providers/{id}/config
+
+Update per-provider API configuration (api_key, base_url, api_config).
+
+PATCH /admin/products/{id}/gateway
+
+Assign a specific payment gateway (paystack | monnify) to a product.
+
+---
+
+# Response Format
+
+Success
+
+{
+  "success": true,
+  "message": "Operation successful.",
+  "data": {}
+}
+
+Error
+
+{
+  "success": false,
+  "message": "Validation failed.",
+  "errors": []
+}
+
+---
+
+# Status Codes
+
+200 OK
+
+201 Created
+
+400 Bad Request
+
+401 Unauthorized
+
+403 Forbidden
+
+404 Not Found
+
+409 Conflict
+
+422 Validation Error
+
+429 Too Many Requests
+
+500 Internal Server Error
+
+---
+
+# Rate Limits
+
+Public API
+
+100 requests/minute
+
+Developer API
+
+1000 requests/hour
+
+Admin API
+
+Unlimited (Authenticated)
+
+---
+
+# Webhooks
+
+Supported Events
+
+order.created
+
+order.processing
+
+order.completed
+
+order.failed
+
+payment.success
+
+payment.failed
+
+Webhook Payload
+
+{
+  "event": "order.completed",
+  "order_id": "ORD_12345",
+  "status": "completed",
+  "timestamp": "2026-07-12T12:00:00Z"
+}
+
+---
+
+# API Versioning
+
+/api/v1
+
+Future versions
+
+/api/v2
+
+---
+
+# Security
+
+- HTTPS Only
+- JWT Authentication
+- API Key Authentication
+- Role-Based Access Control (RBAC)
+- Rate Limiting
+- Request Validation
+- Audit Logging
+- Secure Environment Variables
+
+---
+
+# External Integrations
+
+Payment Gateways
+
+- Paystack (webhook: POST /payments/webhook/paystack)
+- Monnify (webhook: POST /payments/webhook/monnify)
+
+Provider
+
+- Akunding Store Reseller API
+- Per-product provider routing (each product uses its own provider config)
+- New providers added via Admin without code changes
+
+---
+
+# API Summary
+
+Authentication
+
+Products
+
+Orders
+
+Payments
+
+Developer API
+
+Admin API
+
+Webhooks
+
+Settings
+
+The Cogna REST API provides a unified interface for the public website, customer dashboard, administrator dashboard, and third-party developers. It is designed to be secure, scalable, versioned, and extensible, enabling future support for additional providers, payment gateways, and platform services without breaking existing integrations.
