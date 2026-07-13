@@ -13,14 +13,8 @@ import {
   updateProviderSchema,
 } from '@/validators/admin.validator'
 import { successResponse, errorResponse } from '@/utils/response'
-import { AppError, ForbiddenError, NotFoundError } from '@/utils/errors'
-
-async function handleError(error: unknown, reply: FastifyReply) {
-  if (error instanceof AppError) {
-    return reply.status(error.statusCode).send(errorResponse(error.message))
-  }
-  return reply.status(500).send(errorResponse('Internal server error'))
-}
+import { handleRouteError } from '@/utils/handle-error'
+import { ForbiddenError, NotFoundError } from '@/utils/errors'
 
 /** RBAC guard — allows ADMIN and SUPER_ADMIN only */
 async function requireAdmin(req: FastifyRequest, reply: FastifyReply) {
@@ -45,7 +39,7 @@ export default async function adminRoutes(app: FastifyInstance) {
         page: 1, limit: 100, active: undefined,
       })
       return reply.send(successResponse({ items, total }))
-    } catch (error) { return handleError(error, reply) }
+    } catch (error) { return handleRouteError(error, reply) }
   })
 
   // POST /api/v1/admin/products
@@ -58,7 +52,7 @@ export default async function adminRoutes(app: FastifyInstance) {
         providerApiOverride: body.providerApiOverride,
       })
       return reply.status(201).send(successResponse(product, 'Product created'))
-    } catch (error) { return handleError(error, reply) }
+    } catch (error) { return handleRouteError(error, reply) }
   })
 
   // PATCH /api/v1/admin/products/:id
@@ -70,7 +64,7 @@ export default async function adminRoutes(app: FastifyInstance) {
       const body    = updateProductSchema.parse(req.body)
       const product = await ProductRepository.update(id, body)
       return reply.send(successResponse(product, 'Product updated'))
-    } catch (error) { return handleError(error, reply) }
+    } catch (error) { return handleRouteError(error, reply) }
   })
 
   // DELETE /api/v1/admin/products/:id  (soft delete)
@@ -81,7 +75,7 @@ export default async function adminRoutes(app: FastifyInstance) {
       if (!existing) throw new NotFoundError('Product')
       const product = await ProductRepository.softDelete(id)
       return reply.send(successResponse(product, 'Product deactivated'))
-    } catch (error) { return handleError(error, reply) }
+    } catch (error) { return handleRouteError(error, reply) }
   })
 
   // ─── Categories ────────────────────────────────────────────────────────────
@@ -91,7 +85,7 @@ export default async function adminRoutes(app: FastifyInstance) {
     try {
       const categories = await CategoryRepository.findAll()
       return reply.send(successResponse(categories))
-    } catch (error) { return handleError(error, reply) }
+    } catch (error) { return handleRouteError(error, reply) }
   })
 
   // POST /api/v1/admin/categories
@@ -100,7 +94,7 @@ export default async function adminRoutes(app: FastifyInstance) {
       const body     = createCategorySchema.parse(req.body)
       const category = await CategoryRepository.create(body)
       return reply.status(201).send(successResponse(category, 'Category created'))
-    } catch (error) { return handleError(error, reply) }
+    } catch (error) { return handleRouteError(error, reply) }
   })
 
   // PATCH /api/v1/admin/categories/:id
@@ -112,7 +106,7 @@ export default async function adminRoutes(app: FastifyInstance) {
       const body     = updateCategorySchema.parse(req.body)
       const category = await CategoryRepository.update(id, body)
       return reply.send(successResponse(category, 'Category updated'))
-    } catch (error) { return handleError(error, reply) }
+    } catch (error) { return handleRouteError(error, reply) }
   })
 
   // DELETE /api/v1/admin/categories/:id
@@ -123,7 +117,7 @@ export default async function adminRoutes(app: FastifyInstance) {
       if (!existing) throw new NotFoundError('Category')
       await CategoryRepository.delete(id)
       return reply.send(successResponse(null, 'Category deleted'))
-    } catch (error) { return handleError(error, reply) }
+    } catch (error) { return handleRouteError(error, reply) }
   })
 
   // ─── Providers ─────────────────────────────────────────────────────────────
@@ -135,7 +129,7 @@ export default async function adminRoutes(app: FastifyInstance) {
       // Strip sensitive apiKey / apiSecret from response
       const safe = providers.map(({ apiKey: _k, apiSecret: _s, ...rest }) => rest)
       return reply.send(successResponse(safe))
-    } catch (error) { return handleError(error, reply) }
+    } catch (error) { return handleRouteError(error, reply) }
   })
 
   // POST /api/v1/admin/providers
@@ -145,7 +139,7 @@ export default async function adminRoutes(app: FastifyInstance) {
       const provider = await ProviderRepository.create(body)
       const { apiKey: _k, apiSecret: _s, ...safe } = provider
       return reply.status(201).send(successResponse(safe, 'Provider created'))
-    } catch (error) { return handleError(error, reply) }
+    } catch (error) { return handleRouteError(error, reply) }
   })
 
   // PATCH /api/v1/admin/providers/:id
@@ -158,7 +152,7 @@ export default async function adminRoutes(app: FastifyInstance) {
       const provider = await ProviderRepository.update(id, body)
       const { apiKey: _k, apiSecret: _s, ...safe } = provider
       return reply.send(successResponse(safe, 'Provider updated'))
-    } catch (error) { return handleError(error, reply) }
+    } catch (error) { return handleRouteError(error, reply) }
   })
 
   // DELETE /api/v1/admin/providers/:id
@@ -169,6 +163,6 @@ export default async function adminRoutes(app: FastifyInstance) {
       if (!existing) throw new NotFoundError('Provider')
       await ProviderRepository.delete(id)
       return reply.send(successResponse(null, 'Provider deleted'))
-    } catch (error) { return handleError(error, reply) }
+    } catch (error) { return handleRouteError(error, reply) }
   })
 }

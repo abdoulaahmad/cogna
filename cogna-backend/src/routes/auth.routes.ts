@@ -6,14 +6,7 @@ import {
   refreshTokenSchema,
 } from '@/validators/auth.validator'
 import { successResponse, errorResponse } from '@/utils/response'
-import { AppError } from '@/utils/errors'
-
-async function handleError(error: unknown, reply: FastifyReply) {
-  if (error instanceof AppError) {
-    return reply.status(error.statusCode).send(errorResponse(error.message, error.errors))
-  }
-  return reply.status(500).send(errorResponse('Internal server error'))
-}
+import { handleRouteError } from '@/utils/handle-error'
 
 export default async function authRoutes(app: FastifyInstance) {
   // POST /api/v1/auth/register
@@ -23,7 +16,7 @@ export default async function authRoutes(app: FastifyInstance) {
       const user = await AuthService.register(body)
       return reply.status(201).send(successResponse(user, 'Registration successful'))
     } catch (error) {
-      return handleError(error, reply)
+      return handleRouteError(error, reply)
     }
   })
 
@@ -34,7 +27,7 @@ export default async function authRoutes(app: FastifyInstance) {
       const result = await AuthService.login(body, app.jwt.sign.bind(app.jwt))
       return reply.send(successResponse(result, 'Login successful'))
     } catch (error) {
-      return handleError(error, reply)
+      return handleRouteError(error, reply)
     }
   })
 
@@ -45,7 +38,7 @@ export default async function authRoutes(app: FastifyInstance) {
       const result = await AuthService.logout(refreshToken)
       return reply.send(successResponse(result))
     } catch (error) {
-      return handleError(error, reply)
+      return handleRouteError(error, reply)
     }
   })
 
@@ -56,7 +49,7 @@ export default async function authRoutes(app: FastifyInstance) {
       const tokens = await AuthService.refresh(refreshToken, app.jwt.sign.bind(app.jwt))
       return reply.send(successResponse(tokens, 'Token refreshed'))
     } catch (error) {
-      return handleError(error, reply)
+      return handleRouteError(error, reply)
     }
   })
 
@@ -67,7 +60,7 @@ export default async function authRoutes(app: FastifyInstance) {
       const user = await AuthService.getMe(sub)
       return reply.send(successResponse(user))
     } catch (error) {
-      return handleError(error, reply)
+      return handleRouteError(error, reply)
     }
   })
 }

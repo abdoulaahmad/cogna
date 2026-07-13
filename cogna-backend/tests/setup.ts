@@ -11,6 +11,12 @@ process.env.DATABASE_TEST_URL   = 'postgresql://user:password@localhost:5432/cog
 
 // ── Mock the entire Prisma database module for unit tests ─────────────────
 // Unit tests mock at the repository layer, so the DB should never be touched.
+vi.mock('@/queue/fulfillment.queue', () => ({
+  fulfillmentQueue: {
+    add: vi.fn().mockResolvedValue({ id: 'mock-job-id' }),
+  }
+}))
+
 vi.mock('@/config/database', () => ({
   default: {
     user:          { findUnique: vi.fn(), create: vi.fn(), update: vi.fn() },
@@ -19,7 +25,8 @@ vi.mock('@/config/database', () => ({
     order:         { create: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn() },
     payment:       { create: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn() },
     product:       { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn() },
-    provider:      { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn() },
+    provider:      { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
+    category:      { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
     auditLog:      { create: vi.fn() },
     setting:       { findUnique: vi.fn(), findMany: vi.fn(), upsert: vi.fn() },
     $transaction:  vi.fn((fn: (tx: unknown) => unknown) => fn({})),

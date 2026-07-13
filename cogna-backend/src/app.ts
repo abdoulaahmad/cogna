@@ -4,6 +4,9 @@ import jwt from '@fastify/jwt'
 import rateLimit from '@fastify/rate-limit'
 import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
+import { ZodError } from 'zod'
+import { AppError } from '@/utils/errors'
+import { errorResponse } from '@/utils/response'
 import { env } from '@/config/env'
 
 // Routes
@@ -27,6 +30,15 @@ export async function buildApp() {
 
   await app.register(jwt, {
     secret: env.JWT_SECRET,
+  })
+
+  // Decorate fastify instance with authenticate method
+  app.decorate('authenticate', async function (request: any, reply: any) {
+    try {
+      await request.jwtVerify()
+    } catch (err) {
+      reply.send(err)
+    }
   })
 
   await app.register(rateLimit, {
@@ -70,6 +82,26 @@ export async function buildApp() {
     message: 'Cogna API is running',
     timestamp: new Date().toISOString(),
   }))
+
+  // ── Global Error Handler ────────────────────────────────────────────────
+  app.setErrorHandler((error, _request, reply) => {
+    if (error instanceof ZodError) {
+      const issues = error.issues ?? (error as { errors?: typeof error.issues }).errors ?? []
+      return reply.status(400).send(
+        errorResponse('Validation failed', issues.map(e => ({ field: e.path.join('.'), message: e.message })))
+      )
+    }
+    if (error instanceof AppError) {
+      return reply.status(error.statusCode).send(errorResponse(error.message, error.errors))
+    }
+    // Fastify JWT errors
+    if ('statusCode' in error && typeof (error as { statusCode: unknown }).statusCode === 'number') {
+      const statusCode = (error as { statusCode: number }).statusCode
+      return reply.status(statusCode).send(errorResponse(error.message))
+    }
+    app.log.error(error)
+    return reply.status(500).send(errorResponse('Internal server error'))
+  })
 
   return app
 }

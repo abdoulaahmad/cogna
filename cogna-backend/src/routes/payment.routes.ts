@@ -2,15 +2,8 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { PaymentService }          from '@/services/payment.service'
 import { initializePaymentSchema } from '@/validators/payment.validator'
 import { successResponse, errorResponse } from '@/utils/response'
-import { AppError } from '@/utils/errors'
+import { handleRouteError } from '@/utils/handle-error'
 import type { PaymentGatewayType } from '@/types/payment-gateway.types'
-
-async function handleError(error: unknown, reply: FastifyReply) {
-  if (error instanceof AppError) {
-    return reply.status(error.statusCode).send(errorResponse(error.message))
-  }
-  return reply.status(500).send(errorResponse('Internal server error'))
-}
 
 export default async function paymentRoutes(app: FastifyInstance) {
 
@@ -32,7 +25,7 @@ export default async function paymentRoutes(app: FastifyInstance) {
 
         return reply.status(201).send(successResponse(result, 'Payment initialized'))
       } catch (error) {
-        return handleError(error, reply)
+        return handleRouteError(error, reply)
       }
     }
   )
@@ -47,7 +40,7 @@ export default async function paymentRoutes(app: FastifyInstance) {
         const payment       = await PaymentService.verifyPayment(reference)
         return reply.send(successResponse(payment, 'Payment verified'))
       } catch (error) {
-        return handleError(error, reply)
+        return handleRouteError(error, reply)
       }
     }
   )
@@ -71,7 +64,7 @@ export default async function paymentRoutes(app: FastifyInstance) {
 
         return reply.status(ok ? 200 : 400).send({ ok })
       } catch (error) {
-        return handleError(error, reply)
+        return handleRouteError(error, reply)
       }
     }
   )

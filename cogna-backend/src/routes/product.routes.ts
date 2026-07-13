@@ -2,14 +2,7 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { ProductService } from '@/services/product.service'
 import { listProductsSchema } from '@/validators/product.validator'
 import { successResponse, errorResponse, paginatedResponse } from '@/utils/response'
-import { AppError } from '@/utils/errors'
-
-async function handleError(error: unknown, reply: FastifyReply) {
-  if (error instanceof AppError) {
-    return reply.status(error.statusCode).send(errorResponse(error.message))
-  }
-  return reply.status(500).send(errorResponse('Internal server error'))
-}
+import { handleRouteError } from '@/utils/handle-error'
 
 export default async function productRoutes(app: FastifyInstance) {
 
@@ -20,7 +13,7 @@ export default async function productRoutes(app: FastifyInstance) {
       const { items, total, page, limit } = await ProductService.listProducts(query)
       return reply.send(paginatedResponse(items, { page, limit, total }))
     } catch (error) {
-      return handleError(error, reply)
+      return handleRouteError(error, reply)
     }
   })
 
@@ -31,7 +24,7 @@ export default async function productRoutes(app: FastifyInstance) {
       const products = await ProductService.searchProducts(q ?? '')
       return reply.send(successResponse(products))
     } catch (error) {
-      return handleError(error, reply)
+      return handleRouteError(error, reply)
     }
   })
 
@@ -42,7 +35,7 @@ export default async function productRoutes(app: FastifyInstance) {
       const products = await ProductService.getProductsByCategory(slug)
       return reply.send(successResponse(products))
     } catch (error) {
-      return handleError(error, reply)
+      return handleRouteError(error, reply)
     }
   })
 
@@ -53,7 +46,7 @@ export default async function productRoutes(app: FastifyInstance) {
       const product = await ProductService.getProductById(id)
       return reply.send(successResponse(product))
     } catch (error) {
-      return handleError(error, reply)
+      return handleRouteError(error, reply)
     }
   })
 }

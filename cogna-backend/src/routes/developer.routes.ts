@@ -2,18 +2,11 @@ import { z }               from 'zod'
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { DeveloperService } from '@/services/developer.service'
 import { successResponse, errorResponse } from '@/utils/response'
-import { AppError } from '@/utils/errors'
+import { handleRouteError } from '@/utils/handle-error'
 
 const createApiKeySchema = z.object({
   name: z.string().min(1).max(100),
 })
-
-async function handleError(error: unknown, reply: FastifyReply) {
-  if (error instanceof AppError) {
-    return reply.status(error.statusCode).send(errorResponse(error.message))
-  }
-  return reply.status(500).send(errorResponse('Internal server error'))
-}
 
 export default async function developerRoutes(app: FastifyInstance) {
 
@@ -26,7 +19,7 @@ export default async function developerRoutes(app: FastifyInstance) {
       const { sub } = req.user as { sub: string }
       const keys    = await DeveloperService.listApiKeys(sub)
       return reply.send(successResponse(keys))
-    } catch (error) { return handleError(error, reply) }
+    } catch (error) { return handleRouteError(error, reply) }
   })
 
   // POST /api/v1/developer/keys
@@ -36,7 +29,7 @@ export default async function developerRoutes(app: FastifyInstance) {
       const { name } = createApiKeySchema.parse(req.body)
       const key     = await DeveloperService.createApiKey(sub, name)
       return reply.status(201).send(successResponse(key, 'API key created'))
-    } catch (error) { return handleError(error, reply) }
+    } catch (error) { return handleRouteError(error, reply) }
   })
 
   // DELETE /api/v1/developer/keys/:id
@@ -46,6 +39,6 @@ export default async function developerRoutes(app: FastifyInstance) {
       const { id }   = req.params as { id: string }
       const revoked  = await DeveloperService.revokeApiKey(id, sub)
       return reply.send(successResponse(revoked, 'API key revoked'))
-    } catch (error) { return handleError(error, reply) }
+    } catch (error) { return handleRouteError(error, reply) }
   })
 }

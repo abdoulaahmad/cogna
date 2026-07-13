@@ -2,14 +2,7 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { OrderService } from '@/services/order.service'
 import { createOrderSchema } from '@/validators/order.validator'
 import { successResponse, errorResponse, paginatedResponse } from '@/utils/response'
-import { AppError } from '@/utils/errors'
-
-async function handleError(error: unknown, reply: FastifyReply) {
-  if (error instanceof AppError) {
-    return reply.status(error.statusCode).send(errorResponse(error.message))
-  }
-  return reply.status(500).send(errorResponse('Internal server error'))
-}
+import { handleRouteError } from '@/utils/handle-error'
 
 export default async function orderRoutes(app: FastifyInstance) {
 
@@ -24,7 +17,7 @@ export default async function orderRoutes(app: FastifyInstance) {
       const order = await OrderService.createOrder(sub, body)
       return reply.status(201).send(successResponse(order, 'Order created'))
     } catch (error) {
-      return handleError(error, reply)
+      return handleRouteError(error, reply)
     }
   })
 
@@ -36,7 +29,7 @@ export default async function orderRoutes(app: FastifyInstance) {
       const { items, total } = await OrderService.listOrders(sub, Number(page), Number(limit))
       return reply.send(paginatedResponse(items, { page: Number(page), limit: Number(limit), total }))
     } catch (error) {
-      return handleError(error, reply)
+      return handleRouteError(error, reply)
     }
   })
 
@@ -48,7 +41,7 @@ export default async function orderRoutes(app: FastifyInstance) {
       const order = await OrderService.getOrder(id, sub, role === 'ADMIN' || role === 'SUPER_ADMIN')
       return reply.send(successResponse(order))
     } catch (error) {
-      return handleError(error, reply)
+      return handleRouteError(error, reply)
     }
   })
 }
