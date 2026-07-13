@@ -29,7 +29,7 @@ export default function Header() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-[#1A140A] w-full font-display">
+    <header className="sticky top-0 z-50 bg-[#081A16] w-full font-display">
       <div className="mx-auto max-w-7xl px-6 md:px-12 lg:px-16 w-full">
         <div className="flex h-20 items-center justify-between">
           
@@ -122,7 +122,7 @@ export default function Header() {
 
       {/* Mobile Menu Overlay */}
       {mobileMenuOpen ? (
-        <div className="md:hidden bg-[#1A140A] border-t border-slate-800/20 px-6 py-4 space-y-4 text-sm font-bold text-slate-400">
+        <div className="md:hidden bg-[#081A16] border-t border-slate-800/20 px-6 py-4 space-y-4 text-sm font-bold text-slate-400">
           {navLinks.map((link, idx) => (
             <Link
               key={idx}

@@ -31,7 +31,7 @@ export default function Hero() {
   return (
     <section 
       style={{
-        background: 'radial-gradient(circle at 72% 48%, rgba(212,175,55,.18), transparent 35%), radial-gradient(circle at 80% 60%, rgba(244,197,66,.08), transparent 30%), linear-gradient(180deg,#1A140A 0%,#0F0F12 100%)'
+        background: 'radial-gradient(circle at 72% 48%, rgba(75, 227, 193, 0.18) 0%, rgba(75, 227, 193, 0.08) 18%, transparent 45%), radial-gradient(circle at 85% 55%, rgba(24, 184, 138, 0.12) 0%, transparent 35%), linear-gradient(180deg, #081A16 0%, #05110F 100%)'
       }}
       className="text-white flex flex-col font-display relative overflow-hidden pb-12"
     >
@@ -126,7 +126,7 @@ export default function Hero() {
                 WebkitMaskImage: 'radial-gradient(circle, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 86%)',
                 maskImage: 'radial-gradient(circle, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 86%)',
               }}
-              className="relative animate-float z-10 w-[78%] sm:w-[82%] lg:w-[84%] max-w-[430px] aspect-square rounded-full overflow-hidden border border-[#D4AF37]/20 shadow-[0_0_60px_rgba(212,175,55,0.35)] flex items-center justify-center pointer-events-none"
+              className="relative animate-float z-10 w-[86%] sm:w-[92%] lg:w-[95%] max-w-[490px] aspect-square rounded-full overflow-hidden border border-[#D4AF37]/20 shadow-[0_0_60px_rgba(212,175,55,0.35)] flex items-center justify-center pointer-events-none"
             >
               <video
                 src="/Animate_the_hero_illustration.mp4"
@@ -142,7 +142,7 @@ export default function Hero() {
             </div>
 
             {/* Soft top gradient overlay to fade top edge of the animation into the hero background */}
-            <div className="absolute inset-x-0 top-0 h-[25%] bg-gradient-to-b from-[#1A140A] to-transparent pointer-events-none z-20" />
+            <div className="absolute inset-x-0 top-0 h-[25%] bg-gradient-to-b from-[#081A16] to-transparent pointer-events-none z-20" />
 
           </div>
 
@@ -151,7 +151,7 @@ export default function Hero() {
 
       {/* Feature Bar (Trust / Value Proposition Section) */}
       <div className="mx-auto max-w-7xl px-8 sm:px-12 lg:px-16 w-full relative z-10">
-        <div className="bg-[#0F0F12] rounded-b-[20px] border-t border-slate-800/25 grid grid-cols-1 md:grid-cols-4 min-h-[70px] md:min-h-[80px] py-4 px-4 md:px-6 items-center gap-y-6 md:gap-y-0">
+        <div className="bg-[#05110F] rounded-b-[20px] border-t border-slate-800/25 grid grid-cols-1 md:grid-cols-4 min-h-[70px] md:min-h-[80px] py-4 px-4 md:px-6 items-center gap-y-6 md:gap-y-0">
           {features.map((feat, idx) => (
             <div
               key={idx}
