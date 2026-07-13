@@ -69,92 +69,44 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* RIGHT Column (55%) - Free-Floating native elements scene */}
+          {/* RIGHT Column (55%) - Large free-floating video animation */}
           <div className="relative w-full h-[400px] lg:h-[500px] flex items-center justify-center">
             
-            {/* Background glows & radial rings (Constellation scene background) */}
+            {/* Background glows & radial rings (Illustration backdrop) */}
             <div className="absolute w-[350px] h-[350px] bg-indigo-600/10 rounded-full blur-[100px] pointer-events-none z-0" />
             <div className="absolute w-[200px] h-[200px] bg-purple-600/5 rounded-full blur-[80px] pointer-events-none z-0" />
             
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
               <svg className="w-full h-full max-w-[550px] max-h-[550px] text-slate-800/40" viewBox="0 0 200 200" fill="none">
-                {/* Orbital lines */}
-                <circle cx="100" cy="100" r="75" className="stroke-indigo-500/5 stroke-[0.8]" />
-                <circle cx="100" cy="100" r="50" className="stroke-purple-500/5 stroke-[0.8] stroke-dashed" />
-                
-                {/* Constellation linkages connecting core to the 4 quadrants */}
-                <line x1="100" y1="100" x2="50" y2="50" className="stroke-indigo-500/10 stroke-[0.8] stroke-dasharray-[2_4]" />
-                <line x1="100" y1="100" x2="150" y2="45" className="stroke-indigo-500/10 stroke-[0.8] stroke-dasharray-[2_4]" />
-                <line x1="100" y1="100" x2="45" y2="150" className="stroke-purple-500/10 stroke-[0.8] stroke-dasharray-[2_4]" />
-                <line x1="100" y1="100" x2="155" y2="155" className="stroke-purple-500/10 stroke-[0.8] stroke-dasharray-[2_4]" />
+                <circle cx="100" cy="100" r="85" className="stroke-indigo-500/5 stroke-[0.8]" />
+                <circle cx="100" cy="100" r="65" className="stroke-purple-500/5 stroke-[0.8] stroke-dashed" />
               </svg>
             </div>
 
-            {/* Subtle floating particles (different levels of blurs and positions) */}
+            {/* Subtle floating particles */}
             <div className="absolute top-[12%] left-[15%] w-1.5 h-1.5 bg-indigo-400/50 rounded-full blur-[0.5px] animate-pulse" />
             <div className="absolute top-[28%] right-[22%] w-2 h-2 bg-purple-400/35 rounded-full blur-[0.5px] animate-pulse" />
             <div className="absolute bottom-[24%] left-[28%] w-1 h-1 bg-pink-400/60 rounded-full blur-[0.5px] animate-pulse" />
             <div className="absolute bottom-[35%] right-[12%] w-2.5 h-2.5 bg-indigo-400/25 rounded-full blur-[1px] animate-pulse" />
 
-            {/* Dark circular pedestal underneath the constellation */}
+            {/* Dark circular pedestal underneath the floating video centerpiece */}
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-64 h-4 bg-slate-950/70 rounded-full blur-[3px] border border-slate-800/10 z-0" />
 
-            {/* NATIVE SCENE: 4 Independent Floating Logos & 1 Central Gateway Hub */}
-            
-            {/* 1. CENTRAL COGNA HUB NODE */}
-            <div className="absolute z-20 animate-float flex flex-col items-center justify-center">
-              <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-600 to-indigo-700 p-[1.5px] shadow-[0_0_30px_rgba(99,102,241,0.5)]">
-                <div className="h-full w-full rounded-2xl bg-[#080b14] flex items-center justify-center text-white">
-                  <Code2 size={28} className="text-indigo-400" />
-                </div>
-              </div>
-              <span className="text-[8px] font-bold tracking-widest text-indigo-400/80 uppercase mt-2.5 bg-indigo-950/40 border border-indigo-900/30 px-2 py-0.5 rounded-full">
-                GATEWAY
-              </span>
-            </div>
-
-            {/* 2. CHATGPT NODE (Top-Left) */}
-            <div className="absolute top-[12%] left-[8%] md:left-[14%] z-10 animate-float-slow">
-              <div className="h-14 w-14 rounded-full bg-[#10a37f] flex items-center justify-center text-white shadow-[0_10px_25px_rgba(16,163,127,0.3)] border border-[#10a37f]/20">
-                <svg viewBox="0 0 24 24" className="h-7 w-7 fill-white" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M21.7,11.3c0.2-1.3-0.5-2.6-1.7-3.1c0.1-0.3,0.1-0.6,0.1-0.9c0-1.7-1.4-3.1-3.1-3.1c-0.6,0-1.1,0.2-1.6,0.5c-0.7-1.1-1.9-1.8-3.3-1.8c-2.1,0-3.8,1.7-3.8,3.8c0,0.3,0,0.5,0.1,0.8C7.5,7,6.3,6.8,5.1,7.5C3.9,8.2,3.3,9.5,3.6,10.9c-0.9,0.5-1.5,1.5-1.5,2.6c0,1.7,1.4,3.1,3.1,3.1c0.3,0,0.5,0,0.8-0.1c0.5,0.9,1.5,1.5,2.6,1.5c0.6,0,1.1-0.2,1.6-0.5c0.7,1.1,1.9,1.8,3.3,1.8c2.1,0,3.8-1.7,3.8-3.8c0-0.3,0-0.5-0.1-0.8c0.9,0.5,2.1,0.7,3.3,0c1.2-0.7,1.8-2,1.5-3.4C21.1,12.3,21.7,11.3,21.7,11.3z" />
-                </svg>
-              </div>
-            </div>
-
-            {/* 3. GEMINI NODE (Top-Right) */}
-            <div className="absolute top-[14%] right-[8%] md:right-[14%] z-10 animate-float-fast">
-              <div className="h-14 w-14 rounded-full bg-[#1e2238] flex items-center justify-center text-white shadow-[0_10px_25px_rgba(99,102,241,0.25)] border border-indigo-500/25">
-                {/* Gemini Sparkle Logo */}
-                <svg viewBox="0 0 24 24" className="h-8 w-8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2C12 7.5 7.5 12 2 12C7.5 12 12 16.5 12 22C12 16.5 16.5 12 22 12C16.5 12 12 7.5 12 2Z" fill="url(#gemini-gradient)" />
-                  <defs>
-                    <linearGradient id="gemini-gradient" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
-                      <stop stopColor="#93c5fd" />
-                      <stop offset="0.5" stopColor="#a78bfa" />
-                      <stop offset="1" stopColor="#f472b6" />
-                    </linearGradient>
-                  </defs>
-                </svg>
-              </div>
-            </div>
-
-            {/* 4. CLAUDE NODE (Bottom-Left) */}
-            <div className="absolute bottom-[16%] left-[6%] md:left-[12%] z-10 animate-float-medium-1">
-              <div className="h-14 w-14 rounded-full bg-[#d97706] flex items-center justify-center text-white shadow-[0_10px_25px_rgba(217,119,6,0.3)] border border-[#d97706]/20">
-                <svg viewBox="0 0 24 24" className="h-7 w-7 fill-white" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2L2 22h20L12 2zm0 4.2L19.3 19H4.7L12 6.2z" />
-                </svg>
-              </div>
-            </div>
-
-            {/* 5. CAPCUT NODE (Bottom-Right) */}
-            <div className="absolute bottom-[16%] right-[6%] md:right-[12%] z-10 animate-float-medium-2">
-              <div className="h-14 w-14 rounded-full bg-gradient-to-tr from-pink-500 to-purple-600 flex items-center justify-center text-white shadow-[0_10px_25px_rgba(236,72,153,0.3)] border border-pink-500/20">
-                <svg viewBox="0 0 24 24" className="h-7 w-7 fill-white" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z" />
-                </svg>
-              </div>
+            {/* Free-floating Video Animation (No borders, panels, or sharp boundaries) */}
+            <div className="relative animate-float z-10 w-[140%] max-w-[600px] lg:w-[155%] lg:max-w-[700px] aspect-video flex items-center justify-center pointer-events-none">
+              <video
+                src="/Animate_the_hero_illustration.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                style={{
+                  mixBlendMode: 'screen',
+                  WebkitMaskImage: 'radial-gradient(circle, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%)',
+                  maskImage: 'radial-gradient(circle, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%)',
+                }}
+                className="w-full h-full object-cover"
+              />
             </div>
 
           </div>
