@@ -4,80 +4,90 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth';
-import { ShoppingCart, User, LogOut, Menu, X, Terminal, Shield } from 'lucide-react';
+import { useCartStore } from '@/stores/cart';
+import { ShoppingCart, LogOut, Menu, X } from 'lucide-react';
+import CartDrawer from '@/components/product/cart-drawer';
 
 export default function Header() {
   const router = useRouter();
   const { user, isAuthenticated, clearAuth } = useAuthStore();
+  const { cartItem } = useCartStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
 
   const handleLogout = () => {
     clearAuth();
     router.push('/login');
   };
 
+  const navLinks = [
+    { name: 'Home', href: '/' },
+    { name: 'Products', href: '/catalog' },
+    { name: 'About', href: '#about' },
+    { name: 'Find Us', href: '#find-us' },
+    { name: 'Pages', href: '#pages' },
+  ];
+
   return (
-    <header className="sticky top-0 z-50 bg-[#080b14]/90 backdrop-blur-md border-b border-slate-800/40">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
+    <header className="sticky top-0 z-50 bg-[#080b14] w-full font-display">
+      <div className="mx-auto max-w-7xl px-6 md:px-12 lg:px-16 w-full">
+        <div className="flex h-20 items-center justify-between">
+          
+          {/* LEFT: Compact logo with breathing room */}
           <div className="flex items-center">
-            <Link href="/" className="font-display text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+            <Link href="/" className="font-display text-xl font-bold tracking-tight text-white flex items-center gap-2">
               <span className="bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">COGNA</span>
             </Link>
           </div>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex space-x-8 text-sm font-semibold text-slate-400 font-display">
-            <Link href="/" className="hover:text-white transition-colors duration-200">
-              Home
-            </Link>
-            <Link href="/catalog" className="hover:text-white transition-colors duration-200">
-              API Catalog
-            </Link>
-            {isAuthenticated ? (
-              <>
-                {user?.role === 'DEVELOPER' || user?.role === 'ADMIN' ? (
-                  <Link href="/keys" className="hover:text-white transition-colors duration-200 flex items-center gap-1.5">
-                    <Terminal size={14} /> Developer Portal
-                  </Link>
-                ) : null}
-                {user?.role === 'ADMIN' ? (
-                  <Link href="/admin/products" className="hover:text-white transition-colors duration-200 flex items-center gap-1.5">
-                    <Shield size={14} /> Admin Dashboard
-                  </Link>
-                ) : null}
-              </>
-            ) : null}
+          {/* CENTER: Evenly spaced navigation, no dropdowns */}
+          <nav className="hidden md:flex items-center space-x-10 text-xs font-bold text-slate-400 tracking-wide">
+            {navLinks.map((link, idx) => (
+              <Link
+                key={idx}
+                href={link.href}
+                className="hover:text-white transition-colors duration-200"
+              >
+                {link.name}
+              </Link>
+            ))}
           </nav>
 
-          {/* Right side controls */}
-          <div className="hidden md:flex items-center space-x-4">
-            <Link
-              href="/cart"
-              className="text-slate-400 hover:text-white p-2 transition-colors duration-200 relative"
+          {/* RIGHT: Cart icon & Primary rounded CTA button perfectly aligned */}
+          <div className="hidden md:flex items-center space-x-6">
+            {/* Cart Icon Toggle */}
+            <button
+              onClick={() => setCartOpen(true)}
+              className="text-slate-400 hover:text-white p-2 transition-colors duration-200 relative focus:outline-none"
+              aria-label="Open cart"
             >
-              <ShoppingCart size={20} />
-              {/* Optional cart bubble count */}
-            </Link>
+              <ShoppingCart size={18} />
+              {cartItem ? (
+                <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-indigo-500 ring-2 ring-[#080b14]" />
+              ) : null}
+            </button>
 
+            {/* Rounded CTA Button */}
             {isAuthenticated ? (
-              <div className="flex items-center space-x-3">
-                <span className="text-xs text-slate-400 font-semibold font-display bg-slate-800/40 px-2.5 py-1 rounded-full border border-slate-700/20">
-                  {user?.fullName.split(' ')[0]}
-                </span>
+              <div className="flex items-center space-x-4">
+                <Link
+                  href={user?.role === 'ADMIN' ? '/admin/products' : '/orders'}
+                  className="rounded-full bg-indigo-600 hover:bg-indigo-700 px-5 py-2.5 text-xs font-bold text-white transition-all duration-200 shadow-sm border border-indigo-700/10 h-10 flex items-center"
+                >
+                  Workspace Portal
+                </Link>
                 <button
                   onClick={handleLogout}
-                  className="text-slate-400 hover:text-rose-500 p-2 transition-colors duration-200"
-                  title="Logout"
+                  className="text-slate-400 hover:text-rose-500 p-2 transition-colors duration-200 focus:outline-none"
+                  title="Sign Out"
                 >
-                  <LogOut size={18} />
+                  <LogOut size={16} />
                 </button>
               </div>
             ) : (
               <Link
                 href="/login"
-                className="rounded-lg bg-indigo-600 hover:bg-indigo-700 px-4 py-2 text-xs font-semibold font-display text-white transition-all duration-200 shadow-sm border border-indigo-700/10"
+                className="rounded-full bg-indigo-600 hover:bg-indigo-700 px-5 py-2.5 text-xs font-bold text-white transition-all duration-200 shadow-sm border border-indigo-700/10 h-10 flex items-center"
               >
                 Sign In
               </Link>
@@ -85,75 +95,75 @@ export default function Header() {
           </div>
 
           {/* Mobile menu toggle */}
-          <div className="flex md:hidden">
+          <div className="flex md:hidden items-center gap-4">
+            <button
+              onClick={() => setCartOpen(true)}
+              className="text-slate-400 hover:text-white p-2 relative"
+            >
+              <ShoppingCart size={18} />
+              {cartItem ? (
+                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500" />
+              ) : null}
+            </button>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="text-slate-400 hover:text-white p-2 transition-colors"
+              className="text-slate-400 hover:text-white p-2 transition-colors focus:outline-none"
             >
-              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
+
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu Overlay */}
       {mobileMenuOpen ? (
-        <div className="md:hidden bg-[#080b14] border-b border-slate-800/40 px-4 pt-2 pb-4 space-y-3 font-display">
-          <Link
-            href="/"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-md text-base font-semibold text-slate-300 hover:bg-slate-800/40 hover:text-white transition"
-          >
-            Home
-          </Link>
-          <Link
-            href="/catalog"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-md text-base font-semibold text-slate-300 hover:bg-slate-800/40 hover:text-white transition"
-          >
-            API Catalog
-          </Link>
-          {isAuthenticated ? (
-            <>
-              {user?.role === 'DEVELOPER' || user?.role === 'ADMIN' ? (
-                <Link
-                  href="/keys"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block px-3 py-2 rounded-md text-base font-semibold text-slate-300 hover:bg-slate-800/40 hover:text-white transition"
-                >
-                  Developer Portal
-                </Link>
-              ) : null}
-              {user?.role === 'ADMIN' ? (
-                <Link
-                  href="/admin/products"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block px-3 py-2 rounded-md text-base font-semibold text-slate-300 hover:bg-slate-800/40 hover:text-white transition"
-                >
-                  Admin Dashboard
-                </Link>
-              ) : null}
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  handleLogout();
-                }}
-                className="w-full text-left block px-3 py-2 rounded-md text-base font-semibold text-rose-400 hover:bg-rose-950/20 hover:text-rose-300 transition"
-              >
-                Logout
-              </button>
-            </>
-          ) : (
+        <div className="md:hidden bg-[#080b14] border-t border-slate-800/20 px-6 py-4 space-y-4 text-sm font-bold text-slate-400">
+          {navLinks.map((link, idx) => (
             <Link
-              href="/login"
+              key={idx}
+              href={link.href}
               onClick={() => setMobileMenuOpen(false)}
-              className="block w-full text-center rounded-lg bg-indigo-600 hover:bg-indigo-700 px-4 py-2.5 text-sm font-semibold text-white transition"
+              className="block hover:text-white transition"
             >
-              Sign In
+              {link.name}
             </Link>
-          )}
+          ))}
+          <div className="pt-2 border-t border-slate-800/20">
+            {isAuthenticated ? (
+              <div className="space-y-4">
+                <Link
+                  href={user?.role === 'ADMIN' ? '/admin/products' : '/orders'}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block w-full text-center rounded-full bg-indigo-600 hover:bg-indigo-700 py-3 text-xs font-bold text-white transition"
+                >
+                  Workspace Portal
+                </Link>
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleLogout();
+                  }}
+                  className="w-full text-center block py-2 text-rose-400 hover:text-rose-350 transition font-bold"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block w-full text-center rounded-full bg-indigo-600 hover:bg-indigo-700 py-3 text-xs font-bold text-white transition"
+              >
+                Sign In
+              </Link>
+            )}
+          </div>
         </div>
       ) : null}
+
+      {/* Slide Drawer Cart overlay */}
+      <CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} />
     </header>
   );
 }
