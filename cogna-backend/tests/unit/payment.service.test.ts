@@ -9,6 +9,9 @@ import { buildOrder, buildPayment, buildProduct } from '../fixtures/factories'
 vi.mock('@/repositories/payment.repository')
 vi.mock('@/repositories/order.repository')
 vi.mock('@/repositories/product.repository')
+vi.mock('@/queue/fulfillment.queue', () => ({
+  fulfillmentQueue: { add: vi.fn().mockResolvedValue({ id: 'job-1' }) },
+}))
 vi.mock('@/payments/GatewayFactory', () => ({
   getPaymentGateway: vi.fn(() => ({
     initializePayment: vi.fn().mockResolvedValue({

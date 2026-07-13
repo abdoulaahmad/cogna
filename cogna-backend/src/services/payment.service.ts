@@ -1,8 +1,9 @@
-import { randomUUID }         from 'crypto'
-import { PaymentRepository }  from '@/repositories/payment.repository'
-import { OrderRepository }    from '@/repositories/order.repository'
-import { ProductRepository }  from '@/repositories/product.repository'
-import { getPaymentGateway }  from '@/payments/GatewayFactory'
+import { randomUUID }            from 'crypto'
+import { PaymentRepository }     from '@/repositories/payment.repository'
+import { OrderRepository }       from '@/repositories/order.repository'
+import { ProductRepository }     from '@/repositories/product.repository'
+import { getPaymentGateway }     from '@/payments/GatewayFactory'
+import { fulfillmentQueue }      from '@/queue/fulfillment.queue'
 import { NotFoundError, ConflictError } from '@/utils/errors'
 import type { PaymentGatewayType }       from '@/types/payment-gateway.types'
 
@@ -86,11 +87,22 @@ export const PaymentService = {
 
     const newStatus = verifyResult.status === 'success' ? 'PAID' : 'FAILED'
 
-    return PaymentRepository.updateStatus(payment.id, newStatus, {
+    const updatedPayment = await PaymentRepository.updateStatus(payment.id, newStatus, {
       gatewayReference: verifyResult.gatewayReference,
       paidAt:           verifyResult.paidAt ?? undefined,
       metadata:         { amount: verifyResult.amount },
     })
+
+    // Trigger fulfillment as soon as payment is confirmed PAID
+    if (newStatus === 'PAID') {
+      await fulfillmentQueue.add(
+        'fulfill-order',
+        { orderId: order.id, productId: order.productId, userId: order.userId },
+        { jobId: `fulfill:${order.id}` }  // idempotent — won't duplicate
+      )
+    }
+
+    return updatedPayment
   },
 
   /**
@@ -135,6 +147,15 @@ export const PaymentService = {
       paidAt:           verifyResult.paidAt ?? undefined,
       metadata:         { amount: verifyResult.amount },
     })
+
+    // Trigger fulfillment on PAID
+    if (newStatus === 'PAID') {
+      await fulfillmentQueue.add(
+        'fulfill-order',
+        { orderId: order.id, productId: order.productId, userId: order.userId },
+        { jobId: `fulfill:${order.id}` }
+      )
+    }
 
     return true
   },
