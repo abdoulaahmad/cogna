@@ -1,0 +1,119 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { PaymentService } from '@/services/payment.service'
+import { PaymentRepository } from '@/repositories/payment.repository'
+import { OrderRepository }   from '@/repositories/order.repository'
+import { ProductRepository } from '@/repositories/product.repository'
+import { NotFoundError, ConflictError } from '@/utils/errors'
+import { buildOrder, buildPayment, buildProduct } from '../fixtures/factories'
+
+vi.mock('@/repositories/payment.repository')
+vi.mock('@/repositories/order.repository')
+vi.mock('@/repositories/product.repository')
+vi.mock('@/payments/GatewayFactory', () => ({
+  getPaymentGateway: vi.fn(() => ({
+    initializePayment: vi.fn().mockResolvedValue({
+      authorizationUrl: 'https://checkout.paystack.com/abc',
+      reference:        'cogna_ref_test',
+      gatewayReference: 'PSK_ref_test',
+    }),
+    verifyPayment: vi.fn().mockResolvedValue({
+      status:    'success',
+      amount:    9999,
+      paidAt:    new Date('2026-01-01'),
+      reference: 'cogna_ref_test',
+    }),
+    validateWebhook: vi.fn().mockReturnValue(true),
+  })),
+}))
+
+const mockProduct = buildProduct({ paymentGateway: 'PAYSTACK' })
+const mockOrder   = buildOrder({ userId: 'user-1', productId: mockProduct.id, status: 'PENDING' })
+const mockPayment = buildPayment({ orderId: mockOrder.id, userId: 'user-1', status: 'PENDING' })
+
+beforeEach(() => { vi.clearAllMocks() })
+
+describe('PaymentService', () => {
+
+  // ─── initializePayment ───────────────────────────────────────────────────
+  describe('initializePayment', () => {
+    it('should initialize payment and return authorizationUrl', async () => {
+      vi.mocked(OrderRepository.findById).mockResolvedValue(mockOrder)
+      vi.mocked(ProductRepository.findById).mockResolvedValue(mockProduct)
+      vi.mocked(PaymentRepository.findByOrderId).mockResolvedValue(null)
+      vi.mocked(PaymentRepository.create).mockResolvedValue(mockPayment)
+
+      const result = await PaymentService.initializePayment(
+        mockOrder.id,
+        'user-1',
+        'user@test.com'
+      )
+
+      expect(result.authorizationUrl).toBe('https://checkout.paystack.com/abc')
+      expect(PaymentRepository.create).toHaveBeenCalledOnce()
+    })
+
+    it('should throw NotFoundError when order does not exist', async () => {
+      vi.mocked(OrderRepository.findById).mockResolvedValue(null)
+
+      await expect(
+        PaymentService.initializePayment('bad-order-id', 'user-1', 'user@test.com')
+      ).rejects.toThrow(NotFoundError)
+    })
+
+    it('should throw ConflictError when payment already exists for the order', async () => {
+      vi.mocked(OrderRepository.findById).mockResolvedValue(mockOrder)
+      vi.mocked(ProductRepository.findById).mockResolvedValue(mockProduct)
+      vi.mocked(PaymentRepository.findByOrderId).mockResolvedValue(mockPayment)
+
+      await expect(
+        PaymentService.initializePayment(mockOrder.id, 'user-1', 'user@test.com')
+      ).rejects.toThrow(ConflictError)
+    })
+  })
+
+  // ─── verifyPayment ────────────────────────────────────────────────────────
+  describe('verifyPayment', () => {
+    it('should verify a payment and update status to PAID on success', async () => {
+      const paidPayment = { ...mockPayment, status: 'PAID' as const }
+      vi.mocked(PaymentRepository.findByReference).mockResolvedValue(mockPayment)
+      vi.mocked(OrderRepository.findById).mockResolvedValue(mockOrder)
+      vi.mocked(ProductRepository.findById).mockResolvedValue(mockProduct)
+      vi.mocked(PaymentRepository.updateStatus).mockResolvedValue(paidPayment)
+
+      const result = await PaymentService.verifyPayment(mockPayment.reference)
+
+      expect(result.status).toBe('PAID')
+      expect(PaymentRepository.updateStatus).toHaveBeenCalledWith(
+        mockPayment.id,
+        'PAID',
+        expect.objectContaining({ gatewayReference: expect.any(String) })
+      )
+    })
+
+    it('should throw NotFoundError when reference does not exist', async () => {
+      vi.mocked(PaymentRepository.findByReference).mockResolvedValue(null)
+
+      await expect(
+        PaymentService.verifyPayment('nonexistent-ref')
+      ).rejects.toThrow(NotFoundError)
+    })
+  })
+
+  // ─── handleWebhook ────────────────────────────────────────────────────────
+  describe('handleWebhook', () => {
+    it('should return true when webhook signature is valid', async () => {
+      vi.mocked(PaymentRepository.findByReference).mockResolvedValue(mockPayment)
+      vi.mocked(OrderRepository.findById).mockResolvedValue(mockOrder)
+      vi.mocked(ProductRepository.findById).mockResolvedValue(mockProduct)
+      vi.mocked(PaymentRepository.updateStatus).mockResolvedValue({ ...mockPayment, status: 'PAID' as const })
+
+      const result = await PaymentService.handleWebhook(
+        'PAYSTACK',
+        JSON.stringify({ data: { reference: mockPayment.reference } }),
+        'valid-sig'
+      )
+
+      expect(result).toBe(true)
+    })
+  })
+})
