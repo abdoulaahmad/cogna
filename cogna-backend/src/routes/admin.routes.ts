@@ -55,7 +55,7 @@ export default async function adminRoutes(app: FastifyInstance) {
       const product = await ProductRepository.create({
         ...body,
         price:               body.price,
-        providerApiOverride: body.providerApiOverride as Record<string, string> | undefined,
+        providerApiOverride: body.providerApiOverride,
       })
       return reply.status(201).send(successResponse(product, 'Product created'))
     } catch (error) { return handleError(error, reply) }
@@ -68,7 +68,7 @@ export default async function adminRoutes(app: FastifyInstance) {
       const existing = await ProductRepository.findById(id)
       if (!existing) throw new NotFoundError('Product')
       const body    = updateProductSchema.parse(req.body)
-      const product = await ProductRepository.update(id, body as Parameters<typeof ProductRepository.update>[1])
+      const product = await ProductRepository.update(id, body)
       return reply.send(successResponse(product, 'Product updated'))
     } catch (error) { return handleError(error, reply) }
   })
@@ -142,7 +142,7 @@ export default async function adminRoutes(app: FastifyInstance) {
   app.post('/providers', async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const body     = createProviderSchema.parse(req.body)
-      const provider = await ProviderRepository.create(body as Parameters<typeof ProviderRepository.create>[0])
+      const provider = await ProviderRepository.create(body)
       const { apiKey: _k, apiSecret: _s, ...safe } = provider
       return reply.status(201).send(successResponse(safe, 'Provider created'))
     } catch (error) { return handleError(error, reply) }
@@ -155,7 +155,7 @@ export default async function adminRoutes(app: FastifyInstance) {
       const existing = await ProviderRepository.findById(id)
       if (!existing) throw new NotFoundError('Provider')
       const body     = updateProviderSchema.parse(req.body)
-      const provider = await ProviderRepository.update(id, body as Parameters<typeof ProviderRepository.update>[1])
+      const provider = await ProviderRepository.update(id, body)
       const { apiKey: _k, apiSecret: _s, ...safe } = provider
       return reply.send(successResponse(safe, 'Provider updated'))
     } catch (error) { return handleError(error, reply) }
