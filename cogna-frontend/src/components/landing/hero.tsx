@@ -29,7 +29,12 @@ export default function Hero() {
   ];
 
   return (
-    <section className="bg-[#070815] text-white flex flex-col font-display relative overflow-hidden pb-12">
+    <section 
+      style={{
+        background: 'radial-gradient(circle at 72% 48%, rgba(212,175,55,.18), transparent 35%), radial-gradient(circle at 80% 60%, rgba(244,197,66,.08), transparent 30%), linear-gradient(180deg,#1A140A 0%,#0F0F12 100%)'
+      }}
+      className="text-white flex flex-col font-display relative overflow-hidden pb-12"
+    >
       
       {/* Hero Content Section */}
       <div className="mx-auto max-w-7xl px-8 sm:px-12 lg:px-16 w-full relative z-10 pt-16 pb-12 lg:pt-20 lg:pb-14">
@@ -114,7 +119,7 @@ export default function Hero() {
             </div>
 
             {/* Soft top gradient overlay to fade top edge of the animation into the hero background */}
-            <div className="absolute inset-x-0 top-0 h-[25%] bg-gradient-to-b from-[#070815] to-transparent pointer-events-none z-20" />
+            <div className="absolute inset-x-0 top-0 h-[25%] bg-gradient-to-b from-[#1A140A] to-transparent pointer-events-none z-20" />
 
           </div>
 
@@ -123,7 +128,7 @@ export default function Hero() {
 
       {/* Feature Bar (Trust / Value Proposition Section) */}
       <div className="mx-auto max-w-7xl px-8 sm:px-12 lg:px-16 w-full relative z-10">
-        <div className="bg-[#070815] rounded-b-[20px] border-t border-slate-800/25 grid grid-cols-1 md:grid-cols-4 min-h-[70px] md:min-h-[80px] py-4 px-4 md:px-6 items-center gap-y-6 md:gap-y-0">
+        <div className="bg-[#0F0F12] rounded-b-[20px] border-t border-slate-800/25 grid grid-cols-1 md:grid-cols-4 min-h-[70px] md:min-h-[80px] py-4 px-4 md:px-6 items-center gap-y-6 md:gap-y-0">
           {features.map((feat, idx) => (
             <div
               key={idx}
