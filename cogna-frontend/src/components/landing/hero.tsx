@@ -29,7 +29,7 @@ export default function Hero() {
   ];
 
   return (
-    <section className="bg-[#080b14] text-white flex flex-col font-display relative overflow-hidden pb-12">
+    <section className="bg-[#070815] text-white flex flex-col font-display relative overflow-hidden pb-12">
       
       {/* Hero Content Section */}
       <div className="mx-auto max-w-7xl px-8 sm:px-12 lg:px-16 w-full relative z-10 pt-16 pb-12 lg:pt-20 lg:pb-14">
@@ -69,15 +69,15 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* RIGHT Column (55%) - Large free-floating video animation */}
-          <div className="relative w-full h-[400px] lg:h-[500px] flex items-center justify-center">
+          {/* RIGHT Column (55%) - Large dominant centerpiece video */}
+          <div className="relative w-full h-[450px] lg:h-[550px] flex items-center justify-center overflow-visible">
             
             {/* Background glows & radial rings (Illustration backdrop) */}
-            <div className="absolute w-[350px] h-[350px] bg-indigo-600/10 rounded-full blur-[100px] pointer-events-none z-0" />
-            <div className="absolute w-[200px] h-[200px] bg-purple-600/5 rounded-full blur-[80px] pointer-events-none z-0" />
+            <div className="absolute w-[400px] h-[400px] bg-indigo-600/10 rounded-full blur-[100px] pointer-events-none z-0" />
+            <div className="absolute w-[250px] h-[250px] bg-purple-600/5 rounded-full blur-[90px] pointer-events-none z-0" />
             
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-              <svg className="w-full h-full max-w-[550px] max-h-[550px] text-slate-800/40" viewBox="0 0 200 200" fill="none">
+              <svg className="w-full h-full max-w-[650px] max-h-[650px] text-slate-800/40" viewBox="0 0 200 200" fill="none">
                 <circle cx="100" cy="100" r="85" className="stroke-indigo-500/5 stroke-[0.8]" />
                 <circle cx="100" cy="100" r="65" className="stroke-purple-500/5 stroke-[0.8] stroke-dashed" />
               </svg>
@@ -89,11 +89,11 @@ export default function Hero() {
             <div className="absolute bottom-[24%] left-[28%] w-1 h-1 bg-pink-400/60 rounded-full blur-[0.5px] animate-pulse" />
             <div className="absolute bottom-[35%] right-[12%] w-2.5 h-2.5 bg-indigo-400/25 rounded-full blur-[1px] animate-pulse" />
 
-            {/* Dark circular pedestal underneath the floating video centerpiece */}
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-64 h-4 bg-slate-950/70 rounded-full blur-[3px] border border-slate-800/10 z-0" />
+            {/* Dark circular pedestal underneath the floating centerpiece */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-64 h-4 bg-slate-950/70 rounded-full blur-[3px] border border-slate-800/10 z-0" />
 
-            {/* Free-floating Video Animation (No borders, panels, or sharp boundaries) */}
-            <div className="relative animate-float z-10 w-[140%] max-w-[600px] lg:w-[155%] lg:max-w-[700px] aspect-video flex items-center justify-center pointer-events-none">
+            {/* Large Free-floating Video Animation (No borders, panels, or sharp boundaries) */}
+            <div className="relative animate-float z-10 w-[150%] max-w-[650px] lg:w-[175%] lg:max-w-[780px] aspect-video flex items-center justify-center pointer-events-none">
               <video
                 src="/Animate_the_hero_illustration.mp4"
                 autoPlay
@@ -109,6 +109,9 @@ export default function Hero() {
               />
             </div>
 
+            {/* Soft top gradient overlay to fade top edge of the animation into the hero background */}
+            <div className="absolute inset-x-0 top-0 h-[25%] bg-gradient-to-b from-[#070815] to-transparent pointer-events-none z-20" />
+
           </div>
 
         </div>
@@ -116,7 +119,7 @@ export default function Hero() {
 
       {/* Feature Bar (Trust / Value Proposition Section) */}
       <div className="mx-auto max-w-7xl px-8 sm:px-12 lg:px-16 w-full relative z-10">
-        <div className="bg-[#080b14] rounded-b-[20px] border-t border-slate-800/25 grid grid-cols-1 md:grid-cols-4 min-h-[70px] md:min-h-[80px] py-4 px-4 md:px-6 items-center gap-y-6 md:gap-y-0">
+        <div className="bg-[#070815] rounded-b-[20px] border-t border-slate-800/25 grid grid-cols-1 md:grid-cols-4 min-h-[70px] md:min-h-[80px] py-4 px-4 md:px-6 items-center gap-y-6 md:gap-y-0">
           {features.map((feat, idx) => (
             <div
               key={idx}
