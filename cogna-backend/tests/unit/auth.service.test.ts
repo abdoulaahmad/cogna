@@ -3,10 +3,18 @@ import { AuthService } from '@/services/auth.service'
 import { UserRepository } from '@/repositories/user.repository'
 import { RefreshTokenRepository } from '@/repositories/refresh-token.repository'
 import { ConflictError, UnauthorizedError } from '@/utils/errors'
+import bcrypt from 'bcryptjs'
+
 
 // ── Mock dependencies ────────────────────────────────────────────────────
 vi.mock('@/repositories/user.repository')
 vi.mock('@/repositories/refresh-token.repository')
+vi.mock('bcryptjs', () => ({
+  default: {
+    hash: vi.fn(() => Promise.resolve('$2a$12$mockedhash')),
+    compare: vi.fn(() => Promise.resolve(true)),
+  }
+}))
 
 const mockSignJwt = vi.fn(() => 'mock.jwt.token')
 
@@ -82,12 +90,9 @@ describe('AuthService', () => {
   // ── login ─────────────────────────────────────────────────────────────
   describe('login', () => {
     it('should return accessToken, refreshToken, and user on valid credentials', async () => {
-      // Generate a real hash for "Password123" at test time
-      const bcrypt = await import('bcryptjs')
-      const hashedPwd = await bcrypt.hash('Password123', 12)
       vi.mocked(UserRepository.findByEmail).mockResolvedValue({
         ...mockUser,
-        passwordHash: hashedPwd,
+        passwordHash: '$2a$12$mockedhash',
       })
       vi.mocked(RefreshTokenRepository.create).mockResolvedValue({
         id:        'rt-uuid',
@@ -117,6 +122,7 @@ describe('AuthService', () => {
 
     it('should throw UnauthorizedError if password is wrong', async () => {
       vi.mocked(UserRepository.findByEmail).mockResolvedValue(mockUser)
+      vi.mocked(bcrypt.compare).mockResolvedValueOnce(false)
 
       await expect(
         AuthService.login({ email: 'test@example.com', password: 'WrongPass999' }, mockSignJwt)
