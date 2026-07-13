@@ -13,6 +13,8 @@
   --animate-float-fast: float-fast 5s ease-in-out infinite;
   --animate-float-medium-1: float-medium-1 6.5s ease-in-out infinite;
   --animate-float-medium-2: float-medium-2 7.5s ease-in-out infinite;
+  --animate-spin-slow: spin 30s linear infinite;
+  --animate-spin-reverse-slow: spin-reverse 45s linear infinite;
 
   --color-gold-light: #F8D56B;
   --color-gold: #D4AF37;
@@ -45,6 +47,11 @@
   @keyframes float-medium-2 {
     0%, 100% { transform: translateY(0px) rotate(0deg); }
     50% { transform: translateY(-10px) rotate(-1.5deg); }
+  }
+
+  @keyframes spin-reverse {
+    from { transform: rotate(360deg); }
+    to { transform: rotate(0deg); }
   }
 }
 

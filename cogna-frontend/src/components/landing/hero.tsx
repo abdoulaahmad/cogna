@@ -74,36 +74,59 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* RIGHT Column (55%) - Balanced circular centerpiece video */}
-          <div className="relative w-full h-[450px] lg:h-[550px] flex items-center justify-center overflow-visible">
+          {/* RIGHT Column (55%) - Layered premium circular centerpiece composition */}
+          <div className="relative w-full h-[480px] lg:h-[560px] flex items-center justify-center overflow-visible">
             
-            {/* Background glows & radial rings (Illustration backdrop) */}
-            <div className="absolute w-[400px] h-[400px] bg-indigo-600/10 rounded-full blur-[100px] pointer-events-none z-0" />
-            <div className="absolute w-[250px] h-[250px] bg-purple-600/5 rounded-full blur-[90px] pointer-events-none z-0" />
+            {/* 1. Large warm gold radial glows behind the entire composition */}
+            <div className="absolute w-[450px] h-[450px] bg-[#D4AF37]/15 rounded-full blur-[110px] pointer-events-none z-0" />
+            <div className="absolute w-[300px] h-[300px] bg-purple-600/5 rounded-full blur-[90px] pointer-events-none z-0" />
             
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-              <svg className="w-full h-full max-w-[600px] max-h-[600px] text-slate-800/40" viewBox="0 0 200 200" fill="none">
-                <circle cx="100" cy="100" r="85" className="stroke-indigo-500/5 stroke-[0.8]" />
-                <circle cx="100" cy="100" r="65" className="stroke-purple-500/5 stroke-[0.8] stroke-dashed" />
+            {/* 2. Increased bloom node directly behind the central glowing core */}
+            <div className="absolute w-32 h-32 bg-[#F8D56B]/20 rounded-full blur-3xl z-0 pointer-events-none animate-pulse" />
+
+            {/* 3. Concentric Orbital Rings (Outside the video layer) */}
+            
+            {/* Orbit 1: Inner Clockwise ring with traveling node */}
+            <div className="absolute w-[92%] h-[92%] max-w-[500px] aspect-square flex items-center justify-center pointer-events-none z-0">
+              <svg className="w-full h-full text-slate-800/20 animate-spin-slow" viewBox="0 0 200 200" fill="none">
+                <circle cx="100" cy="100" r="88" className="stroke-[#D4AF37]/15 stroke-[0.8]" />
+                <circle cx="100" cy="12" r="3" className="fill-[#F8D56B] filter drop-shadow-[0_0_5px_rgba(248,213,107,0.8)]" />
               </svg>
             </div>
 
-            {/* Subtle floating particles */}
-            <div className="absolute top-[12%] left-[15%] w-1.5 h-1.5 bg-indigo-400/50 rounded-full blur-[0.5px] animate-pulse" />
-            <div className="absolute top-[28%] right-[22%] w-2 h-2 bg-purple-400/35 rounded-full blur-[0.5px] animate-pulse" />
-            <div className="absolute bottom-[24%] left-[28%] w-1 h-1 bg-pink-400/60 rounded-full blur-[0.5px] animate-pulse" />
-            <div className="absolute bottom-[35%] right-[12%] w-2.5 h-2.5 bg-indigo-400/25 rounded-full blur-[1px] animate-pulse" />
+            {/* Orbit 2: Middle Counter-Clockwise dashed ring */}
+            <div className="absolute w-[102%] h-[102%] max-w-[550px] aspect-square flex items-center justify-center pointer-events-none z-0">
+              <svg className="w-full h-full text-slate-800/25 animate-spin-reverse-slow" viewBox="0 0 200 200" fill="none">
+                <circle cx="100" cy="100" r="95" className="stroke-[#B8860B]/12 stroke-[0.8] stroke-dashed" />
+                <circle cx="5" cy="100" r="2.5" className="fill-[#D4AF37]/50" />
+              </svg>
+            </div>
 
-            {/* Dark circular pedestal underneath the floating centerpiece */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-64 h-4 bg-slate-950/70 rounded-full blur-[3px] border border-slate-800/10 z-0" />
+            {/* Orbit 3: Outer light ring */}
+            <div className="absolute w-[112%] h-[112%] max-w-[600px] aspect-square flex items-center justify-center pointer-events-none z-0">
+              <svg className="w-full h-full text-slate-800/10" viewBox="0 0 200 200" fill="none">
+                <circle cx="100" cy="100" r="99" className="stroke-indigo-500/5 stroke-[0.6]" />
+              </svg>
+            </div>
 
-            {/* Premium Circular Video Container: Reduced diameter by 22%, soft feathered radial mask, increased gold glow, internal video scaling */}
+            {/* 4. Subtle floating particles surrounding the orbit scene */}
+            <div className="absolute top-[8%] left-[12%] w-1.5 h-1.5 bg-[#F8D56B]/60 rounded-full blur-[0.5px] animate-pulse" />
+            <div className="absolute top-[28%] right-[6%] w-2 h-2 bg-[#D4AF37]/45 rounded-full blur-[0.5px] animate-pulse" />
+            <div className="absolute bottom-[16%] left-[8%] w-1 h-1 bg-[#B8860B]/70 rounded-full blur-[0.5px] animate-pulse" />
+            <div className="absolute bottom-[24%] right-[10%] w-2.5 h-2.5 bg-[#F8D56B]/30 rounded-full blur-[1px] animate-pulse" />
+            <div className="absolute top-[20%] right-[22%] w-1 h-1 bg-[#D4AF37]/80 rounded-full animate-pulse" />
+            <div className="absolute bottom-[8%] right-[28%] w-1.5 h-1.5 bg-[#F8D56B]/50 rounded-full blur-[0.5px] animate-pulse" />
+
+            {/* 5. Dark circular pedestal underneath the floating centerpiece */}
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-72 h-4 bg-slate-950/70 rounded-full blur-[3px] border border-slate-800/10 z-0" />
+
+            {/* 6. Premium circular cropped video container (about 80% scale of outer centerpiece bounds) */}
             <div 
               style={{
-                WebkitMaskImage: 'radial-gradient(circle, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 88%)',
-                maskImage: 'radial-gradient(circle, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 88%)',
+                WebkitMaskImage: 'radial-gradient(circle, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 86%)',
+                maskImage: 'radial-gradient(circle, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 86%)',
               }}
-              className="relative animate-float z-10 w-[64%] sm:w-[70%] lg:w-[72%] max-w-[360px] aspect-square rounded-full overflow-hidden border border-[#D4AF37]/20 shadow-[0_0_60px_rgba(212,175,55,0.35)] flex items-center justify-center pointer-events-none"
+              className="relative animate-float z-10 w-[78%] sm:w-[82%] lg:w-[84%] max-w-[430px] aspect-square rounded-full overflow-hidden border border-[#D4AF37]/20 shadow-[0_0_60px_rgba(212,175,55,0.35)] flex items-center justify-center pointer-events-none"
             >
               <video
                 src="/Animate_the_hero_illustration.mp4"
@@ -114,7 +137,7 @@ export default function Hero() {
                 style={{
                   mixBlendMode: 'screen',
                 }}
-                className="w-full h-full object-contain scale-[0.88]"
+                className="w-full h-full object-cover rounded-full scale-[1.06]"
               />
             </div>
 
