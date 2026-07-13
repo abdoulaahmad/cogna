@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ApiKeyRepository } from '@/repositories/api-key.repository'
 
-vi.mock('@/config/database', () => ({
-  prisma: {
+vi.mock('@/config/database', () => {
+  const mockPrisma = {
     apiKey: {
       findMany:   vi.fn(),
       findFirst:  vi.fn(),
@@ -10,10 +10,15 @@ vi.mock('@/config/database', () => ({
       create:     vi.fn(),
       update:     vi.fn(),
     },
-  },
-}))
+  }
+  return {
+    default: mockPrisma,
+    prisma:  mockPrisma,
+  }
+})
 
 import { prisma } from '@/config/database'
+
 
 const mockKey = {
   id:         'key-1',
