@@ -16,6 +16,7 @@ export interface Product {
   };
   image?: string;
   paymentGateway: 'PAYSTACK' | 'MONNIFY';
+  active?: boolean;
 }
 
 interface ProductCardProps {
