@@ -1,26 +1,21 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: var(--font-plus-jakarta-sans), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --font-display: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  
+  /* Shared aesthetic shadows and borders */
+  --shadow-premium: 0 4px 30px rgba(0, 0, 0, 0.03);
+  --shadow-premium-dark: 0 4px 30px rgba(0, 0, 0, 0.4);
+}
+
 :root {
   --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --foreground: #0f172a;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-plus-jakarta-sans), ui-sans-serif, sans-serif;
 }
