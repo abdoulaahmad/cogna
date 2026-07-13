@@ -14,3 +14,6 @@ export interface FulfillmentJobResult {
 
 /** Name of the BullMQ queue */
 export const FULFILLMENT_QUEUE_NAME = 'fulfillment' as const
+
+/** Valid job names for the fulfillment queue */
+export type FulfillmentJobName = 'fulfill-order'

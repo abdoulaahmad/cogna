@@ -1,6 +1,6 @@
 import { Queue } from 'bullmq'
 import { createRedisConnection }                    from '@/config/redis'
-import type { FulfillmentJobData, FulfillmentJobResult } from '@/types/fulfillment-job.types'
+import type { FulfillmentJobData, FulfillmentJobResult, FulfillmentJobName } from '@/types/fulfillment-job.types'
 import { FULFILLMENT_QUEUE_NAME }                    from '@/types/fulfillment-job.types'
 
 /**
@@ -8,7 +8,7 @@ import { FULFILLMENT_QUEUE_NAME }                    from '@/types/fulfillment-j
  * Producers (payment webhook handler) enqueue jobs here.
  * The worker process consumes them.
  */
-export const fulfillmentQueue = new Queue<FulfillmentJobData, FulfillmentJobResult>(
+export const fulfillmentQueue = new Queue<FulfillmentJobData, FulfillmentJobResult, FulfillmentJobName>(
   FULFILLMENT_QUEUE_NAME,
   {
     connection: createRedisConnection(),

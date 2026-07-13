@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { ProductService } from '@/services/product.service'
 import { listProductsSchema } from '@/validators/product.validator'
-import { successResponse, errorResponse, paginatedResponse } from '@/utils/response'
+import { successResponse, paginatedResponse } from '@/utils/response'
 import { handleRouteError } from '@/utils/handle-error'
 
 export default async function productRoutes(app: FastifyInstance) {

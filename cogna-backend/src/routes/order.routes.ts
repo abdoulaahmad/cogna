@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { OrderService } from '@/services/order.service'
 import { createOrderSchema } from '@/validators/order.validator'
-import { successResponse, errorResponse, paginatedResponse } from '@/utils/response'
+import { successResponse, paginatedResponse } from '@/utils/response'
 import { handleRouteError } from '@/utils/handle-error'
 
 export default async function orderRoutes(app: FastifyInstance) {

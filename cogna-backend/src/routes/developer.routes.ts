@@ -1,7 +1,7 @@
 import { z }               from 'zod'
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { DeveloperService } from '@/services/developer.service'
-import { successResponse, errorResponse } from '@/utils/response'
+import { successResponse } from '@/utils/response'
 import { handleRouteError } from '@/utils/handle-error'
 
 const createApiKeySchema = z.object({

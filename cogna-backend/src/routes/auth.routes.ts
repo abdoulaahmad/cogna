@@ -5,7 +5,7 @@ import {
   loginSchema,
   refreshTokenSchema,
 } from '@/validators/auth.validator'
-import { successResponse, errorResponse } from '@/utils/response'
+import { successResponse } from '@/utils/response'
 import { handleRouteError } from '@/utils/handle-error'
 
 export default async function authRoutes(app: FastifyInstance) {

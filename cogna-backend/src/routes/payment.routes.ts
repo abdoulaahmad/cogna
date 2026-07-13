@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { PaymentService }          from '@/services/payment.service'
 import { initializePaymentSchema } from '@/validators/payment.validator'
-import { successResponse, errorResponse } from '@/utils/response'
+import { successResponse } from '@/utils/response'
 import { handleRouteError } from '@/utils/handle-error'
 import type { PaymentGatewayType } from '@/types/payment-gateway.types'
 

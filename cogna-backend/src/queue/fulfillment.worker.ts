@@ -1,6 +1,6 @@
 import { Worker, type Job } from 'bullmq'
 import { createRedisConnection }   from '@/config/redis'
-import { ProviderFactory }         from '@/providers/provider.factory'
+import { getProvider }             from '@/providers/provider.factory'
 import { OrderRepository }         from '@/repositories/order.repository'
 import { ProductRepository }       from '@/repositories/product.repository'
 import type { FulfillmentJobData, FulfillmentJobResult } from '@/types/fulfillment-job.types'
@@ -34,18 +34,17 @@ async function processFulfillmentJob(
   await job.updateProgress(10)
 
   // Resolve the fulfillment provider adapter from DB credentials
-  const provider = await ProviderFactory.resolve(product.providerId)
+  const provider = await getProvider(product.providerId)
 
   await job.updateProgress(30)
 
   // Send the fulfillment request to the external provider
   const result = await provider.fulfillOrder({
     orderId,
-    productId:        product.providerProductId,
-    customerEmail:    order.customerEmail,
-    amount:           Number(order.amount),
-    currency:         order.currency,
-    providerOrderId:  order.providerOrderId ?? undefined,
+    providerProductId: product.providerProductId,
+    customerEmail:     order.customerEmail,
+    amount:            Number(order.amount),
+    currency:          order.currency,
   })
 
   await job.updateProgress(70)

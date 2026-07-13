@@ -1,4 +1,5 @@
 import { defineConfig } from 'prisma/config'
+import 'dotenv/config'
 import { PrismaClient } from '@prisma/client'
 
 const connectionUrl =
@@ -7,5 +8,8 @@ const connectionUrl =
     : (process.env.DATABASE_URL ?? '')
 
 export default defineConfig({
-  datasourceUrl: connectionUrl,
+  schema: 'prisma/schema.prisma',
+  datasource: {
+    url: connectionUrl,
+  },
 })
