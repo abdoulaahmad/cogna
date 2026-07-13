@@ -14,6 +14,10 @@
   --animate-float-medium-1: float-medium-1 6.5s ease-in-out infinite;
   --animate-float-medium-2: float-medium-2 7.5s ease-in-out infinite;
 
+  --color-gold-light: #F8D56B;
+  --color-gold: #D4AF37;
+  --color-gold-dark: #B8860B;
+
   @keyframes float {
     0%, 100% {
       transform: translateY(0px);

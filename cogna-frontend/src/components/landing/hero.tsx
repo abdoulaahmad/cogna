@@ -37,14 +37,14 @@ export default function Hero() {
           
           {/* LEFT Column (45%) */}
           <div className="flex flex-col text-left">
-            <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest mb-2">
+            <span className="text-[10px] font-bold text-[#D4AF37] uppercase tracking-widest mb-2">
               Proxy API Gateways
             </span>
             
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05] mb-4 text-white">
               Subscribe to <br />
               Unified Developer <br />
-              <span className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-300 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#F8D56B] via-[#D4AF37] to-[#B8860B] bg-clip-text text-transparent">
                 APIs
               </span>
             </h1>
@@ -56,7 +56,7 @@ export default function Hero() {
             <div className="flex items-center gap-4 mt-8">
               <Link
                 href="/catalog"
-                className="rounded-full bg-amber-500 hover:bg-amber-600 px-6 py-3 text-xs font-bold text-slate-950 shadow-md border border-amber-400/20 transition-all duration-200"
+                className="rounded-full bg-[#D4AF37] hover:bg-[#B8860B] px-6 py-3 text-xs font-bold text-slate-950 shadow-md border border-[#F8D56B]/20 transition-all duration-200"
               >
                 Browse APIs
               </Link>

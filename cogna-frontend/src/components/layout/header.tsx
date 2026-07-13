@@ -50,7 +50,7 @@ export default function Header() {
               <Link
                 key={idx}
                 href={link.href}
-                className="hover:text-white transition-colors duration-200"
+                className="hover:text-[#D4AF37] transition-colors duration-200"
               >
                 {link.name}
               </Link>
@@ -62,12 +62,12 @@ export default function Header() {
             {/* Cart Icon Toggle */}
             <button
               onClick={() => setCartOpen(true)}
-              className="text-slate-400 hover:text-white p-2 transition-colors duration-200 relative focus:outline-none"
+              className="text-slate-400 hover:text-[#D4AF37] p-2 transition-colors duration-200 relative focus:outline-none"
               aria-label="Open cart"
             >
               <ShoppingCart size={18} />
               {cartItem ? (
-                <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-[#080b14]" />
+                <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-[#D4AF37] ring-2 ring-[#080b14]" />
               ) : null}
             </button>
 
@@ -76,7 +76,7 @@ export default function Header() {
               <div className="flex items-center space-x-4">
                 <Link
                   href={user?.role === 'ADMIN' ? '/admin/products' : '/orders'}
-                  className="rounded-full bg-amber-500 hover:bg-amber-600 px-5 py-2.5 text-xs font-bold text-slate-950 transition-all duration-200 shadow-sm border border-amber-400/20 h-10 flex items-center"
+                  className="rounded-full bg-[#D4AF37] hover:bg-[#B8860B] px-5 py-2.5 text-xs font-bold text-slate-950 transition-all duration-200 shadow-sm border border-[#F8D56B]/20 h-10 flex items-center"
                 >
                   Workspace Portal
                 </Link>
@@ -91,7 +91,7 @@ export default function Header() {
             ) : (
               <Link
                 href="/login"
-                className="rounded-full bg-amber-500 hover:bg-amber-600 px-5 py-2.5 text-xs font-bold text-slate-950 transition-all duration-200 shadow-sm border border-amber-400/20 h-10 flex items-center"
+                className="rounded-full bg-[#D4AF37] hover:bg-[#B8860B] px-5 py-2.5 text-xs font-bold text-slate-950 transition-all duration-200 shadow-sm border border-[#F8D56B]/20 h-10 flex items-center"
               >
                 Sign In
               </Link>
@@ -102,16 +102,16 @@ export default function Header() {
           <div className="flex md:hidden items-center gap-4">
             <button
               onClick={() => setCartOpen(true)}
-              className="text-slate-400 hover:text-white p-2 relative"
+              className="text-slate-400 hover:text-[#D4AF37] p-2 relative"
             >
               <ShoppingCart size={18} />
               {cartItem ? (
-                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-amber-50" />
+                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-[#D4AF37]" />
               ) : null}
             </button>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="text-slate-400 hover:text-white p-2 transition-colors focus:outline-none"
+              className="text-slate-400 hover:text-[#D4AF37] p-2 transition-colors focus:outline-none"
             >
               {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -128,7 +128,7 @@ export default function Header() {
               key={idx}
               href={link.href}
               onClick={() => setMobileMenuOpen(false)}
-              className="block hover:text-white transition"
+              className="block hover:text-[#D4AF37] transition"
             >
               {link.name}
             </Link>
@@ -139,7 +139,7 @@ export default function Header() {
                 <Link
                   href={user?.role === 'ADMIN' ? '/admin/products' : '/orders'}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block w-full text-center rounded-full bg-amber-500 hover:bg-amber-600 py-3 text-xs font-bold text-slate-950 transition"
+                  className="block w-full text-center rounded-full bg-[#D4AF37] hover:bg-[#B8860B] py-3 text-xs font-bold text-slate-950 transition"
                 >
                   Workspace Portal
                 </Link>
@@ -157,7 +157,7 @@ export default function Header() {
               <Link
                 href="/login"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block w-full text-center rounded-full bg-amber-500 hover:bg-amber-600 py-3 text-xs font-bold text-slate-950 transition"
+                className="block w-full text-center rounded-full bg-[#D4AF37] hover:bg-[#B8860B] py-3 text-xs font-bold text-slate-950 transition"
               >
                 Sign In
               </Link>
