@@ -78,4 +78,61 @@ export const ProductRepository = {
       take:    50,
     })
   },
+
+  /** Create a new product (admin only) */
+  async create(data: {
+    providerId:          string
+    providerProductId:   string
+    categoryId:          string
+    name:                string
+    slug:                string
+    description?:        string
+    price:               number
+    currency:            string
+    deliveryTime?:       string
+    image?:              string
+    active:              boolean
+    paymentGateway:      'PAYSTACK' | 'MONNIFY'
+    providerApiOverride?: Record<string, string>
+  }): Promise<ProductWithCategory> {
+    return prisma.product.create({
+      data:    { ...data },
+      include: { category: true },
+    })
+  },
+
+  /** Update product fields (admin only) */
+  async update(
+    id:   string,
+    data: Partial<{
+      providerId:          string
+      providerProductId:   string
+      categoryId:          string
+      name:                string
+      slug:                string
+      description:         string
+      price:               number
+      currency:            string
+      deliveryTime:        string
+      image:               string
+      active:              boolean
+      paymentGateway:      'PAYSTACK' | 'MONNIFY'
+      providerApiOverride: Record<string, string>
+    }>
+  ): Promise<ProductWithCategory> {
+    return prisma.product.update({
+      where:   { id },
+      data,
+      include: { category: true },
+    })
+  },
+
+  /** Soft-delete a product by setting active = false (admin only) */
+  async softDelete(id: string): Promise<ProductWithCategory> {
+    return prisma.product.update({
+      where:   { id },
+      data:    { active: false },
+      include: { category: true },
+    })
+  },
 }
