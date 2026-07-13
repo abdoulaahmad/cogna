@@ -41,7 +41,7 @@ export const PaymentService = {
     const existing = await PaymentRepository.findByOrderId(orderId)
     if (existing) throw new ConflictError('A payment has already been initiated for this order')
 
-    const gateway   = getPaymentGateway(product.paymentGateway as PaymentGatewayType)
+    const gateway   = getPaymentGateway(product.paymentGateway)
     const reference = generateReference()
 
     const initResult = await gateway.initializePayment({
@@ -56,7 +56,7 @@ export const PaymentService = {
     await PaymentRepository.create({
       orderId,
       userId,
-      gateway:   product.paymentGateway as PaymentGatewayType,
+      gateway:   product.paymentGateway,
       reference: initResult.reference,
       amount:    Number(order.amount),
       currency:  order.currency,
@@ -82,7 +82,7 @@ export const PaymentService = {
     const product = await ProductRepository.findById(order.productId)
     if (!product) throw new NotFoundError('Product')
 
-    const gateway     = getPaymentGateway(product.paymentGateway as PaymentGatewayType)
+    const gateway     = getPaymentGateway(product.paymentGateway)
     const verifyResult = await gateway.verifyPayment(reference)
 
     const newStatus = verifyResult.status === 'success' ? 'PAID' : 'FAILED'
