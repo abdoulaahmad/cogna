@@ -7,6 +7,17 @@
   /* Shared aesthetic shadows and borders */
   --shadow-premium: 0 4px 30px rgba(0, 0, 0, 0.03);
   --shadow-premium-dark: 0 4px 30px rgba(0, 0, 0, 0.4);
+
+  --animate-float: float 6s ease-in-out infinite;
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-15px);
+    }
+  }
 }
 
 :root {
