@@ -70,33 +70,39 @@ export default function Hero() {
           </div>
 
           {/* RIGHT Column (55%) */}
-          <div className="flex items-center justify-center relative min-h-[300px] lg:min-h-[350px]">
+          <div className="flex items-center justify-center relative min-h-[350px] lg:min-h-[450px]">
             
             {/* Neon glow behind the illustration */}
-            <div className="absolute w-[250px] h-[250px] bg-indigo-600/15 rounded-full blur-[80px] pointer-events-none z-0" />
+            <div className="absolute w-[320px] h-[320px] bg-indigo-600/15 rounded-full blur-[90px] pointer-events-none z-0" />
             
-            {/* Floating Illustration */}
-            <div className="relative animate-float z-10 w-72 h-72 lg:w-80 lg:h-80 flex items-center justify-center">
-              <svg
-                viewBox="0 0 200 200"
-                className="w-full h-full text-indigo-500 drop-shadow-[0_0_20px_rgba(99,102,241,0.3)]"
-                fill="none"
-              >
-                <circle cx="100" cy="100" r="70" className="stroke-indigo-500/10 stroke-[1]" />
-                <circle cx="100" cy="100" r="50" className="stroke-purple-500/15 stroke-[1] stroke-dashed" />
-                <circle cx="100" cy="100" r="24" className="fill-indigo-600/25 stroke-indigo-400/80 stroke-2" />
-                <circle cx="100" cy="100" r="8" className="fill-purple-400 animate-pulse" />
-                <path d="M 60 100 A 40 20 25 1 0 140 100" className="stroke-indigo-400/30 stroke-[1.2]" />
-                <path d="M 60 100 A 40 20 -25 1 0 140 100" className="stroke-purple-400/20 stroke-[1.2]" />
-                <circle cx="100" cy="60" r="3" className="fill-indigo-300" />
-                <circle cx="140" cy="100" r="3" className="fill-purple-300" />
-                <circle cx="100" cy="140" r="3" className="fill-indigo-300" />
-                <circle cx="60" cy="100" r="3" className="fill-purple-300" />
+            {/* SVG background rings mapping */}
+            <div className="absolute w-[110%] h-[110%] flex items-center justify-center pointer-events-none z-0">
+              <svg className="w-full h-full text-indigo-500/10" viewBox="0 0 200 200" fill="none">
+                <circle cx="100" cy="100" r="85" className="stroke-indigo-500/10 stroke-[0.8]" />
+                <circle cx="100" cy="100" r="65" className="stroke-purple-500/10 stroke-[0.8] stroke-dashed" />
               </svg>
             </div>
 
-            {/* Dark circular pedestal underneath the floating sphere */}
-            <div className="absolute bottom-4 lg:bottom-6 left-1/2 -translate-x-1/2 w-48 h-4 bg-slate-950/60 rounded-full blur-[2px] border border-slate-800/10 z-0" />
+            {/* Floating particles */}
+            <div className="absolute top-[20%] left-[25%] w-1.5 h-1.5 bg-indigo-400 rounded-full opacity-40 blur-[0.5px] animate-pulse" />
+            <div className="absolute bottom-[25%] right-[20%] w-2 h-2 bg-purple-400 rounded-full opacity-30 blur-[0.5px] animate-pulse" />
+            <div className="absolute top-[60%] right-[15%] w-1 h-1 bg-pink-400 rounded-full opacity-50 blur-[0.5px] animate-pulse" />
+
+            {/* Free-floating 3D Video Illustration (No card, borders, or background box panels) */}
+            <div className="relative animate-float z-10 w-[140%] max-w-[580px] lg:w-[150%] lg:max-w-[650px] aspect-video flex items-center justify-center pointer-events-none">
+              <video
+                src="/Animate_the_hero_illustration.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                style={{ mixBlendMode: 'screen' }}
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+            {/* Dark circular pedestal underneath the floating container */}
+            <div className="absolute bottom-2 lg:bottom-4 left-1/2 -translate-x-1/2 w-56 h-4 bg-slate-950/70 rounded-full blur-[2px] border border-slate-800/10 z-0" />
           </div>
 
         </div>
