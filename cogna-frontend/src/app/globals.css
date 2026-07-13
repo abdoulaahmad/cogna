@@ -9,6 +9,10 @@
   --shadow-premium-dark: 0 4px 30px rgba(0, 0, 0, 0.4);
 
   --animate-float: float 6s ease-in-out infinite;
+  --animate-float-slow: float-slow 8s ease-in-out infinite;
+  --animate-float-fast: float-fast 5s ease-in-out infinite;
+  --animate-float-medium-1: float-medium-1 6.5s ease-in-out infinite;
+  --animate-float-medium-2: float-medium-2 7.5s ease-in-out infinite;
 
   @keyframes float {
     0%, 100% {
@@ -17,6 +21,26 @@
     50% {
       transform: translateY(-15px);
     }
+  }
+
+  @keyframes float-slow {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-12px) rotate(2deg); }
+  }
+
+  @keyframes float-fast {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-8px) rotate(-3deg); }
+  }
+
+  @keyframes float-medium-1 {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-15px) rotate(1deg); }
+  }
+
+  @keyframes float-medium-2 {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(-1.5deg); }
   }
 }
 
