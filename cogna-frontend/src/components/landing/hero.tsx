@@ -74,7 +74,7 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* RIGHT Column (55%) - Large centerpiece video with cinematic radial masks */}
+          {/* RIGHT Column (55%) - Large premium circular video centerpiece */}
           <div className="relative w-full h-[450px] lg:h-[550px] flex items-center justify-center overflow-visible">
             
             {/* Background glows & radial rings (Illustration backdrop) */}
@@ -97,13 +97,13 @@ export default function Hero() {
             {/* Dark circular pedestal underneath the floating centerpiece */}
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-64 h-4 bg-slate-950/70 rounded-full blur-[3px] border border-slate-800/10 z-0" />
 
-            {/* Cinematic Radial Masked Video (Applied to wrapper container for bulletproof cross-browser rendering) */}
+            {/* Premium Circular Video Container with gold glow and radial transparency clip */}
             <div 
               style={{
-                WebkitMaskImage: 'radial-gradient(circle, rgba(0,0,0,1) 35%, rgba(0,0,0,0) 70%)',
-                maskImage: 'radial-gradient(circle, rgba(0,0,0,1) 35%, rgba(0,0,0,0) 70%)',
+                WebkitMaskImage: 'radial-gradient(circle, rgba(0,0,0,1) 55%, rgba(0,0,0,0) 100%)',
+                maskImage: 'radial-gradient(circle, rgba(0,0,0,1) 55%, rgba(0,0,0,0) 100%)',
               }}
-              className="relative animate-float z-10 w-[150%] max-w-[650px] lg:w-[175%] lg:max-w-[780px] aspect-video flex items-center justify-center pointer-events-none overflow-hidden"
+              className="relative animate-float z-10 w-[78%] sm:w-[85%] lg:w-[90%] max-w-[460px] aspect-square rounded-full overflow-hidden border border-[#D4AF37]/15 shadow-[0_0_50px_rgba(212,175,55,0.25)] flex items-center justify-center pointer-events-none"
             >
               <video
                 src="/Animate_the_hero_illustration.mp4"
@@ -114,7 +114,7 @@ export default function Hero() {
                 style={{
                   mixBlendMode: 'screen',
                 }}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover scale-[1.12]"
               />
             </div>
 
