@@ -87,7 +87,7 @@ export const PaymentService = {
     const newStatus = verifyResult.status === 'success' ? 'PAID' : 'FAILED'
 
     return PaymentRepository.updateStatus(payment.id, newStatus, {
-      gatewayReference: verifyResult.reference,
+      gatewayReference: verifyResult.gatewayReference,
       paidAt:           verifyResult.paidAt ?? undefined,
       metadata:         { amount: verifyResult.amount },
     })
@@ -131,7 +131,7 @@ export const PaymentService = {
     const newStatus    = verifyResult.status === 'success' ? 'PAID' : 'FAILED'
 
     await PaymentRepository.updateStatus(payment.id, newStatus, {
-      gatewayReference: verifyResult.reference,
+      gatewayReference: verifyResult.gatewayReference,
       paidAt:           verifyResult.paidAt ?? undefined,
       metadata:         { amount: verifyResult.amount },
     })

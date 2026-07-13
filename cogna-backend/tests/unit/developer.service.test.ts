@@ -62,13 +62,13 @@ describe('DeveloperService', () => {
   // ─── revokeApiKey ──────────────────────────────────────────────────────────
   describe('revokeApiKey', () => {
     it('should revoke the key when it belongs to the user', async () => {
-      const revoked = { ...mockKey, status: 'INACTIVE' as const }
+      const revoked = { ...mockKey, status: 'REVOKED' as const }
       vi.mocked(ApiKeyRepository.findById).mockResolvedValue(mockKey)
       vi.mocked(ApiKeyRepository.revoke).mockResolvedValue(revoked)
 
       const result = await DeveloperService.revokeApiKey('key-1', 'user-1')
 
-      expect(result.status).toBe('INACTIVE')
+      expect(result.status).toBe('REVOKED')
     })
 
     it('should throw NotFoundError when key does not belong to user', async () => {

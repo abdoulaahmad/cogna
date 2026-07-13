@@ -35,6 +35,6 @@ export const DeveloperService = {
   async revokeApiKey(keyId: string, userId: string) {
     const key = await ApiKeyRepository.findById(keyId, userId)
     if (!key) throw new NotFoundError('API key')
-    return ApiKeyRepository.revoke(keyId, userId)
+    return ApiKeyRepository.revoke(keyId)
   },
 }

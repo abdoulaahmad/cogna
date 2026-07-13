@@ -1,5 +1,5 @@
 import { prisma } from '@/config/database'
-import type { Payment } from '@prisma/client'
+import type { Payment, Prisma } from '@prisma/client'
 import type { PaymentCreateInput } from '@/types/payment.types'
 
 export const PaymentRepository = {
@@ -48,7 +48,7 @@ export const PaymentRepository = {
         status,
         ...(extras.gatewayReference !== undefined && { gatewayReference: extras.gatewayReference }),
         ...(extras.paidAt            !== undefined && { paidAt:            extras.paidAt }),
-        ...(extras.metadata          !== undefined && { metadata:          extras.metadata }),
+        ...(extras.metadata          !== undefined && { metadata:          extras.metadata as Prisma.InputJsonValue }),
       },
     })
   },

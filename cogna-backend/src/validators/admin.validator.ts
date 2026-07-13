@@ -15,8 +15,8 @@ export const createProviderSchema = z.object({
   baseUrl:   z.string().url(),
   apiKey:    z.string().min(1),
   apiSecret: z.string().optional(),
-  apiConfig: z.record(z.unknown()).optional(),
-  status:    z.enum(['ACTIVE', 'INACTIVE']).default('ACTIVE'),
+  apiConfig: z.record(z.string(), z.unknown()).optional(),
+  status:    z.string().default('ACTIVE').transform((v) => v as 'ACTIVE' | 'INACTIVE'),
 })
 
 export const updateProviderSchema = createProviderSchema.partial()

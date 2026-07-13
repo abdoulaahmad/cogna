@@ -22,8 +22,8 @@ export const createProductSchema = z.object({
   deliveryTime:        z.string().optional(),
   image:               z.string().url().optional(),
   active:              z.boolean().default(true),
-  paymentGateway:      z.enum(['PAYSTACK', 'MONNIFY']).default('PAYSTACK'),
-  providerApiOverride: z.record(z.string()).optional(),
+  paymentGateway:      z.string().default('PAYSTACK').transform((v) => v as 'PAYSTACK' | 'MONNIFY'),
+  providerApiOverride: z.record(z.string(), z.string()).optional(),
 })
 
 // ─── Update product (admin) ───────────────────────────────────────────────────

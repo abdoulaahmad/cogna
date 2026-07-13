@@ -26,11 +26,11 @@ export const ApiKeyRepository = {
     return prisma.apiKey.create({ data })
   },
 
-  /** Revoke a key by setting its status to INACTIVE */
-  async revoke(id: string, userId: string): Promise<ApiKey> {
+  /** Revoke a key by setting its status to REVOKED */
+  async revoke(id: string): Promise<ApiKey> {
     return prisma.apiKey.update({
       where: { id },
-      data:  { status: 'INACTIVE' },
+      data:  { status: 'REVOKED' },
     })
   },
 

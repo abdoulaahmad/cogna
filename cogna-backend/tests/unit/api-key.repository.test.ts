@@ -83,13 +83,13 @@ describe('ApiKeyRepository', () => {
 
   // ─── revoke ────────────────────────────────────────────────────────────────
   describe('revoke', () => {
-    it('should set status to INACTIVE', async () => {
-      const revoked = { ...mockKey, status: 'INACTIVE' as const }
+    it('should set status to REVOKED', async () => {
+      const revoked = { ...mockKey, status: 'REVOKED' as const }
       vi.mocked(prisma.apiKey.update).mockResolvedValue(revoked)
 
-      const result = await ApiKeyRepository.revoke('key-1', 'user-1')
+      const result = await ApiKeyRepository.revoke('key-1')
 
-      expect(result.status).toBe('INACTIVE')
+      expect(result.status).toBe('REVOKED')
     })
   })
 })

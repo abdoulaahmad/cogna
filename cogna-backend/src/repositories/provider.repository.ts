@@ -1,5 +1,5 @@
 import prisma from '@/config/database'
-import type { Provider } from '@prisma/client'
+import type { Provider, Prisma } from '@prisma/client'
 
 export const ProviderRepository = {
 
@@ -22,7 +22,13 @@ export const ProviderRepository = {
     apiConfig?: Record<string, unknown>
     status?:    'ACTIVE' | 'INACTIVE'
   }): Promise<Provider> {
-    return prisma.provider.create({ data })
+    const { apiConfig, ...rest } = data
+    return prisma.provider.create({
+      data: {
+        ...rest,
+        ...(apiConfig !== undefined && { apiConfig: apiConfig as Prisma.InputJsonValue }),
+      },
+    })
   },
 
   /** Update a provider (admin only) */
@@ -37,7 +43,14 @@ export const ProviderRepository = {
       status:    'ACTIVE' | 'INACTIVE'
     }>
   ): Promise<Provider> {
-    return prisma.provider.update({ where: { id }, data })
+    const { apiConfig, ...rest } = data
+    return prisma.provider.update({
+      where: { id },
+      data:  {
+        ...rest,
+        ...(apiConfig !== undefined && { apiConfig: apiConfig as Prisma.InputJsonValue }),
+      },
+    })
   },
 
   /** Delete a provider (admin only) */
