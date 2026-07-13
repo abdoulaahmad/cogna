@@ -35,8 +35,12 @@ export default function Header() {
           
           {/* LEFT: Compact logo with breathing room */}
           <div className="flex items-center">
-            <Link href="/" className="font-display text-xl font-bold tracking-tight text-white flex items-center gap-2">
-              <span className="bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">COGNA</span>
+            <Link href="/" className="flex items-center gap-2 focus:outline-none">
+              <img
+                src="/logo-cogna.png"
+                alt="Cogna Logo"
+                className="h-7 w-auto object-contain hover:opacity-90 transition-opacity"
+              />
             </Link>
           </div>
 
@@ -63,7 +67,7 @@ export default function Header() {
             >
               <ShoppingCart size={18} />
               {cartItem ? (
-                <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-indigo-500 ring-2 ring-[#080b14]" />
+                <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-[#080b14]" />
               ) : null}
             </button>
 
@@ -72,7 +76,7 @@ export default function Header() {
               <div className="flex items-center space-x-4">
                 <Link
                   href={user?.role === 'ADMIN' ? '/admin/products' : '/orders'}
-                  className="rounded-full bg-indigo-600 hover:bg-indigo-700 px-5 py-2.5 text-xs font-bold text-white transition-all duration-200 shadow-sm border border-indigo-700/10 h-10 flex items-center"
+                  className="rounded-full bg-amber-500 hover:bg-amber-600 px-5 py-2.5 text-xs font-bold text-slate-950 transition-all duration-200 shadow-sm border border-amber-400/20 h-10 flex items-center"
                 >
                   Workspace Portal
                 </Link>
@@ -87,7 +91,7 @@ export default function Header() {
             ) : (
               <Link
                 href="/login"
-                className="rounded-full bg-indigo-600 hover:bg-indigo-700 px-5 py-2.5 text-xs font-bold text-white transition-all duration-200 shadow-sm border border-indigo-700/10 h-10 flex items-center"
+                className="rounded-full bg-amber-500 hover:bg-amber-600 px-5 py-2.5 text-xs font-bold text-slate-950 transition-all duration-200 shadow-sm border border-amber-400/20 h-10 flex items-center"
               >
                 Sign In
               </Link>
@@ -102,7 +106,7 @@ export default function Header() {
             >
               <ShoppingCart size={18} />
               {cartItem ? (
-                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500" />
+                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-amber-50" />
               ) : null}
             </button>
             <button
@@ -135,7 +139,7 @@ export default function Header() {
                 <Link
                   href={user?.role === 'ADMIN' ? '/admin/products' : '/orders'}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block w-full text-center rounded-full bg-indigo-600 hover:bg-indigo-700 py-3 text-xs font-bold text-white transition"
+                  className="block w-full text-center rounded-full bg-amber-500 hover:bg-amber-600 py-3 text-xs font-bold text-slate-950 transition"
                 >
                   Workspace Portal
                 </Link>
@@ -153,7 +157,7 @@ export default function Header() {
               <Link
                 href="/login"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block w-full text-center rounded-full bg-indigo-600 hover:bg-indigo-700 py-3 text-xs font-bold text-white transition"
+                className="block w-full text-center rounded-full bg-amber-500 hover:bg-amber-600 py-3 text-xs font-bold text-slate-950 transition"
               >
                 Sign In
               </Link>
