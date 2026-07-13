@@ -1,17 +1,22 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { AkudingAdapter } from '@/providers/akunding.adapter'
-
-// Mock global fetch
-const mockFetch = vi.fn()
-vi.stubGlobal('fetch', mockFetch)
 
 const CONFIG = {
   apiKey:  'test-akunding-key',
   baseUrl: 'https://api.akunding.com',
 }
 
-beforeEach(() => { vi.clearAllMocks() })
-afterEach(()  => { vi.unstubAllGlobals() })
+// Shared mock — reassigned in each test
+let fetchMock: ReturnType<typeof vi.fn>
+
+beforeEach(() => {
+  fetchMock = vi.fn()
+  vi.stubGlobal('fetch', fetchMock)
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 describe('AkudingAdapter', () => {
 
@@ -20,7 +25,7 @@ describe('AkudingAdapter', () => {
   // ─── fulfillOrder ──────────────────────────────────────────────────────────
   describe('fulfillOrder', () => {
     it('should fulfill an order and return PROCESSING status', async () => {
-      mockFetch.mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         ok:   true,
         json: async () => ({
           success: true,
@@ -41,7 +46,7 @@ describe('AkudingAdapter', () => {
     })
 
     it('should return FAILED status when provider responds with success: false', async () => {
-      mockFetch.mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         ok:   true,
         json: async () => ({
           success: false,
@@ -63,7 +68,7 @@ describe('AkudingAdapter', () => {
     })
 
     it('should throw when HTTP response is not OK', async () => {
-      mockFetch.mockResolvedValueOnce({ ok: false, status: 500 })
+      fetchMock.mockResolvedValueOnce({ ok: false, status: 500 })
 
       await expect(
         adapter.fulfillOrder({
@@ -80,7 +85,7 @@ describe('AkudingAdapter', () => {
   // ─── checkOrderStatus ──────────────────────────────────────────────────────
   describe('checkOrderStatus', () => {
     it('should return COMPLETED when provider reports success', async () => {
-      mockFetch.mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         ok:   true,
         json: async () => ({
           success: true,
@@ -95,7 +100,7 @@ describe('AkudingAdapter', () => {
     })
 
     it('should return PROCESSING when provider reports pending', async () => {
-      mockFetch.mockResolvedValueOnce({
+      fetchMock.mockResolvedValueOnce({
         ok:   true,
         json: async () => ({
           success: true,
@@ -109,7 +114,7 @@ describe('AkudingAdapter', () => {
     })
 
     it('should throw when HTTP response is not OK', async () => {
-      mockFetch.mockResolvedValueOnce({ ok: false, status: 404 })
+      fetchMock.mockResolvedValueOnce({ ok: false, status: 404 })
 
       await expect(
         adapter.checkOrderStatus('bad-order-id')
