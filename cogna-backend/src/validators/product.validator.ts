@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-// ── List products query ──────────────────────────────────────────────────
+// ─── List products query ──────────────────────────────────────────────────────
 export const listProductsSchema = z.object({
   category: z.string().optional(),
   search:   z.string().optional(),
@@ -9,4 +9,27 @@ export const listProductsSchema = z.object({
   active:   z.coerce.boolean().optional(),
 })
 
-export type ListProductsQuery = z.infer<typeof listProductsSchema>
+// ─── Create product (admin) ───────────────────────────────────────────────────
+export const createProductSchema = z.object({
+  providerId:          z.string().uuid(),
+  providerProductId:   z.string().min(1),
+  categoryId:          z.string().uuid(),
+  name:                z.string().min(2).max(200),
+  slug:                z.string().min(2).max(200).regex(/^[a-z0-9-]+$/, 'slug must be lowercase kebab-case'),
+  description:         z.string().optional(),
+  price:               z.number().positive(),
+  currency:            z.string().length(3).default('NGN'),
+  deliveryTime:        z.string().optional(),
+  image:               z.string().url().optional(),
+  active:              z.boolean().default(true),
+  paymentGateway:      z.enum(['PAYSTACK', 'MONNIFY']).default('PAYSTACK'),
+  providerApiOverride: z.record(z.string()).optional(),
+})
+
+// ─── Update product (admin) ───────────────────────────────────────────────────
+export const updateProductSchema = createProductSchema.partial()
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+export type ListProductsQuery  = z.infer<typeof listProductsSchema>
+export type CreateProductInput = z.infer<typeof createProductSchema>
+export type UpdateProductInput = z.infer<typeof updateProductSchema>
