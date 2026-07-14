@@ -9,7 +9,7 @@ function createPrismaClient() {
     connectionString:
       env.APP_ENV === 'test'
         ? (env.DATABASE_TEST_URL ?? env.DATABASE_URL)
-        : env.DATABASE_URL,
+        : (env.NEON_DATABASE_URL ?? env.DATABASE_URL),
   })
 
   return new PrismaClient({
