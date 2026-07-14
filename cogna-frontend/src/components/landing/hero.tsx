@@ -117,9 +117,6 @@ export default function Hero() {
             <div className="absolute top-[20%] right-[22%] w-1 h-1 bg-[#D4AF37]/80 rounded-full animate-pulse" />
             <div className="absolute bottom-[8%] right-[28%] w-1.5 h-1.5 bg-[#F8D56B]/50 rounded-full blur-[0.5px] animate-pulse" />
 
-            {/* 5. Dark circular pedestal underneath the floating centerpiece */}
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-72 h-4 bg-slate-950/70 rounded-full blur-[3px] border border-slate-800/10 z-0" />
-
             {/* 6. Premium circular cropped video container (about 80% scale of outer centerpiece bounds) */}
             <div 
               style={{
