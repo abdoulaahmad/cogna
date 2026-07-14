@@ -11,6 +11,7 @@
     "dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register src/server.ts",
     "worker:dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register src/worker.ts",
     "build": "tsc",
+    "heroku-postbuild": "prisma generate && npm run build",
     "start": "node dist/server.js",
     "worker": "node dist/worker.js",
     "test": "vitest run",
