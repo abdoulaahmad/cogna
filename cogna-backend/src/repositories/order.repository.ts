@@ -1,6 +1,8 @@
 import prisma from '@/config/database'
 import type { Order } from '@prisma/client'
 
+const orderDetailsInclude = { product: true, payment: true } as const
+
 export const OrderRepository = {
 
   /** Create a new order record */
@@ -17,7 +19,7 @@ export const OrderRepository = {
 
   /** Find a single order by ID */
   async findById(id: string): Promise<Order | null> {
-    return prisma.order.findUnique({ where: { id } })
+    return prisma.order.findUnique({ where: { id }, include: orderDetailsInclude })
   },
 
   /** Find all orders belonging to a user */
@@ -28,6 +30,7 @@ export const OrderRepository = {
         orderBy: { createdAt: 'desc' },
         skip:    (page - 1) * limit,
         take:    limit,
+        include: orderDetailsInclude,
       }),
       prisma.order.count({ where: { userId } }),
     ])

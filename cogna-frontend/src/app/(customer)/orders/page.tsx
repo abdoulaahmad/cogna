@@ -38,29 +38,8 @@ export default function OrdersPage() {
         } else {
           setError(response.data.message || 'Failed to retrieve orders');
         }
-      } catch (err: any) {
-        console.error(err);
-        // Fallback to mock data if backend has no orders or database is fresh
-        const mockFallback: OrderItem[] = [
-          {
-            id: 'ord-mock-1',
-            amount: '5000.00',
-            currency: 'NGN',
-            status: 'COMPLETED',
-            createdAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-            product: {
-              name: 'GPT-4o Chat API Integration',
-              price: '5000.00',
-              currency: 'NGN',
-            },
-            payment: {
-              reference: 'ref_paystack_mock_123',
-              status: 'PAID',
-              paidAt: new Date(Date.now() - 86400000).toISOString(),
-            },
-          },
-        ];
-        setOrders(mockFallback);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Failed to retrieve orders');
       } finally {
         setIsLoading(false);
       }
