@@ -12,4 +12,7 @@ export default defineConfig({
   datasource: {
     url: connectionUrl,
   },
+  migrations: {
+    seed: 'ts-node -r tsconfig-paths/register prisma/seed.ts',
+  },
 })
