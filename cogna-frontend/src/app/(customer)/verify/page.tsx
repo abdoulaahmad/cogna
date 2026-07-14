@@ -32,9 +32,7 @@ function VerifyContent() {
 
     const verifyPayment = async () => {
       try {
-        const response = await api.post('/payments/verify', {
-          reference,
-        });
+        const response = await api.get(`/payments/verify/${encodeURIComponent(reference)}`);
 
         if (response.data.success && response.data.data?.status === 'PAID') {
           setStatus('success');
