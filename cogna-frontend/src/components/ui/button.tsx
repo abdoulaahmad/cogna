@@ -17,10 +17,10 @@ export function Button({
 }: ButtonProps) {
   // Styles based on variant
   const variantStyles = {
-    primary: 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm border border-indigo-700/10 focus-visible:ring-indigo-500',
-    secondary: 'bg-white border border-slate-200 text-slate-800 hover:bg-slate-50 hover:text-slate-900 focus-visible:ring-slate-400',
-    danger: 'bg-rose-600 hover:bg-rose-700 text-white shadow-sm border border-rose-700/10 focus-visible:ring-rose-500',
-    ghost: 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 focus-visible:ring-slate-300',
+    primary: 'bg-[#D4AF37] hover:bg-[#B8860B] text-slate-950 shadow-md border border-[#F8D56B]/20 focus-visible:ring-[#D4AF37] font-bold rounded-full',
+    secondary: 'bg-slate-800/40 hover:bg-slate-800/60 border border-slate-700/30 text-slate-300 hover:text-white focus-visible:ring-slate-500 rounded-full',
+    danger: 'bg-rose-600 hover:bg-rose-700 text-white shadow-sm border border-rose-700/10 focus-visible:ring-rose-500 rounded-full',
+    ghost: 'text-[#C6D6D1] hover:bg-[#18B88A]/10 hover:text-white focus-visible:ring-emerald-500 rounded-full',
   };
 
   // Styles based on size
