@@ -4,7 +4,7 @@ import { env } from '@/config/env'
 const redisUrlParsed = parseRedisUrl(env.REDIS_URL)
 
 const redisOpts = {
-  maxRetriesPerRequest: null as null, // required by BullMQ
+  maxRetriesPerRequest: null, // required by BullMQ
   enableReadyCheck:     false,
   // parse the URL into discrete fields so BullMQ's bundled ioredis is happy
   ...redisUrlParsed,

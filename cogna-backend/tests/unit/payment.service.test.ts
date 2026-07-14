@@ -3,7 +3,7 @@ import { PaymentService } from '@/services/payment.service'
 import { PaymentRepository } from '@/repositories/payment.repository'
 import { OrderRepository }   from '@/repositories/order.repository'
 import { ProductRepository } from '@/repositories/product.repository'
-import { NotFoundError, ConflictError } from '@/utils/errors'
+import { NotFoundError, ConflictError, ForbiddenError } from '@/utils/errors'
 import { buildOrder, buildPayment, buildProduct } from '../fixtures/factories'
 
 vi.mock('@/repositories/payment.repository')
@@ -22,8 +22,10 @@ vi.mock('@/payments/GatewayFactory', () => ({
     verifyPayment: vi.fn().mockResolvedValue({
       status:           'success',
       amount:           9999,
+      currency:         'NGN',
       paidAt:           new Date('2026-01-01'),
       gatewayReference: 'PSK_ref_test',
+      metadata:         {},
     }),
     validateWebhook: vi.fn().mockReturnValue(true),
   })),
@@ -63,6 +65,13 @@ describe('PaymentService', () => {
       ).rejects.toThrow(NotFoundError)
     })
 
+    it('should reject initializing payment for another customer’s order', async () => {
+      vi.mocked(OrderRepository.findById).mockResolvedValue({ ...mockOrder, userId: 'another-user' })
+
+      await expect(
+        PaymentService.initializePayment(mockOrder.id, 'user-1', 'user@test.com')
+      ).rejects.toThrow(ForbiddenError)
+    })
     it('should throw ConflictError when payment already exists for the order', async () => {
       vi.mocked(OrderRepository.findById).mockResolvedValue(mockOrder)
       vi.mocked(ProductRepository.findById).mockResolvedValue(mockProduct)
@@ -93,6 +102,31 @@ describe('PaymentService', () => {
       )
     })
 
+    it('should reject verification by another customer', async () => {
+      vi.mocked(PaymentRepository.findByReference).mockResolvedValue(mockPayment)
+
+      await expect(PaymentService.verifyPayment(mockPayment.reference, 'another-user')).rejects.toThrow(ForbiddenError)
+      expect(OrderRepository.findById).not.toHaveBeenCalled()
+    })
+
+    it('should keep a pending gateway payment pending without fulfillment', async () => {
+      const { getPaymentGateway } = await import('@/payments/GatewayFactory')
+      vi.mocked(getPaymentGateway).mockImplementationOnce(() => ({
+        verifyPayment: vi.fn().mockResolvedValue({
+          status: 'pending', amount: 9999, currency: 'NGN', gatewayReference: 'PSK_ref_test', paidAt: null, metadata: {},
+        }),
+      } as never))
+      vi.mocked(PaymentRepository.findByReference).mockResolvedValue(mockPayment)
+      vi.mocked(OrderRepository.findById).mockResolvedValue(mockOrder)
+      vi.mocked(PaymentRepository.updateStatus).mockResolvedValue({ ...mockPayment, status: 'PENDING' as const })
+
+      const result = await PaymentService.verifyPayment(mockPayment.reference, mockPayment.userId)
+
+      expect(result.status).toBe('PENDING')
+      expect(PaymentRepository.updateStatus).toHaveBeenCalledWith(mockPayment.id, 'PENDING', expect.any(Object))
+      const { fulfillmentQueue } = await import('@/queue/fulfillment.queue')
+      expect(fulfillmentQueue.add).not.toHaveBeenCalled()
+    })
     it('should throw NotFoundError when reference does not exist', async () => {
       vi.mocked(PaymentRepository.findByReference).mockResolvedValue(null)
 

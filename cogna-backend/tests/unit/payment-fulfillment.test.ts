@@ -24,9 +24,11 @@ vi.mock('@/payments/GatewayFactory', () => ({
     }),
     verifyPayment: vi.fn().mockResolvedValue({
       status:           'success',
-      amount:           5000,
+      amount:           9999,
+      currency:         'NGN',
       paidAt:           new Date('2026-01-01'),
       gatewayReference: 'PSK_ref_1',
+      metadata:         {},
     }),
     validateWebhook: vi.fn().mockReturnValue(true),
   })),
@@ -67,7 +69,7 @@ describe('PaymentService + FulfillmentQueue integration', () => {
         status: 'failed', amount: 5000, paidAt: null, gatewayReference: '',
       }) }
       const { getPaymentGateway } = await import('@/payments/GatewayFactory')
-      vi.mocked(getPaymentGateway).mockReturnValue(failedGateway as never)
+      vi.mocked(getPaymentGateway).mockImplementationOnce(() => failedGateway as never)
 
       vi.mocked(PaymentRepository.findByReference).mockResolvedValue(mockPayment)
       vi.mocked(OrderRepository.findById).mockResolvedValue(mockOrder)

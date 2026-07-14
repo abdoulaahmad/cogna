@@ -96,6 +96,7 @@ describe('Payments API Integration', () => {
 
       expect(response.status).toBe(200)
       expect(response.body.data.status).toBe('PAID')
+      expect(vi.mocked(PaymentService.verifyPayment)).toHaveBeenCalledWith('cogna_ref_1', 'user-1')
     })
   })
 
@@ -111,6 +112,9 @@ describe('Payments API Integration', () => {
         .send({ event: 'charge.success', data: { reference: 'ref_1' } })
 
       expect(response.status).toBe(200)
+      expect(vi.mocked(PaymentService.handleWebhook)).toHaveBeenCalledWith(
+        'PAYSTACK', expect.stringContaining('charge.success'), 'valid-sig'
+      )
     })
 
     it('should return 400 for invalid webhook signature', async () => {

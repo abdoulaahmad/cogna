@@ -7,7 +7,7 @@ export interface FulfillmentJobData {
 
 /** Result stored on the job after completion */
 export interface FulfillmentJobResult {
-  status:          'COMPLETED' | 'FAILED'
+  status:          'PROCESSING' | 'COMPLETED' | 'FAILED'
   providerOrderId: string | null
   message?:        string
 }

@@ -1,9 +1,10 @@
-import Fastify, { type FastifyError } from 'fastify'
+import Fastify, { type FastifyError, type FastifyReply, type FastifyRequest } from 'fastify'
 import cors from '@fastify/cors'
 import jwt from '@fastify/jwt'
 import rateLimit from '@fastify/rate-limit'
 import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
+import rawBody from 'fastify-raw-body'
 import { ZodError } from 'zod'
 import { AppError } from '@/utils/errors'
 import { errorResponse } from '@/utils/response'
@@ -33,7 +34,7 @@ export async function buildApp() {
   })
 
   // Decorate fastify instance with authenticate method
-  app.decorate('authenticate', async function (request: any, reply: any) {
+  app.decorate('authenticate', async function (request: FastifyRequest, reply: FastifyReply) {
     try {
       await request.jwtVerify()
     } catch (err) {
@@ -44,6 +45,13 @@ export async function buildApp() {
   await app.register(rateLimit, {
     max: 100,
     timeWindow: '1 minute',
+  })
+
+  await app.register(rawBody, {
+    field: 'rawBody',
+    global: false,
+    encoding: 'utf8',
+    runFirst: true,
   })
 
   await app.register(swagger, {

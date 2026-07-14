@@ -6,7 +6,7 @@ import { AkudingAdapter } from '@/providers/akunding.adapter'
 vi.mock('@/config/database', () => ({
   prisma: {
     provider: {
-      findFirst: vi.fn(),
+      findUnique: vi.fn(),
     },
   },
 }))
@@ -18,7 +18,7 @@ beforeEach(() => { vi.clearAllMocks() })
 describe('ProviderFactory', () => {
 
   it('should return an AkudingAdapter when provider name is akunding', async () => {
-    vi.mocked(prisma.provider.findFirst).mockResolvedValue({
+    vi.mocked(prisma.provider.findUnique).mockResolvedValue({
       id:        'prov-1',
       name:      'akunding',
       baseUrl:   'https://api.akunding.com',
@@ -30,19 +30,19 @@ describe('ProviderFactory', () => {
       updatedAt: new Date(),
     })
 
-    const adapter = await getProvider('akunding')
+    const adapter = await getProvider('prov-1')
 
     expect(adapter).toBeInstanceOf(AkudingAdapter)
   })
 
   it('should throw when provider is not found in DB', async () => {
-    vi.mocked(prisma.provider.findFirst).mockResolvedValue(null)
+    vi.mocked(prisma.provider.findUnique).mockResolvedValue(null)
 
-    await expect(getProvider('akunding')).rejects.toThrow('Provider not found')
+    await expect(getProvider('prov-1')).rejects.toThrow('Provider not found')
   })
 
   it('should throw when provider name is unsupported', async () => {
-    vi.mocked(prisma.provider.findFirst).mockResolvedValue({
+    vi.mocked(prisma.provider.findUnique).mockResolvedValue({
       id:        'prov-2',
       name:      'unknown-provider',
       baseUrl:   'https://unknown.com',
@@ -54,11 +54,11 @@ describe('ProviderFactory', () => {
       updatedAt: new Date(),
     })
 
-    await expect(getProvider('unknown-provider')).rejects.toThrow('Unsupported provider')
+    await expect(getProvider('prov-2')).rejects.toThrow('Unsupported provider')
   })
 
   it('should throw when provider is INACTIVE', async () => {
-    vi.mocked(prisma.provider.findFirst).mockResolvedValue({
+    vi.mocked(prisma.provider.findUnique).mockResolvedValue({
       id:        'prov-3',
       name:      'akunding',
       baseUrl:   'https://api.akunding.com',
@@ -70,6 +70,6 @@ describe('ProviderFactory', () => {
       updatedAt: new Date(),
     })
 
-    await expect(getProvider('akunding')).rejects.toThrow('Provider is inactive')
+    await expect(getProvider('prov-3')).rejects.toThrow('Provider is inactive')
   })
 })
