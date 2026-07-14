@@ -7,6 +7,7 @@ import Hero from '@/components/landing/hero';
 import CategoryCards from '@/components/landing/category-cards';
 import ProductGrid from '@/components/product/product-grid';
 import { Truck, RotateCcw, Shield } from 'lucide-react';
+import FeaturedSubscriptions from '@/components/landing/featured-subscriptions';
 import type { Product } from '@/components/product/product-card';
 import type { Category } from '@/components/product/category-selector';
 
@@ -91,28 +92,12 @@ export default function Home() {
       {/* 30% Dark Hero Section (Header sits sticky inside PublicLayout) */}
       <Hero />
 
+      {/* Featured Subscriptions Section */}
+      <FeaturedSubscriptions />
+
       {/* 70% White Content section containing catalog, categories, and values */}
       <div className="bg-white py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-16">
-          
-          {/* Featured Products Catalog list */}
-          <div>
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-bold text-slate-800">Featured AI Subscriptions</h2>
-              <Link
-                href="/catalog"
-                className="rounded-lg border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2 text-xs font-bold text-slate-700 hover:text-slate-900 transition shadow-sm"
-              >
-                View All APIs
-              </Link>
-            </div>
-            
-            <ProductGrid
-              products={MOCK_PRODUCTS}
-              categories={MOCK_CATEGORIES}
-              onAddToCart={handleAddToCart}
-            />
-          </div>
 
           {/* Categories Grid Section */}
           <CategoryCards />
