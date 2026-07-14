@@ -81,9 +81,11 @@ export function ProductCard({ product, onAddToCart, badge }: ProductCardProps) {
         </div>
 
         {/* Card Description */}
-        <h3 className="text-base font-bold font-display text-slate-800 line-clamp-1 group-hover:text-indigo-600 transition-colors">
-          {product.name}
-        </h3>
+        <Link href={`/products/${product.slug}`} className="block">
+          <h3 className="text-base font-bold font-display text-slate-800 line-clamp-1 group-hover:text-indigo-600 transition-colors">
+            {product.name}
+          </h3>
+        </Link>
         
         {/* Mock Rating */}
         <div className="flex items-center gap-1 mt-1 mb-2">

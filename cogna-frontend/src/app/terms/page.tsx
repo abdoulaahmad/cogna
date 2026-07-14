@@ -1,0 +1,1 @@
+export default function TermsPage(){return <main className='mx-auto max-w-3xl p-10'><h1 className='text-3xl font-bold'>Terms of Service</h1><p className='mt-4'>Cogna terms of service will be published here before public launch.</p></main>}

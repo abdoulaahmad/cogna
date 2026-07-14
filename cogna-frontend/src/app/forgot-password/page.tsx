@@ -1,0 +1,1 @@
+export default function ForgotPasswordPage(){return <main className='mx-auto max-w-3xl p-10'><h1 className='text-3xl font-bold'>Password recovery</h1><p className='mt-4'>Password recovery is being prepared. Contact support if you need account assistance.</p></main>}

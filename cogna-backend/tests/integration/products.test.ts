@@ -7,6 +7,7 @@ vi.mock('@/services/product.service', () => ({
   ProductService: {
     listProducts:         vi.fn(),
     getProductById:       vi.fn(),
+    getProductBySlug:     vi.fn(),
     searchProducts:       vi.fn(),
     getProductsByCategory: vi.fn(),
   },
@@ -77,6 +78,17 @@ describe('Products API Integration', () => {
     })
   })
 
+  describe('GET /api/v1/products/slug/:slug', () => {
+    it('should return a single product by slug', async () => {
+      vi.mocked(ProductService.getProductBySlug).mockResolvedValueOnce(mockProduct)
+
+      const response = await request(app.server).get('/api/v1/products/slug/netflix-premium')
+
+      expect(response.status).toBe(200)
+      expect(response.body.data.slug).toBe('netflix-premium')
+      expect(vi.mocked(ProductService.getProductBySlug)).toHaveBeenCalledWith('netflix-premium')
+    })
+  })
   describe('GET /api/v1/products/:id', () => {
     it('should return a single product by ID', async () => {
       vi.mocked(ProductService.getProductById).mockResolvedValueOnce(mockProduct)

@@ -1,0 +1,1 @@
+export default function DocsPage(){return <main className='mx-auto max-w-3xl p-10'><h1 className='text-3xl font-bold'>Cogna API Documentation</h1><p className='mt-4'>Explore the live API reference at <a className='text-emerald-700 underline' href='https://my-cogna-backend-5c83635813a6.herokuapp.com/docs'>Cogna API Docs</a>.</p></main>}

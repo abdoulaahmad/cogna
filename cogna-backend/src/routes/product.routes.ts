@@ -39,6 +39,17 @@ export default async function productRoutes(app: FastifyInstance) {
     }
   })
 
+  // GET /api/v1/products/slug/:slug
+  app.get('/slug/:slug', async (req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { slug } = req.params as { slug: string }
+      const product = await ProductService.getProductBySlug(slug)
+      return reply.send(successResponse(product))
+    } catch (error) {
+      return handleRouteError(error, reply)
+    }
+  })
+
   // GET /api/v1/products/:id
   app.get('/:id', async (req: FastifyRequest, reply: FastifyReply) => {
     try {
