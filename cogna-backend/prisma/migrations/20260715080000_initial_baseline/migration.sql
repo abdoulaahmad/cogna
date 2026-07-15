@@ -1,0 +1,1 @@
+-- Baseline: existing production schema predates Prisma migration tracking.`n-- Marked as applied; no SQL is executed for this baseline.
