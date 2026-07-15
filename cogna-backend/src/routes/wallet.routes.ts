@@ -1,12 +1,33 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import { WalletService } from '@/services/wallet.service'
-import { initializeWalletFundingSchema } from '@/validators/wallet.validator'
+import { initializeWalletFundingSchema, walletPurchaseSchema, walletRefundSchema } from '@/validators/wallet.validator'
 import { handleRouteError } from '@/utils/handle-error'
 import { successResponse } from '@/utils/response'
 
 export default async function walletRoutes(app: FastifyInstance) {
   app.addHook('onRequest', app.authenticate)
 
+  app.get('/', async (req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { sub } = req.user as { sub: string }
+      return reply.send(successResponse(await WalletService.getSummary(sub)))
+    } catch (error) { return handleRouteError(error, reply) }
+  })
+
+  app.get('/transactions', async (req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { sub } = req.user as { sub: string }
+      const { page = 1, limit = 20 } = req.query as { page?: number; limit?: number }
+      const result = await WalletService.listTransactions(sub, Number(page), Number(limit))
+      return reply.send(successResponse(result))
+    } catch (error) { return handleRouteError(error, reply) }
+  })
+  app.post('/refunds', async (req: FastifyRequest, reply: FastifyReply) => {
+    try { const { sub } = req.user as { sub: string }; const body = walletRefundSchema.parse(req.body); return reply.status(201).send(successResponse(await WalletService.refundPurchase({ userId: sub, ...body }), 'Wallet refund completed')) } catch (error) { return handleRouteError(error, reply) }
+  })
+  app.post('/purchase', async (req: FastifyRequest, reply: FastifyReply) => {
+    try { const { sub } = req.user as { sub: string }; const body = walletPurchaseSchema.parse(req.body); return reply.status(201).send(successResponse(await WalletService.purchase({ userId: sub, ...body }), 'Wallet purchase created')) } catch (error) { return handleRouteError(error, reply) }
+  })
   app.post('/fund', async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const { sub, email } = req.user as { sub: string; email: string }

@@ -1,4 +1,4 @@
-﻿# Cogna Agent Instructions
+# Cogna Agent Instructions
 
 ## Product direction
 
@@ -55,3 +55,17 @@ Cogna is a production AI-subscription and digital-services marketplace, not a li
 Follow `docs/COGNA_LAUNCH_PLAN.md`.
 
 Begin with Phase 0: route recovery, dynamic catalog, removal of mock production data, contract alignment, and core order/payment/fulfillment correctness. Do not implement wallet funding UI before the wallet ledger and verified payment state machine are designed and tested.
+
+## Sprint delivery workflow
+
+- Deliver every product sprint backend-first: schema/migrations, repositories, services, validators, routes, authorization, jobs, tests, API documentation, then backend quality gates and a commit.
+- Build the corresponding frontend only after the sprint backend contract is stable.
+- Treat frontend work as part of its product sprint, never as an unrelated parallel sprint.
+
+## Standing execution authority
+
+The user has granted standing approval for normal, in-scope local implementation work needed to complete the launch plan. Do not repeatedly ask for confirmation before local file edits, tests, builds, linting, commits, or migration creation.
+
+- Do not deploy the backend or frontend until the full product work is complete, unless the user explicitly changes this instruction.
+- Do not apply production database migrations until the final release, unless the user explicitly changes this instruction.
+- Still comply with platform-enforced permission prompts and pause only for genuinely new authority, destructive operations, external coordination, or a material product decision.

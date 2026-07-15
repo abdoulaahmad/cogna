@@ -58,6 +58,12 @@ enum WalletTransactionDirection {
   DEBIT
 }
 
+enum RefundStatus {
+  REQUESTED
+  COMPLETED
+  FAILED
+}
+
 enum WalletFundingStatus {
   INITIALIZED
   PENDING
@@ -99,6 +105,7 @@ model User {
   auditLogs      AuditLog[]
   wallet         Wallet?
   walletFundings WalletFunding[]
+  refunds Refund[]
 
   @@map("users")
 }
@@ -209,6 +216,8 @@ model Order {
   user    User     @relation(fields: [userId], references: [id])
   product Product  @relation(fields: [productId], references: [id])
   payment Payment?
+  walletTransactions WalletTransaction[]
+  refunds Refund[]
 
   @@index([userId])
   @@index([status])
@@ -257,6 +266,7 @@ model Wallet {
   user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions WalletTransaction[]
   fundings     WalletFunding[]
+  refunds      Refund[]
 
   @@map("wallets")
 }
@@ -264,6 +274,7 @@ model Wallet {
 model WalletTransaction {
   id                String                     @id @default(uuid())
   walletId          String                     @map("wallet_id")
+  orderId           String?                    @map("order_id")
   type              WalletTransactionType
   direction         WalletTransactionDirection
   amount            Decimal                    @db.Decimal(14, 2)
@@ -278,7 +289,9 @@ model WalletTransaction {
   createdAt         DateTime                   @default(now()) @map("created_at")
 
   wallet  Wallet         @relation(fields: [walletId], references: [id], onDelete: Restrict)
+  order   Order?         @relation(fields: [orderId], references: [id], onDelete: Restrict)
   funding WalletFunding?
+  refunds Refund[]
 
   @@index([walletId, createdAt])
   @@map("wallet_transactions")
@@ -309,6 +322,27 @@ model WalletFunding {
   @@map("wallet_fundings")
 }
 
+
+model Refund {
+  id                  String       @id @default(uuid())
+  userId              String       @map("user_id")
+  orderId             String       @map("order_id")
+  walletId            String       @map("wallet_id")
+  walletTransactionId String?      @unique @map("wallet_transaction_id")
+  amount              Decimal      @db.Decimal(14, 2)
+  currency            String       @default("NGN")
+  reason              String
+  status              RefundStatus @default(REQUESTED)
+  reference           String       @unique
+  idempotencyKey      String       @unique @map("idempotency_key")
+  createdAt           DateTime     @default(now()) @map("created_at")
+  updatedAt           DateTime     @updatedAt @map("updated_at")
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+  order Order @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Restrict)
+  walletTransaction WalletTransaction? @relation(fields: [walletTransactionId], references: [id], onDelete: Restrict)
+  @@map("refunds")
+}
 model PaymentEvent {
   id          String         @id @default(uuid())
   gateway     PaymentGateway

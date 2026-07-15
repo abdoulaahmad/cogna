@@ -5,6 +5,25 @@ import { ConflictError, ForbiddenError } from '@/utils/errors'
 import type { PaymentGatewayType } from '@/types/payment-gateway.types'
 
 export const WalletService = {
+  async getSummary(userId: string) {
+    return WalletRepository.getOrCreate(userId)
+  },
+
+  async listTransactions(userId: string, page = 1, limit = 20) {
+    return WalletRepository.findTransactionsByUserId(userId, page, limit)
+  },
+  async refundPurchase(input: { userId: string; orderId: string; reason: string; idempotencyKey: string }) {
+    const refund = await WalletRepository.refundPurchase(input)
+    if (!refund) throw new ConflictError('Eligible wallet purchase was not found')
+    return refund
+  },
+  async purchase(input: { userId: string; productId: string; customerEmail: string; idempotencyKey: string }) {
+    const product = await (await import('@/repositories/product.repository')).ProductRepository.findById(input.productId)
+    if (!product || !product.active) throw new ConflictError('Product is not available')
+    const order = await WalletRepository.purchase({ ...input, providerId: product.providerId, amount: Number(product.price), currency: product.currency })
+    if (!order) throw new ConflictError('Insufficient wallet balance')
+    return order
+  },
   async initializeFunding(input: {
     userId: string; email: string; amount: number; currency: string; gateway: PaymentGatewayType
     idempotencyKey: string; callbackUrl?: string
