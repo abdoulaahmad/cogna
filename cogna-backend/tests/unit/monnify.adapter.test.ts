@@ -39,7 +39,7 @@ describe('MonnifyAdapter', () => {
       })
 
       const result = await adapter.initializePayment({
-        amount: 50000, // 500 NGN
+        amount: 500, // 500 NGN
         currency: 'NGN',
         email: 'test@customer.com',
         reference: 'ref_123',
@@ -77,7 +77,7 @@ describe('MonnifyAdapter', () => {
       const result = await adapter.verifyPayment('ref_123')
 
       expect(result.status).toBe('success')
-      expect(result.amount).toBe(50000) // converted to kobo
+      expect(result.amount).toBe(500)
       expect(result.paidAt).toBeInstanceOf(Date)
     })
 

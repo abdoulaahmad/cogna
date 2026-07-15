@@ -7,6 +7,15 @@ import type { PaymentVerifyResult } from '@/types/payment-verify-result.types'
 import { env } from '@/config/env'
 
 const PAYSTACK_BASE_URL = 'https://api.paystack.co'
+const PAYSTACK_MINOR_UNIT_FACTOR = 100
+
+function toPaystackMinorUnits(amount: number): number {
+  return Math.round(amount * PAYSTACK_MINOR_UNIT_FACTOR)
+}
+
+function fromPaystackMinorUnits(amount: number): number {
+  return amount / PAYSTACK_MINOR_UNIT_FACTOR
+}
 
 /**
  * PaystackAdapter — implements IPaymentGateway using the Paystack API.
@@ -37,7 +46,7 @@ export class PaystackAdapter implements IPaymentGateway {
       `${PAYSTACK_BASE_URL}/transaction/initialize`,
       {
         email:        options.email,
-        amount:       options.amount,
+        amount:       toPaystackMinorUnits(options.amount),
         currency:     options.currency,
         reference:    options.reference,
         callback_url: options.callbackUrl,
@@ -80,7 +89,7 @@ export class PaystackAdapter implements IPaymentGateway {
 
     return {
       status:           data.status === 'success' ? 'success' : data.status === 'abandoned' ? 'failed' : 'pending',
-      amount:           data.amount,
+      amount:           fromPaystackMinorUnits(data.amount),
       currency:         data.currency,
       gatewayReference: data.reference,
       paidAt:           data.paid_at ? new Date(data.paid_at) : null,

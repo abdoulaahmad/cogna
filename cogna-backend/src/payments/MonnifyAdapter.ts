@@ -61,7 +61,7 @@ export class MonnifyAdapter implements IPaymentGateway {
     const response = await axios.post(
       `${this.baseUrl}/api/v1/merchant/transactions/init-transaction`,
       {
-        amount:              options.amount / 100, // Monnify uses full units, not kobo
+        amount:              options.amount,
         customerName:        options.email,
         customerEmail:       options.email,
         paymentReference:    options.reference,
@@ -108,7 +108,7 @@ export class MonnifyAdapter implements IPaymentGateway {
       status:           responseBody.paymentStatus === 'PAID' ? 'success'
                       : responseBody.paymentStatus === 'FAILED' ? 'failed'
                       : 'pending',
-      amount:           Math.round(responseBody.amountPaid * 100), // convert back to kobo
+      amount:           responseBody.amountPaid,
       currency:         responseBody.currencyCode,
       gatewayReference: responseBody.transactionReference,
       paidAt:           responseBody.completedOn ? new Date(responseBody.completedOn) : null,

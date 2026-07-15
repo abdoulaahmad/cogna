@@ -17,6 +17,7 @@ import orderRoutes from '@/routes/order.routes'
 import paymentRoutes from '@/routes/payment.routes'
 import developerRoutes from '@/routes/developer.routes'
 import adminRoutes from '@/routes/admin.routes'
+import walletRoutes from '@/routes/wallet.routes'
 
 export async function buildApp() {
   const app = Fastify({
@@ -83,6 +84,7 @@ export async function buildApp() {
   await app.register(paymentRoutes,   { prefix: '/api/v1/payments' })
   await app.register(developerRoutes, { prefix: '/api/v1/developer' })
   await app.register(adminRoutes,     { prefix: '/api/v1/admin' })
+  await app.register(walletRoutes,    { prefix: '/api/v1/wallet' })
 
   // ── Health Check ───────────────────────────────────────────────────────
   app.get('/health', async () => ({

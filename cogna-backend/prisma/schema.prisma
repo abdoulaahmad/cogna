@@ -45,6 +45,26 @@ enum PaymentGateway {
   PAYSTACK
   MONNIFY
 }
+enum WalletTransactionType {
+  FUNDING
+  PURCHASE
+  REFUND
+  ADJUSTMENT
+  REVERSAL
+}
+
+enum WalletTransactionDirection {
+  CREDIT
+  DEBIT
+}
+
+enum WalletFundingStatus {
+  INITIALIZED
+  PENDING
+  COMPLETED
+  FAILED
+  REVERSED
+}
 
 enum ApiKeyStatus {
   ACTIVE
@@ -77,6 +97,8 @@ model User {
   orders         Order[]
   payments       Payment[]
   auditLogs      AuditLog[]
+  wallet         Wallet?
+  walletFundings WalletFunding[]
 
   @@map("users")
 }
@@ -219,6 +241,91 @@ model Payment {
 }
 
 // ─────────────────────────────────────────────
+
+model Wallet {
+  id               String   @id @default(uuid())
+  userId           String   @unique @map("user_id")
+  currency         String   @default("NGN")
+  availableBalance Decimal  @default(0) @db.Decimal(14, 2) @map("available_balance")
+  pendingBalance   Decimal  @default(0) @db.Decimal(14, 2) @map("pending_balance")
+  lifetimeFunded   Decimal  @default(0) @db.Decimal(14, 2) @map("lifetime_funded")
+  lifetimeSpent    Decimal  @default(0) @db.Decimal(14, 2) @map("lifetime_spent")
+  version          Int      @default(0)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions WalletTransaction[]
+  fundings     WalletFunding[]
+
+  @@map("wallets")
+}
+
+model WalletTransaction {
+  id                String                     @id @default(uuid())
+  walletId          String                     @map("wallet_id")
+  type              WalletTransactionType
+  direction         WalletTransactionDirection
+  amount            Decimal                    @db.Decimal(14, 2)
+  currency          String                     @default("NGN")
+  balanceBefore     Decimal                    @db.Decimal(14, 2) @map("balance_before")
+  balanceAfter      Decimal                    @db.Decimal(14, 2) @map("balance_after")
+  reference         String                     @unique
+  idempotencyKey    String                     @unique @map("idempotency_key")
+  externalReference String?                    @unique @map("external_reference")
+  source            String
+  metadata          Json?
+  createdAt         DateTime                   @default(now()) @map("created_at")
+
+  wallet  Wallet         @relation(fields: [walletId], references: [id], onDelete: Restrict)
+  funding WalletFunding?
+
+  @@index([walletId, createdAt])
+  @@map("wallet_transactions")
+}
+
+model WalletFunding {
+  id                  String              @id @default(uuid())
+  walletId            String              @map("wallet_id")
+  userId              String              @map("user_id")
+  walletTransactionId String?             @unique @map("wallet_transaction_id")
+  gateway             PaymentGateway
+  reference           String              @unique
+  gatewayReference    String?             @unique @map("gateway_reference")
+  authorizationUrl    String?             @map("authorization_url")
+  idempotencyKey      String              @unique @map("idempotency_key")
+  amount              Decimal             @db.Decimal(14, 2)
+  currency            String              @default("NGN")
+  status              WalletFundingStatus @default(INITIALIZED)
+  metadata            Json?
+  createdAt           DateTime            @default(now()) @map("created_at")
+  updatedAt           DateTime            @updatedAt @map("updated_at")
+
+  wallet            Wallet             @relation(fields: [walletId], references: [id], onDelete: Restrict)
+  user              User               @relation(fields: [userId], references: [id], onDelete: Restrict)
+  walletTransaction WalletTransaction? @relation(fields: [walletTransactionId], references: [id], onDelete: Restrict)
+
+  @@index([userId, createdAt])
+  @@map("wallet_fundings")
+}
+
+model PaymentEvent {
+  id          String         @id @default(uuid())
+  gateway     PaymentGateway
+  eventId     String         @map("event_id")
+  reference   String?
+  payloadHash String         @map("payload_hash")
+  eventType   String         @map("event_type")
+  status      String         @default("RECEIVED")
+  payload     Json?
+  receivedAt  DateTime       @default(now()) @map("received_at")
+  processedAt DateTime?      @map("processed_at")
+
+  @@unique([gateway, eventId])
+  @@unique([gateway, payloadHash])
+  @@index([reference])
+  @@map("payment_events")
+}
 // ADMIN / SYSTEM
 // ─────────────────────────────────────────────
 

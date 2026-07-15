@@ -42,7 +42,7 @@ describe('PaystackAdapter', () => {
       })
 
       await adapter.initializePayment({
-        amount: 5000, currency: 'NGN', email: 'x@x.com', reference: 'ref', orderId: 'o-1',
+        amount: 50, currency: 'NGN', email: 'x@x.com', reference: 'ref', orderId: 'o-1',
       })
 
       expect(axios.post).toHaveBeenCalledWith(
@@ -71,7 +71,7 @@ describe('PaystackAdapter', () => {
       const result = await adapter.verifyPayment('cogna_ref_001')
 
       expect(result.status).toBe('success')
-      expect(result.amount).toBe(9999)
+      expect(result.amount).toBe(99.99)
       expect(result.paidAt).toBeInstanceOf(Date)
     })
 
