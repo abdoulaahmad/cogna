@@ -20,6 +20,20 @@ enum UserRole {
   ADMIN
 }
 
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+  OPERATIONS
+  SUPPORT
+  FINANCE
+}
+
+enum AdjustmentRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum UserStatus {
   ACTIVE
   SUSPENDED
@@ -77,6 +91,15 @@ enum ApiKeyStatus {
   REVOKED
 }
 
+enum ApiKeyEnvironment {
+  TEST
+  LIVE
+}
+
+enum UserCapabilityType {
+  DEVELOPER
+}
+
 enum ProviderStatus {
   ACTIVE
   INACTIVE
@@ -92,6 +115,7 @@ model User {
   email          String     @unique
   passwordHash   String     @map("password_hash")
   role           UserRole   @default(CUSTOMER)
+  adminRole      AdminRole? @map("admin_role")
   emailVerified  Boolean    @default(false) @map("email_verified")
   status         UserStatus @default(PENDING)
   createdAt      DateTime   @default(now()) @map("created_at")
@@ -103,13 +127,34 @@ model User {
   orders         Order[]
   payments       Payment[]
   auditLogs      AuditLog[]
+  capabilities   UserCapability[]
   wallet         Wallet?
   walletFundings WalletFunding[]
-  refunds Refund[]
+  refunds        Refund[]
+  apiRequestLogs ApiRequestLog[]
+  webhookEndpoints DeveloperWebhookEndpoint[]
+  makerAdjustments  WalletAdjustmentRequest[] @relation("MakerRelation")
+  checkerAdjustments WalletAdjustmentRequest[] @relation("CheckerRelation")
+  verificationTokens VerificationToken[]
+  supportTickets     SupportTicket[]
+  supportMessages    SupportMessage[]
+  notifications      Notification[]
+  notificationPreference NotificationPreference?
+  receipts           Receipt[]
 
   @@map("users")
 }
 
+model UserCapability {
+  id        String             @id @default(uuid())
+  userId    String             @map("user_id")
+  type      UserCapabilityType
+  enabledAt DateTime           @default(now()) @map("enabled_at")
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+  @@map("user_capabilities")
+}
 model RefreshToken {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
@@ -127,11 +172,15 @@ model ApiKey {
   userId     String       @map("user_id")
   name       String
   apiKey     String       @unique @map("api_key")
+  environment ApiKeyEnvironment @default(TEST)
+  scopes     String[]     @default([])
+  expiresAt  DateTime?    @map("expires_at")
   status     ApiKeyStatus @default(ACTIVE)
   lastUsedAt DateTime?    @map("last_used_at")
   createdAt  DateTime     @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  requestLogs ApiRequestLog[]
 
   @@map("api_keys")
 }
@@ -164,6 +213,7 @@ model Provider {
   updatedAt DateTime       @updatedAt @map("updated_at")
 
   products Product[]
+  webhookEvents ProviderWebhookEvent[]
 
   @@map("providers")
 }
@@ -218,6 +268,8 @@ model Order {
   payment Payment?
   walletTransactions WalletTransaction[]
   refunds Refund[]
+  supportTickets SupportTicket[]
+  statusEvents   OrderStatusEvent[]
 
   @@index([userId])
   @@index([status])
@@ -267,6 +319,7 @@ model Wallet {
   transactions WalletTransaction[]
   fundings     WalletFunding[]
   refunds      Refund[]
+  adjustments  WalletAdjustmentRequest[]
 
   @@map("wallets")
 }
@@ -292,7 +345,6 @@ model WalletTransaction {
   order   Order?         @relation(fields: [orderId], references: [id], onDelete: Restrict)
   funding WalletFunding?
   refunds Refund[]
-
   @@index([walletId, createdAt])
   @@map("wallet_transactions")
 }
@@ -384,4 +436,233 @@ model AuditLog {
   user User? @relation(fields: [userId], references: [id])
 
   @@map("audit_logs")
+}
+
+// ─────────────────────────────────────────────
+// DEVELOPER WORKSPACE & WEBHOOKS
+// ─────────────────────────────────────────────
+
+model ApiRequestLog {
+  id           String    @id @default(uuid())
+  apiKeyId     String?   @map("api_key_id")
+  userId       String    @map("user_id")
+  method       String
+  path         String
+  statusCode   Int       @map("status_code")
+  latencyMs    Int       @map("latency_ms")
+  ipAddress    String?   @map("ip_address")
+  errorMessage String?   @map("error_message")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  apiKey ApiKey? @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([apiKeyId, createdAt])
+  @@map("api_request_logs")
+}
+
+model DeveloperWebhookEndpoint {
+  id          String            @id @default(uuid())
+  userId      String            @map("user_id")
+  url         String
+  secret      String            // used to sign webhooks
+  environment ApiKeyEnvironment @default(TEST)
+  active      Boolean           @default(true)
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
+
+  user       User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveries DeveloperWebhookDelivery[]
+
+  @@map("developer_webhook_endpoints")
+}
+
+model DeveloperWebhookDelivery {
+  id          String   @id @default(uuid())
+  endpointId  String   @map("endpoint_id")
+  eventId     String   @map("event_id")
+  eventType   String   @map("event_type")
+  payload     Json
+  statusCode  Int?     @map("status_code")
+  response    String?  // response body from destination
+  success     Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  endpoint DeveloperWebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+
+  @@map("developer_webhook_deliveries")
+}
+
+model ProviderWebhookEvent {
+  id          String    @id @default(uuid())
+  providerId  String    @map("provider_id")
+  eventId     String    @map("event_id")
+  payloadHash String    @map("payload_hash")
+  eventType   String    @map("event_type")
+  status      String    @default("RECEIVED")
+  payload     Json?
+  receivedAt  DateTime  @default(now()) @map("received_at")
+  processedAt DateTime? @map("processed_at")
+
+  provider Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, eventId])
+  @@unique([providerId, payloadHash])
+  @@map("provider_webhook_events")
+}
+
+model WalletAdjustmentRequest {
+  id        String                  @id @default(uuid())
+  walletId  String                  @map("wallet_id")
+  makerId   String                  @map("maker_id")
+  checkerId String?                 @map("checker_id")
+  amount    Decimal                 @db.Decimal(14, 2)
+  direction WalletTransactionDirection
+  reason    String
+  status    AdjustmentRequestStatus @default(PENDING)
+  createdAt DateTime                @default(now()) @map("created_at")
+  updatedAt DateTime                @updatedAt @map("updated_at")
+
+  wallet  Wallet  @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  maker   User    @relation("MakerRelation", fields: [makerId], references: [id])
+  checker User?   @relation("CheckerRelation", fields: [checkerId], references: [id])
+
+  @@map("wallet_adjustment_requests")
+}
+
+model VerificationToken {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  tokenHash  String    @unique @map("token_hash")
+  type       TokenType
+  expiresAt  DateTime  @map("expires_at")
+  consumedAt DateTime? @map("consumed_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tokenHash])
+  @@map("verification_tokens")
+}
+
+enum TokenType {
+  PASSWORD_RESET
+  EMAIL_VERIFICATION
+}
+
+model OrderStatusEvent {
+  id        String      @id @default(uuid())
+  orderId   String      @map("order_id")
+  status    OrderStatus
+  note      String?
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("order_status_events")
+}
+
+model SupportTicket {
+  id        String         @id @default(uuid())
+  userId    String         @map("user_id")
+  orderId   String?        @map("order_id")
+  subject   String
+  status    TicketStatus   @default(OPEN)
+  priority  TicketPriority @default(LOW)
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order    Order?           @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  messages SupportMessage[]
+
+  @@map("support_tickets")
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model SupportMessage {
+  id        String   @id @default(uuid())
+  ticketId  String   @map("ticket_id")
+  senderId  String   @map("sender_id")
+  message   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  sender User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("support_messages")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String           @map("user_id")
+  title     String
+  message   String
+  type      NotificationType
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  FUNDING
+  PURCHASE
+  FULFILLMENT
+  REFUND
+  SECURITY
+}
+
+model NotificationPreference {
+  id               String   @id @default(uuid())
+  userId           String   @unique @map("user_id")
+  emailFunding     Boolean  @default(true) @map("email_funding")
+  emailPurchase    Boolean  @default(true) @map("email_purchase")
+  emailFulfillment Boolean  @default(true) @map("email_fulfillment")
+  emailRefund      Boolean  @default(true) @map("email_refund")
+  emailSecurity    Boolean  @default(true) @map("email_security")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
+}
+
+model Receipt {
+  id        String      @id @default(uuid())
+  reference String      @unique
+  userId    String      @map("user_id")
+  type      ReceiptType
+  amount    Decimal     @db.Decimal(14, 2)
+  currency  String      @default("NGN")
+  entityId  String      @map("entity_id")
+  metadata  Json?
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("receipts")
+}
+
+enum ReceiptType {
+  FUNDING
+  PURCHASE
+  REFUND
+  PAYMENT
 }

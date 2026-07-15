@@ -1,6 +1,7 @@
 import { prisma } from '@/config/database'
 import { AkudingAdapter } from './akunding.adapter'
 import type { IProvider } from './provider.interface'
+import { decryptCredential } from '@/utils/credential-crypto'
 
 /**
  * Loads a provider by its immutable database ID and returns the matching adapter.
@@ -15,7 +16,7 @@ export async function getProvider(providerId: string): Promise<IProvider> {
 
   switch (record.name.toLowerCase()) {
     case 'akunding':
-      return new AkudingAdapter({ apiKey: record.apiKey, baseUrl: record.baseUrl })
+      return new AkudingAdapter({ apiKey: decryptCredential(record.apiKey), baseUrl: record.baseUrl })
     default:
       throw new Error(`Unsupported provider: ${record.name}`)
   }

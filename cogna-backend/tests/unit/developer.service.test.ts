@@ -33,7 +33,7 @@ describe('DeveloperService', () => {
 
   // ─── createApiKey ──────────────────────────────────────────────────────────
   describe('createApiKey', () => {
-    it('should create and return a new API key with cg_live_ prefix', async () => {
+    it('stores only a hash and reveals a test key once', async () => {
       vi.mocked(ApiKeyRepository.create).mockResolvedValue(mockKey)
 
       const result = await DeveloperService.createApiKey('user-1', 'My App')
@@ -42,10 +42,11 @@ describe('DeveloperService', () => {
         expect.objectContaining({
           userId: 'user-1',
           name:   'My App',
-          apiKey: expect.stringMatching(/^cg_live_[a-f0-9]{32}$/),
+          apiKey: expect.stringMatching(/^[a-f0-9]{64}$/),
         })
       )
       expect(result.name).toBe('My App')
+      expect(result.rawKey).toMatch(/^cg_test_[a-f0-9]{48}$/)
     })
 
     it('should generate a unique key on each call', async () => {

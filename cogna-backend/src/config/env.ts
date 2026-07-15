@@ -23,6 +23,8 @@ const envSchema = z.object({
   MONNIFY_BASE_URL:      z.string().url().default('https://sandbox.monnify.com'),
   MONNIFY_CONTRACT_CODE: z.string().optional(),
 
+  PROVIDER_ENCRYPTION_KEY: z.string().min(32).optional(),
+
   AKUNDING_API_KEY:      z.string().optional(),
   AKUNDING_BASE_URL:     z.string().url().default('https://akunding.com/api'),
 

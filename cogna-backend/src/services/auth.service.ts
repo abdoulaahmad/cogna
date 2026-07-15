@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs'
 import { v4 as uuidv4 } from 'uuid'
 import { UserRepository } from '@/repositories/user.repository'
 import { RefreshTokenRepository } from '@/repositories/refresh-token.repository'
+import { UserCapabilityRepository } from '@/repositories/user-capability.repository'
 import { ConflictError, NotFoundError, UnauthorizedError } from '@/utils/errors'
 import { env } from '@/config/env'
 import type { RegisterInput, LoginInput } from '@/validators/auth.validator'
@@ -104,6 +105,7 @@ export const AuthService = {
   async getMe(userId: string) {
     const user = await UserRepository.findById(userId)
     if (!user) throw new NotFoundError('User')
+    const isDeveloper = await UserCapabilityRepository.hasDeveloper(userId)
     return {
       id:            user.id,
       fullName:      user.fullName,
@@ -111,6 +113,7 @@ export const AuthService = {
       role:          user.role,
       emailVerified: user.emailVerified,
       status:        user.status,
+      isDeveloper,
       createdAt:     user.createdAt,
     }
   },

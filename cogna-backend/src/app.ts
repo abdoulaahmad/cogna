@@ -18,6 +18,12 @@ import paymentRoutes from '@/routes/payment.routes'
 import developerRoutes from '@/routes/developer.routes'
 import adminRoutes from '@/routes/admin.routes'
 import walletRoutes from '@/routes/wallet.routes'
+import profileRoutes from '@/routes/profile.routes'
+import customerRoutes from '@/routes/customer.routes'
+import providerWebhookRoutes from '@/routes/provider-webhook.routes'
+import apiKeyAuthPlugin from '@/plugins/api-key-auth'
+import adminRbacPlugin from '@/plugins/admin-rbac'
+import sandboxRoutes from '@/routes/sandbox.routes'
 
 export async function buildApp() {
   const app = Fastify({
@@ -47,6 +53,9 @@ export async function buildApp() {
     max: 100,
     timeWindow: '1 minute',
   })
+
+  await app.register(apiKeyAuthPlugin)
+  await app.register(adminRbacPlugin)
 
   await app.register(rawBody, {
     field: 'rawBody',
@@ -85,6 +94,10 @@ export async function buildApp() {
   await app.register(developerRoutes, { prefix: '/api/v1/developer' })
   await app.register(adminRoutes,     { prefix: '/api/v1/admin' })
   await app.register(walletRoutes,    { prefix: '/api/v1/wallet' })
+  await app.register(profileRoutes,   { prefix: '/api/v1' })
+  await app.register(customerRoutes,  { prefix: '/api/v1' })
+  await app.register(providerWebhookRoutes, { prefix: '/api/v1/providers' })
+  await app.register(sandboxRoutes,   { prefix: '/api/v1/sandbox' })
 
   // ── Health Check ───────────────────────────────────────────────────────
   app.get('/health', async () => ({

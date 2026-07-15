@@ -3,12 +3,18 @@ import { createRedisConnection } from '@/config/redis'
 import { getProvider } from '@/providers/provider.factory'
 import { OrderRepository } from '@/repositories/order.repository'
 import { ProductRepository } from '@/repositories/product.repository'
+import { FulfillmentService } from '@/services/fulfillment.service'
 import type { FulfillmentJobData, FulfillmentJobResult } from '@/types/fulfillment-job.types'
 import { FULFILLMENT_QUEUE_NAME } from '@/types/fulfillment-job.types'
 
 async function processFulfillmentJob(
   job: Job<FulfillmentJobData, FulfillmentJobResult>
 ): Promise<FulfillmentJobResult> {
+  if (job.name === 'poll-processing-orders') {
+    await FulfillmentService.pollProcessingOrders()
+    return { status: 'COMPLETED', providerOrderId: null }
+  }
+
   const { orderId, productId } = job.data
   const order = await OrderRepository.findById(orderId)
   const product = await ProductRepository.findById(productId)

@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { AuthService } from '@/services/auth.service'
+import { DeveloperCapabilityService } from '@/services/developer-capability.service'
 import {
   registerSchema,
   loginSchema,
@@ -59,6 +60,17 @@ export default async function authRoutes(app: FastifyInstance) {
       const { sub } = req.user as { sub: string }
       const user = await AuthService.getMe(sub)
       return reply.send(successResponse(user))
+    } catch (error) {
+      return handleRouteError(error, reply)
+    }
+  })
+
+  // POST /api/v1/auth/developer/enable
+  app.post('/developer/enable', { onRequest: [app.authenticate] }, async (req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { sub } = req.user as { sub: string }
+      const capability = await DeveloperCapabilityService.enable(sub)
+      return reply.send(successResponse(capability, 'Developer capability enabled'))
     } catch (error) {
       return handleRouteError(error, reply)
     }

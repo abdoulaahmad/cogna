@@ -99,7 +99,13 @@ describe('ProviderRepository', () => {
     db.provider.create.mockResolvedValueOnce(mockProvider)
     const result = await ProviderRepository.create({ name: 'Akunding', baseUrl: 'https://api.akunding.com', apiKey: 'key' })
     expect(result).toEqual(mockProvider)
-    expect(db.provider.create).toHaveBeenCalledWith({ data: { name: 'Akunding', baseUrl: 'https://api.akunding.com', apiKey: 'key' } })
+    expect(db.provider.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        name: 'Akunding',
+        baseUrl: 'https://api.akunding.com',
+        apiKey: expect.stringMatching(/^v1:/),
+      }),
+    })
   })
 
   it('create — creates a provider WITH apiConfig', async () => {

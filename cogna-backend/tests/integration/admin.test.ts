@@ -14,6 +14,11 @@ vi.mock('@/repositories/product.repository', () => ({
   },
 }))
 
+vi.mock('@/repositories/order.repository', () => ({
+  OrderRepository: { findById: vi.fn(), updateStatus: vi.fn() },
+}))
+vi.mock('@/services/fulfillment.service', () => ({ FulfillmentService: { refreshStatus: vi.fn() } }))
+vi.mock('@/queue/fulfillment.queue', () => ({ fulfillmentQueue: { add: vi.fn() } }))
 vi.mock('@/repositories/category.repository', () => ({
   CategoryRepository: {
     findAll:  vi.fn(),
@@ -37,6 +42,9 @@ vi.mock('@/repositories/provider.repository', () => ({
 import { ProductRepository }  from '@/repositories/product.repository'
 import { CategoryRepository } from '@/repositories/category.repository'
 import { ProviderRepository } from '@/repositories/provider.repository'
+import { OrderRepository } from '@/repositories/order.repository'
+import { FulfillmentService } from '@/services/fulfillment.service'
+import { fulfillmentQueue } from '@/queue/fulfillment.queue'
 
 // ── App lifecycle ──────────────────────────────────────────────────────────
 let app: FastifyInstance
@@ -315,5 +323,36 @@ describe('Admin API Integration', () => {
 
       expect(res.status).toBe(200)
     })
+  })
+})
+
+describe('admin fulfillment controls', () => {
+  it('refreshes a processing order for an administrator', async () => {
+    vi.mocked(FulfillmentService.refreshStatus).mockResolvedValueOnce({ id: 'order-1', status: 'COMPLETED' } as never)
+
+    const response = await request(app.server)
+      .post('/api/v1/admin/orders/order-1/refresh-fulfillment')
+      .set('Authorization', `Bearer ${adminToken}`)
+
+    expect(response.status).toBe(200)
+    expect(FulfillmentService.refreshStatus).toHaveBeenCalledWith('order-1')
+  })
+
+  it('requeues a failed order for an administrator', async () => {
+    vi.mocked(OrderRepository.findById).mockResolvedValueOnce({ id: 'order-1', status: 'FAILED', productId: 'prod-1', userId: 'user-1' } as never)
+    vi.mocked(OrderRepository.updateStatus).mockResolvedValueOnce({} as never)
+    vi.mocked(fulfillmentQueue.add).mockResolvedValueOnce({} as never)
+
+    const response = await request(app.server)
+      .post('/api/v1/admin/orders/order-1/retry-fulfillment')
+      .set('Authorization', `Bearer ${adminToken}`)
+
+    expect(response.status).toBe(202)
+    expect(OrderRepository.updateStatus).toHaveBeenCalledWith('order-1', 'PROCESSING')
+    expect(fulfillmentQueue.add).toHaveBeenCalledWith(
+      'fulfill-order',
+      expect.objectContaining({ orderId: 'order-1' }),
+      expect.objectContaining({ jobId: expect.stringMatching(/^fulfillment-retry:/) }),
+    )
   })
 })

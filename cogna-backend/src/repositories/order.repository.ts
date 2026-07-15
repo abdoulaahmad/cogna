@@ -22,6 +22,14 @@ export const OrderRepository = {
     return prisma.order.findUnique({ where: { id }, include: orderDetailsInclude })
   },
 
+  /** Find an order by provider reference */
+  async findByProviderOrderId(providerId: string, providerOrderId: string): Promise<Order | null> {
+    return prisma.order.findFirst({
+      where:   { providerId, providerOrderId },
+      include: orderDetailsInclude,
+    })
+  },
+
   /** Find all orders belonging to a user */
   async findByUserId(userId: string, page = 1, limit = 20): Promise<{ items: Order[]; total: number }> {
     const [items, total] = await prisma.$transaction([

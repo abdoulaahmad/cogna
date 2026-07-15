@@ -16,4 +16,4 @@ export interface FulfillmentJobResult {
 export const FULFILLMENT_QUEUE_NAME = 'fulfillment' as const
 
 /** Valid job names for the fulfillment queue */
-export type FulfillmentJobName = 'fulfill-order'
+export type FulfillmentJobName = 'fulfill-order' | 'poll-processing-orders'

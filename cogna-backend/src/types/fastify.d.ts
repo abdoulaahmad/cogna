@@ -8,6 +8,18 @@ declare module 'fastify' {
       request: import('fastify').FastifyRequest,
       reply:   import('fastify').FastifyReply
     ) => Promise<void>
+    /** Authenticate a developer request using X-API-Key header */
+    authenticateApiKey: (
+      request: import('fastify').FastifyRequest,
+      reply:   import('fastify').FastifyReply
+    ) => Promise<void>
+    /** Enforce admin role permission boundaries */
+    requireAdminRole: (
+      allowedRoles: import('@prisma/client').AdminRole[]
+    ) => (
+      request: import('fastify').FastifyRequest,
+      reply: import('fastify').FastifyReply
+    ) => Promise<void>
     jwt: JWT
   }
 
@@ -16,8 +28,18 @@ declare module 'fastify' {
     user: {
       sub:  string
       role: string
+      adminRole?: import('@prisma/client').AdminRole | null
       iat?: number
       exp?: number
     }
+    /** API key context populated after API Key authentication */
+    apiKeyContext?: {
+      id: string
+      userId: string
+      environment: 'TEST' | 'LIVE'
+      scopes: string[]
+    }
+    /** Request start timestamp for API logging */
+    startTime?: number
   }
 }

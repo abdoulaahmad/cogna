@@ -22,7 +22,14 @@ export const ApiKeyRepository = {
   },
 
   /** Persist a new API key for the user */
-  async create(data: { userId: string; name: string; apiKey: string }): Promise<ApiKey> {
+  async create(data: {
+    userId: string
+    name: string
+    apiKey: string
+    environment?: 'TEST' | 'LIVE'
+    scopes?: string[]
+    expiresAt?: Date | null
+  }): Promise<ApiKey> {
     return prisma.apiKey.create({ data })
   },
 

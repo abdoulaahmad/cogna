@@ -1,0 +1,23 @@
+import prisma from '@/config/database'
+import type { OrderStatus } from '@prisma/client'
+
+export const CustomerRepository = {
+  async getWallet(userId: string) { const existing = await prisma.wallet.findUnique({ where: { userId } }); return existing ?? prisma.wallet.create({ data: { userId } }) },
+  countOrders: (userId: string, status: OrderStatus) => prisma.order.count({ where: { userId, status } }),
+  recentOrders: (userId: string) => prisma.order.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 5, include: { product: true } }),
+  recentTransactions: (walletId: string) => prisma.walletTransaction.findMany({ where: { walletId }, orderBy: { createdAt: 'desc' }, take: 5 }),
+  async listOrders(userId: string, page: number, limit: number, status?: OrderStatus) { const where = { userId, ...(status && { status }) }; const [items,total]=await Promise.all([prisma.order.findMany({ where, orderBy:{createdAt:'desc'}, skip:(page-1)*limit, take:limit, include:{product:true,payment:true} }),prisma.order.count({where})]); return {items,total,page,limit} },
+  findOrderDetails: (id: string) => prisma.order.findUnique({ where:{id}, include:{product:true,payment:true,walletTransactions:true,statusEvents:{orderBy:{createdAt:'asc'}}} }),
+  findOrder: (id: string) => prisma.order.findUnique({ where:{id} }),
+  findOrderReceipt: (orderId: string) => prisma.receipt.findFirst({ where:{entityId:orderId,type:'PURCHASE'} }),
+  cancelOrder(userId: string, orderId: string) { return prisma.$transaction(async tx => { const order=await tx.order.findUnique({where:{id:orderId},include:{payment:true,walletTransactions:true}}); if(!order)return {kind:'NOT_FOUND' as const}; if(order.userId!==userId)return {kind:'FORBIDDEN' as const}; if(order.status!=='PENDING')return {kind:'INVALID_STATE' as const}; const debit=order.walletTransactions.find(e=>e.direction==='DEBIT'&&e.type==='PURCHASE'); if(debit){const wallet=await tx.wallet.findUnique({where:{userId}}); if(!wallet)return {kind:'WALLET_NOT_FOUND' as const}; const after=wallet.availableBalance.add(order.amount); await tx.walletTransaction.create({data:{walletId:wallet.id,orderId,type:'REFUND',direction:'CREDIT',amount:order.amount,balanceBefore:wallet.availableBalance,balanceAfter:after,reference:`REF-CANCEL-${orderId}`,idempotencyKey:`idemp-ref-cancel-${orderId}`,source:'ORDER_CANCEL'}}); await tx.wallet.update({where:{id:wallet.id},data:{availableBalance:after,lifetimeSpent:wallet.lifetimeSpent.sub(order.amount),version:{increment:1}}}); await tx.receipt.create({data:{reference:`REC-REF-${orderId.slice(0,8)}`,userId,type:'REFUND',amount:order.amount,entityId:orderId,metadata:{reason:'Order cancelled by customer'}}})} const updated=await tx.order.update({where:{id:orderId},data:{status:'CANCELLED'}}); await tx.orderStatusEvent.create({data:{orderId,status:'CANCELLED',note:'Cancelled by customer'}}); await tx.notification.create({data:{userId,title:'Order Cancelled',message:`Your order for product ID ${order.productId} has been cancelled${debit?' and refunded':''}.`,type:'REFUND'}}); return {kind:'OK' as const,order:updated} }) },
+  findReceipt: (reference: string) => prisma.receipt.findUnique({where:{reference},include:{user:{select:{email:true,fullName:true}}}}),
+  async listTickets(userId:string,page:number,limit:number){const [items,total]=await Promise.all([prisma.supportTicket.findMany({where:{userId},orderBy:{updatedAt:'desc'},skip:(page-1)*limit,take:limit}),prisma.supportTicket.count({where:{userId}})]);return {items,total,page,limit}},
+  createTicket(userId:string,subject:string,message:string,orderId?:string){return prisma.$transaction(async tx=>{const ticket=await tx.supportTicket.create({data:{userId,orderId:orderId??null,subject,status:'OPEN'}});await tx.supportMessage.create({data:{ticketId:ticket.id,senderId:userId,message}});return ticket})},
+  findTicketDetails:(id:string)=>prisma.supportTicket.findUnique({where:{id},include:{messages:{orderBy:{createdAt:'asc'}},order:{select:{id:true,productId:true,status:true}}}}),
+  findTicket:(id:string)=>prisma.supportTicket.findUnique({where:{id}}),
+  addTicketMessage(ticketId:string,senderId:string,message:string){return prisma.$transaction(async tx=>{const created=await tx.supportMessage.create({data:{ticketId,senderId,message}});await tx.supportTicket.update({where:{id:ticketId},data:{status:'OPEN'}});return created})},
+  listNotifications:(userId:string)=>prisma.notification.findMany({where:{userId},orderBy:{createdAt:'desc'}}),
+  findNotification:(id:string)=>prisma.notification.findUnique({where:{id}}),
+  markNotificationRead:(id:string)=>prisma.notification.update({where:{id},data:{read:true}}),
+}
