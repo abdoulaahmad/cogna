@@ -65,7 +65,15 @@ export const PaymentGatewayConfigurationService = {
 
   async getGateway(gatewayType: PaymentGatewayType): Promise<IPaymentGateway> {
     const record = await PaymentGatewayConfigurationRepository.findByGateway(gatewayType)
-    if (!record) return getPaymentGateway(gatewayType)
+    if (!record) {
+      if (gatewayType === 'PAYSTACK' && !env.PAYSTACK_SECRET_KEY) {
+        throw new ConflictError('Paystack is not configured. Add credentials in Admin → Payment gateways.')
+      }
+      if (gatewayType === 'MONNIFY' && (!env.MONNIFY_API_KEY || !env.MONNIFY_SECRET_KEY || !env.MONNIFY_CONTRACT_CODE)) {
+        throw new ConflictError('Monnify is not configured')
+      }
+      return getPaymentGateway(gatewayType)
+    }
     if (!record.enabled) throw new ConflictError(`${gatewayType} is disabled`)
 
     const secretKey = decryptCredential(record.secretKey)

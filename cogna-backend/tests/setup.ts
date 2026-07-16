@@ -9,6 +9,7 @@ process.env.JWT_REFRESH_SECRET  = 'test-refresh-secret-minimum-32-chars-long'
 process.env.DATABASE_URL        = 'postgresql://user:password@localhost:5432/cogna_test'
 process.env.DATABASE_TEST_URL   = 'postgresql://user:password@localhost:5432/cogna_test'
 process.env.PROVIDER_ENCRYPTION_KEY = 'test-provider-encryption-key-at-least-32'
+process.env.PAYSTACK_SECRET_KEY = 'sk_test_test-suite-key'
 
 // ── Mock the entire Prisma database module for unit tests ─────────────────
 // Unit tests mock at the repository layer, so the DB should never be touched.

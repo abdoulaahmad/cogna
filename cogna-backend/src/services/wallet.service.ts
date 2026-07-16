@@ -35,6 +35,9 @@ export const WalletService = {
       return { reference: existing.reference, authorizationUrl: existing.authorizationUrl }
     }
 
+    // Validate gateway readiness before creating a persistent funding attempt.
+    const gateway = await PaymentGatewayConfigurationService.getGateway(input.gateway)
+
     const wallet = await WalletRepository.getOrCreate(input.userId, input.currency)
     if (wallet.currency !== input.currency) throw new ConflictError('Wallet currency does not match funding currency')
 
@@ -43,8 +46,7 @@ export const WalletService = {
       walletId: wallet.id, userId: input.userId, gateway: input.gateway, reference,
       idempotencyKey: input.idempotencyKey, amount: input.amount, currency: input.currency,
     })
-    const gateway = await PaymentGatewayConfigurationService.getGateway(input.gateway)
-    const result = await gateway.initializePayment({
+        const result = await gateway.initializePayment({
       amount: input.amount, currency: input.currency, email: input.email, reference, orderId: funding.id, callbackUrl: input.callbackUrl,
     })
     await WalletRepository.saveCheckout(funding.id, result.authorizationUrl, result.gatewayReference)
