@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 import { PaymentService } from '@/services/payment.service'
+import { WalletService } from '@/services/wallet.service'
 import { initializePaymentSchema } from '@/validators/payment.validator'
 import { successResponse } from '@/utils/response'
 import { handleRouteError } from '@/utils/handle-error'
@@ -37,7 +38,18 @@ export default async function paymentRoutes(app: FastifyInstance) {
       const rawBody = req.rawBody
       if (!rawBody) return reply.status(400).send({ ok: false })
       const payload = Buffer.isBuffer(rawBody) ? rawBody.toString('utf8') : rawBody
-      const ok = await PaymentService.handleWebhook(gateway.toUpperCase() as PaymentGatewayType, payload, signature)
+      const gatewayType = gateway.toUpperCase() as PaymentGatewayType
+      let reference = ''
+      try {
+        const webhook = JSON.parse(payload) as { data?: { reference?: unknown } }
+        reference = typeof webhook.data?.reference === 'string' ? webhook.data.reference : ''
+      } catch {
+        return reply.status(400).send({ ok: false })
+      }
+
+      const ok = reference.startsWith('wallet_')
+        ? await WalletService.handleFundingWebhook(gatewayType, payload, signature)
+        : await PaymentService.handleWebhook(gatewayType, payload, signature)
       return reply.status(ok ? 200 : 400).send({ ok })
     } catch (error) {
       return handleRouteError(error, reply)

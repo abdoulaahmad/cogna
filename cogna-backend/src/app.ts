@@ -34,6 +34,7 @@ export async function buildApp() {
   await app.register(cors, {
     origin: env.APP_URL,
     credentials: true,
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   })
 
   await app.register(jwt, {

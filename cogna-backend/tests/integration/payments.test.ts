@@ -11,7 +11,14 @@ vi.mock('@/services/payment.service', () => ({
   },
 }))
 
+vi.mock('@/services/wallet.service', () => ({
+  WalletService: {
+    handleFundingWebhook: vi.fn(),
+  },
+}))
+
 import { PaymentService } from '@/services/payment.service'
+import { WalletService } from '@/services/wallet.service'
 
 let app: FastifyInstance
 let authToken: string
@@ -125,6 +132,32 @@ describe('Payments API Integration', () => {
         .set('x-paystack-signature', 'bad-sig')
         .set('Content-Type', 'application/json')
         .send({ event: 'charge.success', data: { reference: 'ref_1' } })
+
+      expect(response.status).toBe(400)
+    })
+
+    it('should dispatch wallet funding references to the wallet service', async () => {
+      vi.mocked(WalletService.handleFundingWebhook).mockResolvedValueOnce(true)
+
+      const response = await request(app.server)
+        .post('/api/v1/payments/webhook/paystack')
+        .set('x-paystack-signature', 'valid-sig')
+        .set('Content-Type', 'application/json')
+        .send({ event: 'charge.success', data: { reference: 'wallet_ref_1' } })
+
+      expect(response.status).toBe(200)
+      expect(vi.mocked(WalletService.handleFundingWebhook)).toHaveBeenCalledWith(
+        'PAYSTACK', expect.stringContaining('wallet_ref_1'), 'valid-sig'
+      )
+      expect(vi.mocked(PaymentService.handleWebhook)).not.toHaveBeenCalled()
+    })
+
+    it('should reject malformed webhook JSON', async () => {
+      const response = await request(app.server)
+        .post('/api/v1/payments/webhook/paystack')
+        .set('x-paystack-signature', 'valid-sig')
+        .set('Content-Type', 'application/json')
+        .send('{not-json')
 
       expect(response.status).toBe(400)
     })

@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto'
 import { PaymentRepository } from '@/repositories/payment.repository'
 import { OrderRepository } from '@/repositories/order.repository'
 import { ProductRepository } from '@/repositories/product.repository'
-import { getPaymentGateway } from '@/payments/GatewayFactory'
+import { PaymentGatewayConfigurationService } from '@/services/payment-gateway-configuration.service'
 import { fulfillmentQueue } from '@/queue/fulfillment.queue'
 import { ConflictError, ForbiddenError, NotFoundError } from '@/utils/errors'
 import type { PaymentGatewayType } from '@/types/payment-gateway.types'
@@ -45,7 +45,7 @@ export const PaymentService = {
     const existing = await PaymentRepository.findByOrderId(orderId)
     if (existing) throw new ConflictError('A payment has already been initiated for this order')
 
-    const gateway = getPaymentGateway(product.paymentGateway)
+    const gateway = await PaymentGatewayConfigurationService.getGateway(product.paymentGateway)
     const reference = generateReference()
     const initResult = await gateway.initializePayment({
       amount: Number(order.amount),
@@ -85,7 +85,7 @@ export const PaymentService = {
     const order = await OrderRepository.findById(payment.orderId)
     if (!order) throw new NotFoundError('Order')
 
-    const gateway = getPaymentGateway(payment.gateway)
+    const gateway = await PaymentGatewayConfigurationService.getGateway(payment.gateway)
     const verifyResult = await gateway.verifyPayment(reference)
     const newStatus = toPaymentStatus(verifyResult.status)
 
@@ -115,7 +115,7 @@ export const PaymentService = {
     rawBody: string,
     signature: string
   ): Promise<boolean> {
-    const gateway = getPaymentGateway(gatewayType)
+    const gateway = await PaymentGatewayConfigurationService.getGateway(gatewayType)
     if (!gateway.validateWebhook(rawBody, signature)) return false
 
     let reference: string

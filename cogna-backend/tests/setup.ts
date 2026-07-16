@@ -25,6 +25,7 @@ vi.mock('@/config/database', () => ({
     apiKey:        { create: vi.fn(), findUnique: vi.fn(), update: vi.fn(), findMany: vi.fn() },
     order:         { create: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn(), aggregate: vi.fn(), groupBy: vi.fn(), count: vi.fn() },
     payment:       { create: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn() },
+    paymentGatewayConfiguration: { findUnique: vi.fn(), findMany: vi.fn(), upsert: vi.fn() },
     product:       { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn() },
     provider:      { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
     category:      { findUnique: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },

@@ -20,6 +20,8 @@ import { successResponse, errorResponse } from '@/utils/response'
 import { handleRouteError } from '@/utils/handle-error'
 import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '@/utils/errors'
 import { AuditLogService } from '@/services/audit-log.service'
+import { PaymentGatewayConfigurationService } from '@/services/payment-gateway-configuration.service'
+import { updatePaystackConfigurationSchema } from '@/validators/payment-gateway-configuration.validator'
 import { AdminRole } from '@prisma/client'
 
 /** RBAC guard — allows ADMIN and SUPER_ADMIN only */
@@ -234,6 +236,34 @@ export default async function adminRoutes(app: FastifyInstance) {
     } catch (error) { return handleRouteError(error, reply) }
   })
 
+  // Payment gateway configuration
+  app.get('/payment-gateways/paystack', {
+    preHandler: app.requireAdminRole([AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.OPERATIONS, AdminRole.FINANCE])
+  }, async (_req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const configuration = await PaymentGatewayConfigurationService.getPaystackStatus()
+      return reply.send(successResponse(configuration))
+    } catch (error) { return handleRouteError(error, reply) }
+  })
+
+  app.put('/payment-gateways/paystack', {
+    preHandler: app.requireAdminRole([AdminRole.SUPER_ADMIN])
+  }, async (req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const input = updatePaystackConfigurationSchema.parse(req.body)
+      const before = await PaymentGatewayConfigurationService.getPaystackStatus()
+      const configuration = await PaymentGatewayConfigurationService.updatePaystack(input)
+      const { sub } = req.user as { sub: string }
+
+      await AuditLogService.recordAuditEvent(sub, 'PAYMENT_GATEWAY_CONFIGURATION_UPDATE', 'payment_gateway_configurations', 'PAYSTACK', req.ip, {
+        reason: 'Paystack configuration updated through the admin portal',
+        beforeSnapshot: before,
+        afterSnapshot: configuration,
+      })
+
+      return reply.send(successResponse(configuration, 'Paystack configuration updated'))
+    } catch (error) { return handleRouteError(error, reply) }
+  })
   // ─── Admin Dashboard Metrics ───────────────────────────────────────────────
   app.get('/dashboard/metrics', {
     preHandler: app.requireAdminRole([AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.OPERATIONS, AdminRole.SUPPORT, AdminRole.FINANCE])

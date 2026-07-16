@@ -1,105 +1,67 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { PaystackAdapter } from '@/payments/PaystackAdapter'
-import axios from 'axios'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('axios')
+const sdk = vi.hoisted(() => ({ initialize: vi.fn(), verify: vi.fn() }))
+vi.mock('@paystack/paystack-sdk', () => ({
+  default: class MockPaystack {
+    transaction = { initialize: sdk.initialize, verify: sdk.verify }
+  },
+}))
+
+import { PaystackAdapter } from '@/payments/PaystackAdapter'
 
 const adapter = new PaystackAdapter('sk_test_fake_secret_key')
 
-beforeEach(() => { vi.clearAllMocks() })
+beforeEach(() => vi.clearAllMocks())
 
 describe('PaystackAdapter', () => {
-
   describe('initializePayment', () => {
-    it('should return authorizationUrl and references on success', async () => {
-      vi.mocked(axios.post).mockResolvedValue({
-        data: {
-          status: true,
-          data: {
-            authorization_url: 'https://checkout.paystack.com/abc123',
-            access_code:       'abc123',
-            reference:         'cogna_ref_001',
-          },
-        },
-      })
+    it('uses the official SDK and returns checkout references', async () => {
+      sdk.initialize.mockResolvedValue({ status: true, data: { authorization_url: 'https://checkout.paystack.com/abc123', access_code: 'abc123', reference: 'cogna_ref_001' } })
 
-      const result = await adapter.initializePayment({
-        amount:    9999,
-        currency:  'NGN',
-        email:     'customer@test.com',
-        reference: 'cogna_ref_001',
-        orderId:   'order-uuid-1',
-      })
+      const result = await adapter.initializePayment({ amount: 99.99, currency: 'NGN', email: 'customer@test.com', reference: 'cogna_ref_001', orderId: 'order-uuid-1', callbackUrl: 'https://cogna.store/verify' })
 
-      expect(result.authorizationUrl).toBe('https://checkout.paystack.com/abc123')
-      expect(result.reference).toBe('cogna_ref_001')
-      expect(result.gatewayReference).toBe('abc123')
+      expect(sdk.initialize).toHaveBeenCalledWith({
+        email: 'customer@test.com', amount: 9999, currency: 'NGN', reference: 'cogna_ref_001',
+        callback_url: 'https://cogna.store/verify', metadata: JSON.stringify({ orderId: 'order-uuid-1' }),
+      })
+      expect(result).toEqual({ authorizationUrl: 'https://checkout.paystack.com/abc123', reference: 'cogna_ref_001', gatewayReference: 'abc123' })
     })
 
-    it('should call Paystack API with correct payload', async () => {
-      vi.mocked(axios.post).mockResolvedValue({
-        data: { data: { authorization_url: 'url', access_code: 'code', reference: 'ref' } },
-      })
-
-      await adapter.initializePayment({
-        amount: 50, currency: 'NGN', email: 'x@x.com', reference: 'ref', orderId: 'o-1',
-      })
-
-      expect(axios.post).toHaveBeenCalledWith(
-        expect.stringContaining('/transaction/initialize'),
-        expect.objectContaining({ amount: 5000, email: 'x@x.com', reference: 'ref' }),
-        expect.any(Object)
-      )
+    it('rejects unsuccessful SDK responses', async () => {
+      sdk.initialize.mockResolvedValue({ status: false, message: 'Invalid key' })
+      await expect(adapter.initializePayment({ amount: 50, currency: 'NGN', email: 'x@x.com', reference: 'ref', orderId: 'o-1' })).rejects.toThrow('Paystack initialization failed: Invalid key')
     })
   })
 
   describe('verifyPayment', () => {
-    it('should return success status when Paystack reports success', async () => {
-      vi.mocked(axios.get).mockResolvedValue({
-        data: {
-          data: {
-            status:    'success',
-            amount:    9999,
-            currency:  'NGN',
-            reference: 'cogna_ref_001',
-            paid_at:   '2026-01-01T12:00:00.000Z',
-            metadata:  {},
-          },
-        },
-      })
+    it('normalizes successful verification amounts from minor units', async () => {
+      sdk.verify.mockResolvedValue({ status: true, data: { status: 'success', amount: 9999, currency: 'NGN', reference: 'cogna_ref_001', paid_at: '2026-01-01T12:00:00.000Z', metadata: { orderId: 'order-1' } } })
 
       const result = await adapter.verifyPayment('cogna_ref_001')
 
-      expect(result.status).toBe('success')
-      expect(result.amount).toBe(99.99)
+      expect(sdk.verify).toHaveBeenCalledWith({ reference: 'cogna_ref_001' })
+      expect(result).toMatchObject({ status: 'success', amount: 99.99, currency: 'NGN', gatewayReference: 'cogna_ref_001', metadata: { orderId: 'order-1' } })
       expect(result.paidAt).toBeInstanceOf(Date)
     })
 
-    it('should return failed status when Paystack reports abandoned', async () => {
-      vi.mocked(axios.get).mockResolvedValue({
-        data: {
-          data: { status: 'abandoned', amount: 0, currency: 'NGN', reference: 'ref', paid_at: null, metadata: {} },
-        },
-      })
+    it.each([['abandoned', 'failed'], ['failed', 'failed'], ['pending', 'pending']] as const)('maps %s to %s', async (gatewayStatus, expectedStatus) => {
+      sdk.verify.mockResolvedValue({ status: true, data: { status: gatewayStatus, amount: 5000, currency: 'NGN', reference: 'ref', paid_at: null, metadata: {} } })
+      await expect(adapter.verifyPayment('ref')).resolves.toMatchObject({ status: expectedStatus, paidAt: null })
+    })
 
-      const result = await adapter.verifyPayment('ref')
-
-      expect(result.status).toBe('failed')
-      expect(result.paidAt).toBeNull()
+    it('rejects malformed successful responses', async () => {
+      sdk.verify.mockResolvedValue({ status: true, data: { status: 'success', currency: 'NGN', reference: 'ref' } })
+      await expect(adapter.verifyPayment('ref')).rejects.toThrow('Paystack response is missing amount')
     })
   })
 
   describe('validateWebhook', () => {
-    it('should return true when HMAC signature matches payload', () => {
-      const crypto = require('crypto')
-      const payload   = JSON.stringify({ event: 'charge.success' })
+    it('accepts only a matching HMAC-SHA512 signature', () => {
+      const crypto = require('crypto') as typeof import('crypto')
+      const payload = JSON.stringify({ event: 'charge.success' })
       const signature = crypto.createHmac('sha512', 'sk_test_fake_secret_key').update(payload).digest('hex')
-
       expect(adapter.validateWebhook(payload, signature)).toBe(true)
-    })
-
-    it('should return false when signature does not match', () => {
-      expect(adapter.validateWebhook('payload', 'wrong-signature')).toBe(false)
+      expect(adapter.validateWebhook(payload, 'wrong-signature')).toBe(false)
     })
   })
 })

@@ -59,6 +59,7 @@ enum PaymentGateway {
   PAYSTACK
   MONNIFY
 }
+
 enum WalletTransactionType {
   FUNDING
   PURCHASE
@@ -110,37 +111,37 @@ enum ProviderStatus {
 // ─────────────────────────────────────────────
 
 model User {
-  id             String     @id @default(uuid())
-  fullName       String     @map("full_name")
-  email          String     @unique
-  passwordHash   String     @map("password_hash")
-  role           UserRole   @default(CUSTOMER)
-  adminRole      AdminRole? @map("admin_role")
-  emailVerified  Boolean    @default(false) @map("email_verified")
-  status         UserStatus @default(PENDING)
-  createdAt      DateTime   @default(now()) @map("created_at")
-  updatedAt      DateTime   @updatedAt @map("updated_at")
+  id            String     @id @default(uuid())
+  fullName      String     @map("full_name")
+  email         String     @unique
+  passwordHash  String     @map("password_hash")
+  role          UserRole   @default(CUSTOMER)
+  adminRole     AdminRole? @map("admin_role")
+  emailVerified Boolean    @default(false) @map("email_verified")
+  status        UserStatus @default(PENDING)
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
 
   // Relations
-  refreshTokens  RefreshToken[]
-  apiKeys        ApiKey[]
-  orders         Order[]
-  payments       Payment[]
-  auditLogs      AuditLog[]
-  capabilities   UserCapability[]
-  wallet         Wallet?
-  walletFundings WalletFunding[]
-  refunds        Refund[]
-  apiRequestLogs ApiRequestLog[]
-  webhookEndpoints DeveloperWebhookEndpoint[]
-  makerAdjustments  WalletAdjustmentRequest[] @relation("MakerRelation")
-  checkerAdjustments WalletAdjustmentRequest[] @relation("CheckerRelation")
-  verificationTokens VerificationToken[]
-  supportTickets     SupportTicket[]
-  supportMessages    SupportMessage[]
-  notifications      Notification[]
+  refreshTokens          RefreshToken[]
+  apiKeys                ApiKey[]
+  orders                 Order[]
+  payments               Payment[]
+  auditLogs              AuditLog[]
+  capabilities           UserCapability[]
+  wallet                 Wallet?
+  walletFundings         WalletFunding[]
+  refunds                Refund[]
+  apiRequestLogs         ApiRequestLog[]
+  webhookEndpoints       DeveloperWebhookEndpoint[]
+  makerAdjustments       WalletAdjustmentRequest[]  @relation("MakerRelation")
+  checkerAdjustments     WalletAdjustmentRequest[]  @relation("CheckerRelation")
+  verificationTokens     VerificationToken[]
+  supportTickets         SupportTicket[]
+  supportMessages        SupportMessage[]
+  notifications          Notification[]
   notificationPreference NotificationPreference?
-  receipts           Receipt[]
+  receipts               Receipt[]
 
   @@map("users")
 }
@@ -155,6 +156,7 @@ model UserCapability {
   @@unique([userId, type])
   @@map("user_capabilities")
 }
+
 model RefreshToken {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
@@ -168,18 +170,18 @@ model RefreshToken {
 }
 
 model ApiKey {
-  id         String       @id @default(uuid())
-  userId     String       @map("user_id")
-  name       String
-  apiKey     String       @unique @map("api_key")
+  id          String            @id @default(uuid())
+  userId      String            @map("user_id")
+  name        String
+  apiKey      String            @unique @map("api_key")
   environment ApiKeyEnvironment @default(TEST)
-  scopes     String[]     @default([])
-  expiresAt  DateTime?    @map("expires_at")
-  status     ApiKeyStatus @default(ACTIVE)
-  lastUsedAt DateTime?    @map("last_used_at")
-  createdAt  DateTime     @default(now()) @map("created_at")
+  scopes      String[]          @default([])
+  expiresAt   DateTime?         @map("expires_at")
+  status      ApiKeyStatus      @default(ACTIVE)
+  lastUsedAt  DateTime?         @map("last_used_at")
+  createdAt   DateTime          @default(now()) @map("created_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   requestLogs ApiRequestLog[]
 
   @@map("api_keys")
@@ -190,11 +192,11 @@ model ApiKey {
 // ─────────────────────────────────────────────
 
 model Category {
-  id          String    @id @default(uuid())
+  id          String   @id @default(uuid())
   name        String
-  slug        String    @unique
+  slug        String   @unique
   description String?
-  createdAt   DateTime  @default(now()) @map("created_at")
+  createdAt   DateTime @default(now()) @map("created_at")
 
   products Product[]
 
@@ -205,17 +207,29 @@ model Provider {
   id        String         @id @default(uuid())
   name      String
   baseUrl   String         @map("base_url")
-  apiKey    String         @map("api_key")       // encrypted
-  apiSecret String?        @map("api_secret")    // optional
-  apiConfig Json?          @map("api_config")    // provider-specific config JSON
+  apiKey    String         @map("api_key") // encrypted
+  apiSecret String?        @map("api_secret") // optional
+  apiConfig Json?          @map("api_config") // provider-specific config JSON
   status    ProviderStatus @default(ACTIVE)
   createdAt DateTime       @default(now()) @map("created_at")
   updatedAt DateTime       @updatedAt @map("updated_at")
 
-  products Product[]
+  products      Product[]
   webhookEvents ProviderWebhookEvent[]
 
   @@map("providers")
+}
+
+model PaymentGatewayConfiguration {
+  id        String         @id @default(uuid())
+  gateway   PaymentGateway @unique
+  publicKey String?        @map("public_key")
+  secretKey String         @map("secret_key")
+  enabled   Boolean        @default(false)
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+
+  @@map("payment_gateway_configurations")
 }
 
 model Product {
@@ -236,8 +250,8 @@ model Product {
   createdAt           DateTime       @default(now()) @map("created_at")
   updatedAt           DateTime       @updatedAt @map("updated_at")
 
-  provider Provider  @relation(fields: [providerId], references: [id])
-  category Category  @relation(fields: [categoryId], references: [id])
+  provider Provider @relation(fields: [providerId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
   orders   Order[]
 
   @@index([slug])
@@ -250,26 +264,26 @@ model Product {
 // ─────────────────────────────────────────────
 
 model Order {
-  id                String      @id @default(uuid())
-  userId            String      @map("user_id")
-  productId         String      @map("product_id")
-  providerId        String      @map("provider_id")
-  providerOrderId   String?     @map("provider_order_id")
-  status            OrderStatus @default(PENDING)
-  amount            Decimal     @db.Decimal(10, 2)
-  currency          String      @default("NGN")
-  customerEmail     String      @map("customer_email")
-  providerResponse  Json?       @map("provider_response")
-  createdAt         DateTime    @default(now()) @map("created_at")
-  updatedAt         DateTime    @updatedAt @map("updated_at")
+  id               String      @id @default(uuid())
+  userId           String      @map("user_id")
+  productId        String      @map("product_id")
+  providerId       String      @map("provider_id")
+  providerOrderId  String?     @map("provider_order_id")
+  status           OrderStatus @default(PENDING)
+  amount           Decimal     @db.Decimal(10, 2)
+  currency         String      @default("NGN")
+  customerEmail    String      @map("customer_email")
+  providerResponse Json?       @map("provider_response")
+  createdAt        DateTime    @default(now()) @map("created_at")
+  updatedAt        DateTime    @updatedAt @map("updated_at")
 
-  user    User     @relation(fields: [userId], references: [id])
-  product Product  @relation(fields: [productId], references: [id])
-  payment Payment?
+  user               User                @relation(fields: [userId], references: [id])
+  product            Product             @relation(fields: [productId], references: [id])
+  payment            Payment?
   walletTransactions WalletTransaction[]
-  refunds Refund[]
-  supportTickets SupportTicket[]
-  statusEvents   OrderStatusEvent[]
+  refunds            Refund[]
+  supportTickets     SupportTicket[]
+  statusEvents       OrderStatusEvent[]
 
   @@index([userId])
   @@index([status])
@@ -286,11 +300,11 @@ model Payment {
   userId           String         @map("user_id")
   gateway          PaymentGateway
   gatewayReference String?        @map("gateway_reference") // ref from the gateway
-  reference        String         @unique                   // internal ref
+  reference        String         @unique // internal ref
   amount           Decimal        @db.Decimal(10, 2)
   currency         String         @default("NGN")
   status           PaymentStatus  @default(PENDING)
-  metadata         Json?          // gateway-specific response data
+  metadata         Json? // gateway-specific response data
   paidAt           DateTime?      @map("paid_at")
   createdAt        DateTime       @default(now()) @map("created_at")
 
@@ -307,15 +321,15 @@ model Wallet {
   id               String   @id @default(uuid())
   userId           String   @unique @map("user_id")
   currency         String   @default("NGN")
-  availableBalance Decimal  @default(0) @db.Decimal(14, 2) @map("available_balance")
-  pendingBalance   Decimal  @default(0) @db.Decimal(14, 2) @map("pending_balance")
-  lifetimeFunded   Decimal  @default(0) @db.Decimal(14, 2) @map("lifetime_funded")
-  lifetimeSpent    Decimal  @default(0) @db.Decimal(14, 2) @map("lifetime_spent")
+  availableBalance Decimal  @default(0) @map("available_balance") @db.Decimal(14, 2)
+  pendingBalance   Decimal  @default(0) @map("pending_balance") @db.Decimal(14, 2)
+  lifetimeFunded   Decimal  @default(0) @map("lifetime_funded") @db.Decimal(14, 2)
+  lifetimeSpent    Decimal  @default(0) @map("lifetime_spent") @db.Decimal(14, 2)
   version          Int      @default(0)
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
-  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions WalletTransaction[]
   fundings     WalletFunding[]
   refunds      Refund[]
@@ -332,8 +346,8 @@ model WalletTransaction {
   direction         WalletTransactionDirection
   amount            Decimal                    @db.Decimal(14, 2)
   currency          String                     @default("NGN")
-  balanceBefore     Decimal                    @db.Decimal(14, 2) @map("balance_before")
-  balanceAfter      Decimal                    @db.Decimal(14, 2) @map("balance_after")
+  balanceBefore     Decimal                    @map("balance_before") @db.Decimal(14, 2)
+  balanceAfter      Decimal                    @map("balance_after") @db.Decimal(14, 2)
   reference         String                     @unique
   idempotencyKey    String                     @unique @map("idempotency_key")
   externalReference String?                    @unique @map("external_reference")
@@ -345,6 +359,7 @@ model WalletTransaction {
   order   Order?         @relation(fields: [orderId], references: [id], onDelete: Restrict)
   funding WalletFunding?
   refunds Refund[]
+
   @@index([walletId, createdAt])
   @@map("wallet_transactions")
 }
@@ -374,27 +389,28 @@ model WalletFunding {
   @@map("wallet_fundings")
 }
 
-
 model Refund {
-  id                  String       @id @default(uuid())
-  userId              String       @map("user_id")
-  orderId             String       @map("order_id")
-  walletId            String       @map("wallet_id")
-  walletTransactionId String?      @unique @map("wallet_transaction_id")
-  amount              Decimal      @db.Decimal(14, 2)
-  currency            String       @default("NGN")
+  id                  String             @id @default(uuid())
+  userId              String             @map("user_id")
+  orderId             String             @map("order_id")
+  walletId            String             @map("wallet_id")
+  walletTransactionId String?            @unique @map("wallet_transaction_id")
+  amount              Decimal            @db.Decimal(14, 2)
+  currency            String             @default("NGN")
   reason              String
-  status              RefundStatus @default(REQUESTED)
-  reference           String       @unique
-  idempotencyKey      String       @unique @map("idempotency_key")
-  createdAt           DateTime     @default(now()) @map("created_at")
-  updatedAt           DateTime     @updatedAt @map("updated_at")
-  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
-  order Order @relation(fields: [orderId], references: [id], onDelete: Restrict)
-  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Restrict)
-  walletTransaction WalletTransaction? @relation(fields: [walletTransactionId], references: [id], onDelete: Restrict)
+  status              RefundStatus       @default(REQUESTED)
+  reference           String             @unique
+  idempotencyKey      String             @unique @map("idempotency_key")
+  createdAt           DateTime           @default(now()) @map("created_at")
+  updatedAt           DateTime           @updatedAt @map("updated_at")
+  user                User               @relation(fields: [userId], references: [id], onDelete: Restrict)
+  order               Order              @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  wallet              Wallet             @relation(fields: [walletId], references: [id], onDelete: Restrict)
+  walletTransaction   WalletTransaction? @relation(fields: [walletTransactionId], references: [id], onDelete: Restrict)
+
   @@map("refunds")
 }
+
 model PaymentEvent {
   id          String         @id @default(uuid())
   gateway     PaymentGateway
@@ -412,6 +428,7 @@ model PaymentEvent {
   @@index([reference])
   @@map("payment_events")
 }
+
 // ADMIN / SYSTEM
 // ─────────────────────────────────────────────
 
@@ -427,7 +444,7 @@ model AuditLog {
   id        String   @id @default(uuid())
   userId    String?  @map("user_id")
   action    String
-  entity    String?  // what was affected
+  entity    String? // what was affected
   entityId  String?  @map("entity_id")
   ipAddress String?  @map("ip_address")
   metadata  Json?
@@ -443,16 +460,16 @@ model AuditLog {
 // ─────────────────────────────────────────────
 
 model ApiRequestLog {
-  id           String    @id @default(uuid())
-  apiKeyId     String?   @map("api_key_id")
-  userId       String    @map("user_id")
+  id           String   @id @default(uuid())
+  apiKeyId     String?  @map("api_key_id")
+  userId       String   @map("user_id")
   method       String
   path         String
-  statusCode   Int       @map("status_code")
-  latencyMs    Int       @map("latency_ms")
-  ipAddress    String?   @map("ip_address")
-  errorMessage String?   @map("error_message")
-  createdAt    DateTime  @default(now()) @map("created_at")
+  statusCode   Int      @map("status_code")
+  latencyMs    Int      @map("latency_ms")
+  ipAddress    String?  @map("ip_address")
+  errorMessage String?  @map("error_message")
+  createdAt    DateTime @default(now()) @map("created_at")
 
   apiKey ApiKey? @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
   user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -466,7 +483,7 @@ model DeveloperWebhookEndpoint {
   id          String            @id @default(uuid())
   userId      String            @map("user_id")
   url         String
-  secret      String            // used to sign webhooks
+  secret      String // used to sign webhooks
   environment ApiKeyEnvironment @default(TEST)
   active      Boolean           @default(true)
   createdAt   DateTime          @default(now()) @map("created_at")
@@ -479,15 +496,15 @@ model DeveloperWebhookEndpoint {
 }
 
 model DeveloperWebhookDelivery {
-  id          String   @id @default(uuid())
-  endpointId  String   @map("endpoint_id")
-  eventId     String   @map("event_id")
-  eventType   String   @map("event_type")
-  payload     Json
-  statusCode  Int?     @map("status_code")
-  response    String?  // response body from destination
-  success     Boolean  @default(false)
-  createdAt   DateTime @default(now()) @map("created_at")
+  id         String   @id @default(uuid())
+  endpointId String   @map("endpoint_id")
+  eventId    String   @map("event_id")
+  eventType  String   @map("event_type")
+  payload    Json
+  statusCode Int?     @map("status_code")
+  response   String? // response body from destination
+  success    Boolean  @default(false)
+  createdAt  DateTime @default(now()) @map("created_at")
 
   endpoint DeveloperWebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
 
@@ -513,20 +530,20 @@ model ProviderWebhookEvent {
 }
 
 model WalletAdjustmentRequest {
-  id        String                  @id @default(uuid())
-  walletId  String                  @map("wallet_id")
-  makerId   String                  @map("maker_id")
-  checkerId String?                 @map("checker_id")
-  amount    Decimal                 @db.Decimal(14, 2)
+  id        String                     @id @default(uuid())
+  walletId  String                     @map("wallet_id")
+  makerId   String                     @map("maker_id")
+  checkerId String?                    @map("checker_id")
+  amount    Decimal                    @db.Decimal(14, 2)
   direction WalletTransactionDirection
   reason    String
-  status    AdjustmentRequestStatus @default(PENDING)
-  createdAt DateTime                @default(now()) @map("created_at")
-  updatedAt DateTime                @updatedAt @map("updated_at")
+  status    AdjustmentRequestStatus    @default(PENDING)
+  createdAt DateTime                   @default(now()) @map("created_at")
+  updatedAt DateTime                   @updatedAt @map("updated_at")
 
-  wallet  Wallet  @relation(fields: [walletId], references: [id], onDelete: Cascade)
-  maker   User    @relation("MakerRelation", fields: [makerId], references: [id])
-  checker User?   @relation("CheckerRelation", fields: [checkerId], references: [id])
+  wallet  Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  maker   User   @relation("MakerRelation", fields: [makerId], references: [id])
+  checker User?  @relation("CheckerRelation", fields: [checkerId], references: [id])
 
   @@map("wallet_adjustment_requests")
 }

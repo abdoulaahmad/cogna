@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto'
-import { getPaymentGateway } from '@/payments/GatewayFactory'
+import { PaymentGatewayConfigurationService } from '@/services/payment-gateway-configuration.service'
 import { WalletRepository } from '@/repositories/wallet.repository'
-import { ConflictError, ForbiddenError } from '@/utils/errors'
+import { ConflictError, ForbiddenError, NotFoundError } from '@/utils/errors'
 import type { PaymentGatewayType } from '@/types/payment-gateway.types'
 
 export const WalletService = {
@@ -43,19 +43,28 @@ export const WalletService = {
       walletId: wallet.id, userId: input.userId, gateway: input.gateway, reference,
       idempotencyKey: input.idempotencyKey, amount: input.amount, currency: input.currency,
     })
-    const result = await getPaymentGateway(input.gateway).initializePayment({
+    const gateway = await PaymentGatewayConfigurationService.getGateway(input.gateway)
+    const result = await gateway.initializePayment({
       amount: input.amount, currency: input.currency, email: input.email, reference, orderId: funding.id, callbackUrl: input.callbackUrl,
     })
     await WalletRepository.saveCheckout(funding.id, result.authorizationUrl, result.gatewayReference)
     return { reference, authorizationUrl: result.authorizationUrl }
   },
+  async verifyFundingForUser(userId: string, reference: string) {
+    const funding = await WalletRepository.findFundingByReference(reference)
+    if (!funding) throw new NotFoundError('Wallet funding')
+    if (funding.userId !== userId) throw new ForbiddenError('Access denied')
+    return this.verifyFunding(reference)
+  },
+
   async verifyFunding(reference: string, gatewayType?: PaymentGatewayType) {
     const funding = await WalletRepository.findFundingByReference(reference)
     if (!funding) throw new ConflictError('Wallet funding was not found')
     if (gatewayType && funding.gateway !== gatewayType) throw new ForbiddenError('Gateway does not match funding')
     if (funding.status === 'COMPLETED') return funding
 
-    const result = await getPaymentGateway(funding.gateway).verifyPayment(reference)
+    const gateway = await PaymentGatewayConfigurationService.getGateway(funding.gateway)
+    const result = await gateway.verifyPayment(reference)
     if (result.status !== 'success') return funding
     if (Number(funding.amount) !== result.amount || funding.currency !== result.currency) {
       throw new ConflictError('Gateway funding amount or currency does not match')
@@ -64,7 +73,7 @@ export const WalletService = {
   },
 
   async handleFundingWebhook(gatewayType: PaymentGatewayType, rawBody: string, signature: string) {
-    const gateway = getPaymentGateway(gatewayType)
+    const gateway = await PaymentGatewayConfigurationService.getGateway(gatewayType)
     if (!gateway.validateWebhook(rawBody, signature)) return false
     try {
       const parsed = JSON.parse(rawBody) as { data?: { reference?: string } }
