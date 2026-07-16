@@ -5,6 +5,7 @@ import type { InitPaymentOptions } from '@/types/init-payment-options.types'
 import type { PaymentInitResult } from '@/types/payment-init-result.types'
 import type { PaymentVerifyResult } from '@/types/payment-verify-result.types'
 import { env } from '@/config/env'
+import { PaymentGatewayError } from '@/utils/errors'
 
 const PAYSTACK_MINOR_UNIT_FACTOR = 100
 
@@ -22,20 +23,20 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function responseData(response: PaystackSdkResponse, operation: string): Record<string, unknown> {
   if (response.status !== true || !isRecord(response.data)) {
-    throw new Error(`Paystack ${operation} failed: ${response.message ?? 'invalid gateway response'}`)
+    throw new PaymentGatewayError(`Paystack ${operation} failed: ${response.message ?? 'invalid gateway response'}`)
   }
   return response.data
 }
 
 function requiredString(data: Record<string, unknown>, field: string): string {
   const value = data[field]
-  if (typeof value !== 'string' || value.length === 0) throw new Error(`Paystack response is missing ${field}`)
+  if (typeof value !== 'string' || value.length === 0) throw new PaymentGatewayError(`Paystack response is missing ${field}`)
   return value
 }
 
 function requiredNumber(data: Record<string, unknown>, field: string): number {
   const value = data[field]
-  if (typeof value !== 'number' || !Number.isFinite(value)) throw new Error(`Paystack response is missing ${field}`)
+  if (typeof value !== 'number' || !Number.isFinite(value)) throw new PaymentGatewayError(`Paystack response is missing ${field}`)
   return value
 }
 
@@ -52,15 +53,21 @@ export class PaystackAdapter implements IPaymentGateway {
   async initializePayment(options: InitPaymentOptions): Promise<PaymentInitResult> {
     if (!this.secretKey) throw new Error('PAYSTACK_SECRET_KEY is required')
 
-    const response = await this.client.transaction.initialize({
-      email: options.email,
-      amount: toPaystackMinorUnits(options.amount),
-      currency: options.currency,
-      reference: options.reference,
-      ...(options.callbackUrl && { callback_url: options.callbackUrl }),
-      metadata: JSON.stringify({ orderId: options.orderId, ...(options.metadata ?? {}) }),
-    })
-    const data = responseData(response, 'initialization')
+    let data: Record<string, unknown>
+    try {
+      const response = await this.client.transaction.initialize({
+        email: options.email,
+        amount: toPaystackMinorUnits(options.amount),
+        currency: options.currency,
+        reference: options.reference,
+        ...(options.callbackUrl && { callback_url: options.callbackUrl }),
+        metadata: JSON.stringify({ orderId: options.orderId, ...(options.metadata ?? {}) }),
+      })
+      data = responseData(response, 'initialization')
+    } catch (error) {
+      if (error instanceof PaymentGatewayError) throw error
+      throw new PaymentGatewayError('Unable to connect to Paystack')
+    }
 
     return {
       authorizationUrl: requiredString(data, 'authorization_url'),

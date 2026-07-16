@@ -8,6 +8,7 @@ vi.mock('@paystack/paystack-sdk', () => ({
 }))
 
 import { PaystackAdapter } from '@/payments/PaystackAdapter'
+import { PaymentGatewayError } from '@/utils/errors'
 
 const adapter = new PaystackAdapter('sk_test_fake_secret_key')
 
@@ -27,9 +28,19 @@ describe('PaystackAdapter', () => {
       expect(result).toEqual({ authorizationUrl: 'https://checkout.paystack.com/abc123', reference: 'cogna_ref_001', gatewayReference: 'abc123' })
     })
 
-    it('rejects unsuccessful SDK responses', async () => {
+    it('rejects unsuccessful SDK responses with an actionable gateway status', async () => {
       sdk.initialize.mockResolvedValue({ status: false, message: 'Invalid key' })
-      await expect(adapter.initializePayment({ amount: 50, currency: 'NGN', email: 'x@x.com', reference: 'ref', orderId: 'o-1' })).rejects.toThrow('Paystack initialization failed: Invalid key')
+      const result = adapter.initializePayment({ amount: 50, currency: 'NGN', email: 'x@x.com', reference: 'ref', orderId: 'o-1' })
+      await expect(result).rejects.toMatchObject({ statusCode: 502, message: 'Paystack initialization failed: Invalid key' })
+      await expect(result).rejects.toBeInstanceOf(PaymentGatewayError)
+    })
+
+    it('maps SDK connectivity failures to a safe gateway error', async () => {
+      sdk.initialize.mockRejectedValue(new Error('socket contained sensitive request context'))
+      await expect(adapter.initializePayment({ amount: 50, currency: 'NGN', email: 'x@x.com', reference: 'ref', orderId: 'o-1' })).rejects.toMatchObject({
+        statusCode: 502,
+        message: 'Unable to connect to Paystack',
+      })
     })
   })
 

@@ -45,3 +45,10 @@ export class ValidationError extends AppError {
     this.name = 'ValidationError'
   }
 }
+
+export class PaymentGatewayError extends AppError {
+  constructor(message = 'Payment gateway is temporarily unavailable') {
+    super(message, 502)
+    this.name = 'PaymentGatewayError'
+  }
+}
