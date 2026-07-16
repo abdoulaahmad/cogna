@@ -53,4 +53,28 @@ describe('WalletService funding verification', () => {
     expect(WalletRepository.getOrCreate).not.toHaveBeenCalled()
     expect(WalletRepository.createFunding).not.toHaveBeenCalled()
   })
+
+  it('successfully initializes funding and returns reference, authorizationUrl, and accessCode', async () => {
+    vi.mocked(WalletRepository.findFundingByIdempotencyKey).mockResolvedValue(null)
+    vi.mocked(PaymentGatewayConfigurationService.getGateway).mockResolvedValue({
+      initializePayment: vi.fn().mockResolvedValue({
+        authorizationUrl: 'https://checkout.paystack.com/fund',
+        reference: 'wallet_ref',
+        gatewayReference: 'access-code-123',
+      }),
+    } as never)
+    vi.mocked(WalletRepository.getOrCreate).mockResolvedValue({ id: 'wallet-1', currency: 'NGN' } as never)
+    vi.mocked(WalletRepository.createFunding).mockResolvedValue({ id: 'funding-1', reference: 'wallet_ref' } as never)
+
+    const result = await WalletService.initializeFunding({
+      userId: 'user-1', email: 'user@example.com', amount: 500, currency: 'NGN', gateway: 'PAYSTACK',
+      idempotencyKey: 'wallet-test-idempotency-2',
+    })
+
+    expect(result).toEqual({
+      reference: expect.stringMatching(/^wallet_\d+_[a-f0-9\-]+$/),
+      authorizationUrl: 'https://checkout.paystack.com/fund',
+      accessCode: 'access-code-123',
+    })
+  })
 })

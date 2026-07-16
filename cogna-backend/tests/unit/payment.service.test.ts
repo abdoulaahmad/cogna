@@ -54,6 +54,7 @@ describe('PaymentService', () => {
       )
 
       expect(result.authorizationUrl).toBe('https://checkout.paystack.com/abc')
+      expect(result.accessCode).toBe('PSK_ref_test')
       expect(PaymentRepository.create).toHaveBeenCalledOnce()
     })
 

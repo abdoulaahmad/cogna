@@ -22,6 +22,14 @@ export default async function walletRoutes(app: FastifyInstance) {
       return reply.send(successResponse(result))
     } catch (error) { return handleRouteError(error, reply) }
   })
+  app.get('/fundings/:reference/verify', async (req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { sub } = req.user as { sub: string }
+      const { reference } = req.params as { reference: string }
+      return reply.send(successResponse(await WalletService.verifyFundingForUser(sub, reference), 'Wallet funding verification completed'))
+    } catch (error) { return handleRouteError(error, reply) }
+  })
+
   app.post('/refunds', async (req: FastifyRequest, reply: FastifyReply) => {
     try { const { sub } = req.user as { sub: string }; const body = walletRefundSchema.parse(req.body); return reply.status(201).send(successResponse(await WalletService.refundPurchase({ userId: sub, ...body }), 'Wallet refund completed')) } catch (error) { return handleRouteError(error, reply) }
   })

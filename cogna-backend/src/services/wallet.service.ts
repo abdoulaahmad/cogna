@@ -32,7 +32,7 @@ export const WalletService = {
     if (existing) {
       if (existing.userId !== input.userId) throw new ForbiddenError('Access denied')
       if (!existing.authorizationUrl) throw new ConflictError('Funding initialization is still in progress')
-      return { reference: existing.reference, authorizationUrl: existing.authorizationUrl }
+      return { reference: existing.reference, authorizationUrl: existing.authorizationUrl, accessCode: existing.gatewayReference ?? undefined }
     }
 
     // Validate gateway readiness before creating a persistent funding attempt.
@@ -46,11 +46,11 @@ export const WalletService = {
       walletId: wallet.id, userId: input.userId, gateway: input.gateway, reference,
       idempotencyKey: input.idempotencyKey, amount: input.amount, currency: input.currency,
     })
-        const result = await gateway.initializePayment({
+    const result = await gateway.initializePayment({
       amount: input.amount, currency: input.currency, email: input.email, reference, orderId: funding.id, callbackUrl: input.callbackUrl,
     })
     await WalletRepository.saveCheckout(funding.id, result.authorizationUrl, result.gatewayReference)
-    return { reference, authorizationUrl: result.authorizationUrl }
+    return { reference, authorizationUrl: result.authorizationUrl, accessCode: result.gatewayReference }
   },
   async verifyFundingForUser(userId: string, reference: string) {
     const funding = await WalletRepository.findFundingByReference(reference)

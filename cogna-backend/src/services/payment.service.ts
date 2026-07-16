@@ -61,6 +61,7 @@ export const PaymentService = {
       userId,
       gateway: product.paymentGateway,
       reference: initResult.reference,
+      gatewayReference: initResult.gatewayReference,
       amount: Number(order.amount),
       currency: order.currency,
     })
@@ -68,6 +69,7 @@ export const PaymentService = {
     return {
       authorizationUrl: initResult.authorizationUrl,
       reference: initResult.reference,
+      accessCode: initResult.gatewayReference,
     }
   },
 

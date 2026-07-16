@@ -7,15 +7,16 @@ export const PaymentRepository = {
   /**
    * Persist a new payment record with PENDING status.
    */
-  async create(input: PaymentCreateInput): Promise<Payment> {
+  async create(input: PaymentCreateInput & { gatewayReference?: string }): Promise<Payment> {
     return prisma.payment.create({
       data: {
-        orderId:   input.orderId,
-        userId:    input.userId,
-        gateway:   input.gateway,
-        reference: input.reference,
-        amount:    input.amount,
-        currency:  input.currency,
+        orderId:          input.orderId,
+        userId:           input.userId,
+        gateway:          input.gateway,
+        reference:        input.reference,
+        gatewayReference: input.gatewayReference,
+        amount:           input.amount,
+        currency:         input.currency,
       },
     })
   },
