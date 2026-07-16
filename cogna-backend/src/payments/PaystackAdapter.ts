@@ -66,6 +66,11 @@ export class PaystackAdapter implements IPaymentGateway {
       data = responseData(response, 'initialization')
     } catch (error) {
       if (error instanceof PaymentGatewayError) throw error
+      const transportError = error instanceof Error ? error as Error & { code?: unknown } : null
+      console.error('Paystack initialization transport failure', {
+        name: transportError?.name ?? 'UnknownError',
+        code: typeof transportError?.code === 'string' ? transportError.code : undefined,
+      })
       throw new PaymentGatewayError('Unable to connect to Paystack')
     }
 
