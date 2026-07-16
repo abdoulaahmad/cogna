@@ -43,7 +43,7 @@ export const AuthService = {
 
     // Generate tokens
     const accessToken = signJwt(
-      { sub: user.id, role: user.role },
+      { sub: user.id, role: user.role, adminRole: user.adminRole },
       { expiresIn: env.JWT_EXPIRES_IN }
     )
 
@@ -61,6 +61,7 @@ export const AuthService = {
         fullName: user.fullName,
         email:    user.email,
         role:     user.role,
+        adminRole: user.adminRole,
       },
     }
   },
@@ -89,7 +90,7 @@ export const AuthService = {
     await RefreshTokenRepository.deleteByToken(refreshToken)
 
     const newAccessToken = signJwt(
-      { sub: user.id, role: user.role },
+      { sub: user.id, role: user.role, adminRole: user.adminRole },
       { expiresIn: env.JWT_EXPIRES_IN }
     )
     const newRefreshToken = uuidv4()
