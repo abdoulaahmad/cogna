@@ -26,7 +26,7 @@ const envSchema = z.object({
   PROVIDER_ENCRYPTION_KEY: z.string().min(32).optional(),
 
   AKUNDING_API_KEY:      z.string().optional(),
-  AKUNDING_BASE_URL:     z.string().url().default('https://akunding.com/api'),
+  AKUNDING_BASE_URL:     z.string().url().default('https://akunding.shop/api/v1'),
 
   REDIS_URL:             z.string().default('redis://localhost:6379'),
 

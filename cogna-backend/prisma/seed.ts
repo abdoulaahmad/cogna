@@ -43,7 +43,7 @@ async function main() {
   const provider = await prisma.provider.create({
     data: {
       name: 'Akunding Reseller API',
-      baseUrl: 'https://akunding.com/api',
+      baseUrl: 'https://akunding.shop/api/v1',
       apiKey: 'sk_live_dummy_akunding_api_key_xxxxxxxxxxxxxxxx',
       status: 'ACTIVE',
     },

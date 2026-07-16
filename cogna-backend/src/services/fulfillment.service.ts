@@ -47,6 +47,8 @@ export const FulfillmentService = {
       customerEmail: order.customerEmail,
       amount: Number(order.amount),
       currency: order.currency,
+      quantity: 1,
+      idempotencyKey: `cogna-order-${order.id}`,
     })
 
     if (result.providerOrderId) {

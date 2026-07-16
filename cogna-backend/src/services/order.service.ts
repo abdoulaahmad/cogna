@@ -2,6 +2,7 @@ import { OrderRepository } from '@/repositories/order.repository'
 import { ProductRepository } from '@/repositories/product.repository'
 import { NotFoundError, ForbiddenError } from '@/utils/errors'
 import type { CreateOrderInput } from '@/validators/order.validator'
+import { toCustomerOrderView } from '@/utils/order-delivery'
 
 export const OrderService = {
 
@@ -34,14 +35,15 @@ export const OrderService = {
     const order = await OrderRepository.findById(orderId)
     if (!order) throw new NotFoundError('Order')
     if (!isAdmin && order.userId !== userId) throw new ForbiddenError('Access denied')
-    return order
+    return isAdmin ? order : toCustomerOrderView(order, true)
   },
 
   /**
    * List all orders for the authenticated user with pagination.
    */
   async listOrders(userId: string, page = 1, limit = 20) {
-    return OrderRepository.findByUserId(userId, page, limit)
+    const result = await OrderRepository.findByUserId(userId, page, limit)
+    return { ...result, items: result.items.map((order) => toCustomerOrderView(order, false)) }
   },
 
   /**

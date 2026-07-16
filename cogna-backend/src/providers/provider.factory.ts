@@ -14,10 +14,9 @@ export async function getProvider(providerId: string): Promise<IProvider> {
   if (!record) throw new Error(`Provider not found: ${providerId}`)
   if (record.status === 'INACTIVE') throw new Error(`Provider is inactive: ${record.name}`)
 
-  switch (record.name.toLowerCase()) {
-    case 'akunding':
-      return new AkudingAdapter({ apiKey: decryptCredential(record.apiKey), baseUrl: record.baseUrl })
-    default:
-      throw new Error(`Unsupported provider: ${record.name}`)
+  if (record.name.toLowerCase().includes('akunding')) {
+    return new AkudingAdapter({ apiKey: decryptCredential(record.apiKey), baseUrl: record.baseUrl })
   }
+
+  throw new Error(`Unsupported provider: ${record.name}`)
 }

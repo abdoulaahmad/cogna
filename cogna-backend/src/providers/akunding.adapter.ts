@@ -1,99 +1,117 @@
-import type { IProvider }           from './provider.interface'
+import type { IProvider } from './provider.interface'
 import type { FulfillOrderInput, FulfillOrderResult } from '@/types/provider.types'
 
-interface AkudingConfig {
-  apiKey:  string
+interface AkundingConfig {
+  apiKey: string
   baseUrl: string
 }
 
-/** Map Akunding status strings to Cogna's standard statuses */
+type AkundingOrder = {
+  id: string | number
+  status: string
+  created_at?: number
+  delivered_at?: number | null
+  [key: string]: unknown
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+/** Map Akunding's documented status values to Cogna's order lifecycle. */
 function mapStatus(status: string): FulfillOrderResult['status'] {
   switch (status.toLowerCase()) {
+    case 'delivered':
     case 'completed':
     case 'success':
       return 'COMPLETED'
+    case 'cancelled':
+    case 'canceled':
+      return 'CANCELLED'
+    case 'expired':
     case 'failed':
     case 'error':
       return 'FAILED'
+    case 'draft':
+    case 'pending':
+    case 'processing':
     default:
       return 'PROCESSING'
   }
 }
 
-/**
- * AkudingAdapter — implements IProvider for the Akunding fulfillment platform.
- *
- * Credentials are injected at construction time (loaded from DB by ProviderFactory).
- * Never hardcode API keys — they come from the providers table at runtime.
- */
+function getOrder(body: unknown): AkundingOrder {
+  if (!isRecord(body)) throw new Error('Akunding response did not contain an order object')
+  const candidate = isRecord(body.data) ? body.data : body
+  if (typeof candidate.id !== 'string' && typeof candidate.id !== 'number') {
+    throw new Error('Akunding response did not contain an order id')
+  }
+  if (typeof candidate.status !== 'string') {
+    throw new Error('Akunding response did not contain an order status')
+  }
+  return candidate as AkundingOrder
+}
+
+/** Akunding reseller provider adapter. */
 export class AkudingAdapter implements IProvider {
-  private readonly apiKey:  string
+  private readonly apiKey: string
   private readonly baseUrl: string
 
-  constructor(config: AkudingConfig) {
-    this.apiKey  = config.apiKey
-    this.baseUrl = config.baseUrl.replace(/\/$/, '') // strip trailing slash
+  constructor(config: AkundingConfig) {
+    this.apiKey = config.apiKey
+    this.baseUrl = config.baseUrl.replace(/\/$/, '')
   }
 
-  /**
-   * Submit a product order to Akunding for fulfillment.
-   */
   async fulfillOrder(input: FulfillOrderInput): Promise<FulfillOrderResult> {
+    if (!Number.isInteger(Number(input.providerProductId)) || Number(input.providerProductId) < 1) {
+      throw new Error('Akunding provider product ID must be a positive integer')
+    }
+    if (!Number.isInteger(input.quantity) || input.quantity < 1 || input.quantity > 1000) {
+      throw new Error('Akunding quantity must be an integer between 1 and 1000')
+    }
     const res = await fetch(`${this.baseUrl}/orders`, {
-      method:  'POST',
+      method: 'POST',
       headers: {
-        'Content-Type':  'application/json',
+        'Content-Type': 'application/json',
         'Authorization': `Bearer ${this.apiKey}`,
+        // Akunding requires this header. The value is deterministically derived
+        // from Cogna's persisted order ID, so retries can never create a second order.
+        'X-Idempotency-Key': input.idempotencyKey,
       },
       body: JSON.stringify({
-        product_id:     input.providerProductId,
-        customer_email: input.customerEmail,
-        amount:         input.amount,
-        currency:       input.currency,
-        reference:      input.orderId,
-        metadata:       input.metadata ?? {},
+        product_id: Number(input.providerProductId),
+        quantity: input.quantity,
       }),
     })
 
-    if (!res.ok) {
-      throw new Error(`Akunding fulfillOrder failed: HTTP ${res.status}`)
+    if (!res.ok) throw new Error(`Akunding fulfillOrder failed: HTTP ${res.status}`)
+
+    const body: unknown = await res.json()
+    if (isRecord(body) && body.success === false) {
+      return { providerOrderId: null, status: 'FAILED', message: typeof body.message === 'string' ? body.message : undefined, rawResponse: body }
     }
 
-    const body = await res.json() as {
-      success: boolean
-      message?: string
-      data:     { orderId: string; status: string }
-    }
-
+    const order = getOrder(body)
     return {
-      providerOrderId: body.data.orderId,
-      status:          body.success ? mapStatus(body.data.status) : 'FAILED',
-      message:         body.message,
-      rawResponse:     body as unknown as Record<string, unknown>,
+      providerOrderId: String(order.id),
+      status: mapStatus(order.status),
+      rawResponse: isRecord(body) ? body : undefined,
     }
   }
 
-  /**
-   * Poll Akunding for the current status of a previously submitted order.
-   */
   async checkOrderStatus(providerOrderId: string): Promise<FulfillOrderResult> {
-    const res = await fetch(`${this.baseUrl}/orders/${providerOrderId}`, {
+    const res = await fetch(`${this.baseUrl}/orders/${encodeURIComponent(providerOrderId)}`, {
       headers: { 'Authorization': `Bearer ${this.apiKey}` },
     })
 
-    if (!res.ok) {
-      throw new Error(`Akunding checkOrderStatus failed: HTTP ${res.status}`)
-    }
+    if (!res.ok) throw new Error(`Akunding checkOrderStatus failed: HTTP ${res.status}`)
 
-    const body = await res.json() as {
-      success: boolean
-      data:    { orderId: string; status: string }
-    }
-
+    const body: unknown = await res.json()
+    const order = getOrder(body)
     return {
-      providerOrderId: body.data.orderId,
-      status:          mapStatus(body.data.status),
-      rawResponse:     body as unknown as Record<string, unknown>,
+      providerOrderId: String(order.id),
+      status: mapStatus(order.status),
+      rawResponse: isRecord(body) ? body : undefined,
     }
   }
 }
