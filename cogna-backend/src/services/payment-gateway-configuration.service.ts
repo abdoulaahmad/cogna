@@ -23,8 +23,18 @@ function paystackMode(secretKey?: string | null): 'TEST' | 'LIVE' | null {
 export const PaymentGatewayConfigurationService = {
   async getPaystackStatus() {
     const record = await PaymentGatewayConfigurationRepository.findByGateway(PaymentGateway.PAYSTACK)
-    const storedSecret = record ? decryptCredential(record.secretKey) : null
-    const storedPublic = record?.publicKey ? decryptCredential(record.publicKey) : null
+    let storedSecret: string | null = null
+    let storedPublic: string | null = null
+
+    try {
+      if (record) {
+        storedSecret = decryptCredential(record.secretKey)
+        storedPublic = record.publicKey ? decryptCredential(record.publicKey) : null
+      }
+    } catch (error) {
+      console.warn(`Failed to decrypt Paystack credentials for admin status: ${(error as Error).message}`)
+    }
+
     const secretKey = storedSecret ?? env.PAYSTACK_SECRET_KEY ?? null
     const publicKey = storedPublic ?? env.PAYSTACK_PUBLIC_KEY ?? null
 
@@ -43,8 +53,18 @@ export const PaymentGatewayConfigurationService = {
 
   async updatePaystack(input: { publicKey?: string; secretKey?: string; enabled: boolean }) {
     const current = await PaymentGatewayConfigurationRepository.findByGateway(PaymentGateway.PAYSTACK)
-    const currentSecret = current ? decryptCredential(current.secretKey) : env.PAYSTACK_SECRET_KEY
-    const currentPublic = current?.publicKey ? decryptCredential(current.publicKey) : env.PAYSTACK_PUBLIC_KEY
+    let currentSecret = env.PAYSTACK_SECRET_KEY
+    let currentPublic = env.PAYSTACK_PUBLIC_KEY
+
+    try {
+      if (current) {
+        currentSecret = decryptCredential(current.secretKey)
+        currentPublic = current.publicKey ? decryptCredential(current.publicKey) : env.PAYSTACK_PUBLIC_KEY
+      }
+    } catch (error) {
+      console.warn(`Failed to decrypt current Paystack credentials during update: ${(error as Error).message}`)
+    }
+
     const effectiveSecret = input.secretKey ?? currentSecret
     const effectivePublic = input.publicKey !== undefined ? input.publicKey : currentPublic
 
@@ -76,8 +96,23 @@ export const PaymentGatewayConfigurationService = {
     }
     if (!record.enabled) throw new ConflictError(`${gatewayType} is disabled`)
 
-    const secretKey = decryptCredential(record.secretKey)
-    const publicKey = record.publicKey ? decryptCredential(record.publicKey) : undefined
+    let secretKey: string
+    let publicKey: string | undefined
+
+    try {
+      secretKey = decryptCredential(record.secretKey)
+      publicKey = record.publicKey ? decryptCredential(record.publicKey) : undefined
+    } catch (error) {
+      console.warn(`Failed to decrypt database credentials for ${gatewayType}: ${(error as Error).message}. Falling back to environment variables.`)
+      if (gatewayType === 'PAYSTACK' && env.PAYSTACK_SECRET_KEY) {
+        return getPaymentGateway(gatewayType)
+      }
+      if (gatewayType === 'MONNIFY' && env.MONNIFY_API_KEY && env.MONNIFY_SECRET_KEY && env.MONNIFY_CONTRACT_CODE) {
+        return getPaymentGateway(gatewayType)
+      }
+      throw new ConflictError(`${gatewayType} credentials could not be decrypted and no environment fallback is configured.`)
+    }
+
     return getPaymentGateway(gatewayType, {
       secretKey,
       ...(gatewayType === 'MONNIFY' && publicKey ? { apiKey: publicKey } : {}),
