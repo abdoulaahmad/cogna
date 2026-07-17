@@ -75,7 +75,7 @@ export default function Header() {
             {isAuthenticated ? (
               <div className="flex items-center space-x-4">
                 <Link
-                  href={user?.role === 'ADMIN' ? '/admin/products' : '/orders'}
+                  href={user?.role === 'ADMIN' ? '/admin/dashboard' : '/dashboard'}
                   className="rounded-full bg-[#D4AF37] hover:bg-[#B8860B] px-5 py-2.5 text-xs font-bold text-slate-950 transition-all duration-200 shadow-sm border border-[#F8D56B]/20 h-10 flex items-center"
                 >
                   Workspace Portal
@@ -137,7 +137,7 @@ export default function Header() {
             {isAuthenticated ? (
               <div className="space-y-4">
                 <Link
-                  href={user?.role === 'ADMIN' ? '/admin/products' : '/orders'}
+                  href={user?.role === 'ADMIN' ? '/admin/dashboard' : '/dashboard'}
                   onClick={() => setMobileMenuOpen(false)}
                   className="block w-full text-center rounded-full bg-[#D4AF37] hover:bg-[#B8860B] py-3 text-xs font-bold text-slate-950 transition"
                 >

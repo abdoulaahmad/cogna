@@ -1,122 +1,49 @@
-import React from 'react';
 import Link from 'next/link';
-import { MessageSquare, ImageIcon, Mic, Code2, ShoppingCart, Star } from 'lucide-react';
+import { ArrowUpRight, Code2, ImageIcon, MessageSquare, Mic, ShoppingBag } from 'lucide-react';
 
 export interface Product {
   id: string;
   name: string;
   price: string;
   currency: string;
-  description?: string;
+  description?: string | null;
   slug: string;
-  category: {
-    id: string;
-    name: string;
-    slug: string;
-  };
-  image?: string;
+  category: { id: string; name: string; slug: string };
+  image?: string | null;
   paymentGateway: 'PAYSTACK' | 'MONNIFY';
+  deliveryTime?: string | null;
   active?: boolean;
 }
 
-interface ProductCardProps {
-  product: Product;
-  onAddToCart?: (product: Product) => void;
-  badge?: 'BEST SELLER' | 'TRENDING' | 'NEW ARRIVAL';
+interface ProductCardProps { product: Product; onAddToCart?: (product: Product) => void }
+
+function categoryIcon(slug: string) {
+  const props = { size: 26, strokeWidth: 1.7 };
+  if (slug.includes('language') || slug.includes('text')) return <MessageSquare {...props} />;
+  if (slug.includes('vision') || slug.includes('image')) return <ImageIcon {...props} />;
+  if (slug.includes('voice') || slug.includes('audio')) return <Mic {...props} />;
+  return <Code2 {...props} />;
 }
 
-export function ProductCard({ product, onAddToCart, badge }: ProductCardProps) {
-  const formattedPrice = new Intl.NumberFormat('en-NG', {
-    style: 'currency',
-    currency: product.currency || 'NGN',
-    minimumFractionDigits: 0,
-  }).format(parseFloat(product.price));
-
-  // Determine category icon
-  const getCategoryIcon = (slug: string) => {
-    switch (slug.toLowerCase()) {
-      case 'natural-language':
-      case 'text':
-        return <MessageSquare className="h-8 w-8 text-indigo-500" />;
-      case 'computer-vision':
-      case 'image':
-        return <ImageIcon className="h-8 w-8 text-purple-500" />;
-      case 'voice-audio':
-      case 'audio':
-        return <Mic className="h-8 w-8 text-pink-500" />;
-      default:
-        return <Code2 className="h-8 w-8 text-slate-500" />;
-    }
-  };
-
-  // Determine badge colors
-  const badgeStyles = {
-    'BEST SELLER': 'bg-indigo-50 text-indigo-600 border-indigo-100',
-    'TRENDING': 'bg-purple-50 text-purple-600 border-purple-100',
-    'NEW ARRIVAL': 'bg-pink-50 text-pink-600 border-pink-100',
-  };
+export default function ProductCard({ product, onAddToCart }: ProductCardProps) {
+  const price = new Intl.NumberFormat('en-NG', { style: 'currency', currency: product.currency || 'NGN', minimumFractionDigits: 0 }).format(Number(product.price));
+  const available = product.active !== false;
 
   return (
-    <div className="group relative rounded-xl border border-slate-200/80 bg-white p-5 transition-all duration-300 hover:shadow-premium hover:-translate-y-1 flex flex-col justify-between h-[360px]">
-      <div>
-        {/* Card Header: Category & Badge */}
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-            {product.category.name}
-          </span>
-          {badge ? (
-            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${badgeStyles[badge]}`}>
-              {badge}
-            </span>
-          ) : null}
-        </div>
-
-        {/* Card Body: Floating SVG Graphic / Category Icon */}
-        <div className="relative w-full h-32 rounded-lg bg-slate-50 flex items-center justify-center mb-4 overflow-hidden border border-slate-100/50 group-hover:bg-slate-100/50 transition-colors">
-          <div className="transition-transform duration-300 group-hover:scale-110">
-            {getCategoryIcon(product.category.slug)}
-          </div>
-          {/* Subtle curved background lines */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-indigo-500/5 via-transparent to-transparent opacity-60 pointer-events-none" />
-        </div>
-
-        {/* Card Description */}
-        <Link href={`/products/${product.slug}`} className="block">
-          <h3 className="text-base font-bold font-display text-slate-800 line-clamp-1 group-hover:text-indigo-600 transition-colors">
-            {product.name}
-          </h3>
-        </Link>
-        
-        {/* Mock Rating */}
-        <div className="flex items-center gap-1 mt-1 mb-2">
-          {[...Array(5)].map((_, i) => (
-            <Star key={i} size={11} className={i < 4 ? "fill-amber-400 text-amber-400" : "text-slate-200"} />
-          ))}
-          <span className="text-[10px] font-bold text-slate-400 ml-1">(4.0)</span>
-        </div>
-
-        <p className="text-xs font-semibold text-slate-500 line-clamp-2 leading-relaxed">
-          {product.description || 'Access high-performance developer integration points for subscribing clients.'}
-        </p>
+    <article className="group flex min-h-[335px] flex-col rounded-3xl border border-emerald-100/15 bg-white/[0.07] p-5 shadow-premium-dark backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-[#D4AF37]/45 hover:bg-white/[0.10]">
+      <div className="flex items-start justify-between gap-4">
+        <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#D4AF37]/25 bg-[#D4AF37]/10 text-[#F8D56B]">{categoryIcon(product.category.slug)}</span>
+        <span className={available ? 'rounded-full border border-emerald-300/20 bg-emerald-300/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[.14em] text-emerald-200' : 'rounded-full border border-rose-300/20 bg-rose-300/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[.14em] text-rose-200'}>{available ? 'Available' : 'Unavailable'}</span>
       </div>
-
-      {/* Card Footer: Price & Add to Cart button */}
-      <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
-        <div>
-          <span className="block text-xs font-bold text-slate-400 uppercase leading-none">Price</span>
-          <span className="text-base font-bold text-slate-800 font-display">{formattedPrice}</span>
-        </div>
-        
-        <button
-          onClick={() => onAddToCart?.(product)}
-          className="p-2.5 rounded-full bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-sm border border-indigo-700/10 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-          title="Add to Cart"
-        >
-          <ShoppingCart size={15} />
-        </button>
+      <div className="mt-6 flex-1">
+        <p className="text-[10px] font-bold uppercase tracking-[.2em] text-[#D4AF37]">{product.category.name}</p>
+        <Link href={`/products/${product.slug}`} className="mt-2 block text-xl font-bold text-white transition group-hover:text-[#F8D56B]">{product.name}</Link>
+        <p className="mt-3 line-clamp-3 text-sm leading-6 text-emerald-100/65">{product.description || 'Product details are provided by Cogna before checkout.'}</p>
       </div>
-    </div>
+      <div className="mt-6 flex items-end justify-between border-t border-emerald-100/10 pt-4">
+        <div><p className="text-[10px] font-bold uppercase tracking-[.16em] text-emerald-100/45">Price</p><p className="mt-1 text-lg font-bold text-white">{price}</p></div>
+        <button type="button" disabled={!available} onClick={() => onAddToCart?.(product)} className="inline-flex items-center gap-2 rounded-full bg-[#D4AF37] px-4 py-2.5 text-xs font-bold text-[#062C23] transition hover:bg-[#F8D56B] disabled:cursor-not-allowed disabled:opacity-45"><ShoppingBag size={15}/>{available ? 'Purchase' : 'Unavailable'}<ArrowUpRight size={14}/></button>
+      </div>
+    </article>
   );
 }
-
-export default ProductCard;

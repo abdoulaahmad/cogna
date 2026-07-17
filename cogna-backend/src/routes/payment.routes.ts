@@ -9,7 +9,12 @@ import type { PaymentGatewayType } from '@/types/payment-gateway.types'
 export default async function paymentRoutes(app: FastifyInstance) {
   app.post('/initialize', { onRequest: [app.authenticate] }, async (req: FastifyRequest, reply: FastifyReply) => {
     try {
-      const { sub, email } = req.user as { sub: string; email: string }
+      let { sub, email } = req.user as { sub: string; email?: string }
+      if (!email) {
+        const user = await (await import('@/repositories/user.repository')).UserRepository.findById(sub)
+        if (!user) return reply.status(401).send({ ok: false, message: 'Unauthorized' })
+        email = user.email
+      }
       const body = initializePaymentSchema.parse(req.body)
       const result = await PaymentService.initializePayment(body.orderId, sub, email, body.callbackUrl)
       return reply.status(201).send(successResponse(result, 'Payment initialized'))

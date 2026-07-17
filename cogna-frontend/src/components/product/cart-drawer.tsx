@@ -73,7 +73,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 </div>
                 
                 <p className="text-xxs font-semibold text-slate-400 mt-3">
-                  Billing Cycle: <span className="text-slate-600 font-bold">Monthly Recurring</span>
+                  Checkout: <span className="text-slate-600 font-bold">Secure payment required</span>
                 </p>
               </GlassCard>
 
@@ -100,7 +100,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               <div className="p-3 bg-slate-50 border border-slate-150 rounded-lg text-xxs font-semibold text-slate-500 flex gap-2">
                 <CreditCard size={14} className="text-indigo-500 shrink-0 mt-0.5" />
                 <span>
-                  By checking out, you authorize recurring billing configuration using the resolved multi-gateway payment channels.
+                  Checkout creates a payment request. Cogna confirms payment before provider fulfillment begins.
                 </span>
               </div>
             </div>

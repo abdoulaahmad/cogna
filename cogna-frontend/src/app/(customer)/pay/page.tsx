@@ -1,166 +1,124 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { ArrowLeft, CreditCard, Loader2, ShieldCheck } from 'lucide-react';
 import { useCartStore } from '@/stores/cart';
 import { useAuthStore } from '@/stores/auth';
 import { api } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { GlassCard } from '@/components/ui/glass-card';
-import { ArrowLeft, CreditCard, Lock } from 'lucide-react';
-import Link from 'next/link';
+import { getErrorMessage } from '@/lib/error-message';
+import Paystack from '@paystack/inline-js';
 
 export default function PayPage() {
   const router = useRouter();
   const { cartItem, clearCart } = useCartStore();
   const { user, isAuthenticated } = useAuthStore();
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Guard: Redirect if not authenticated or no item in cart
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/login?redirect=/pay');
-    } else if (!cartItem) {
-      router.push('/');
-    }
-  }, [isAuthenticated, cartItem, router]);
+    if (!isAuthenticated) router.replace('/login?redirect=/pay');
+    else if (!cartItem) router.replace('/catalog');
+  }, [cartItem, isAuthenticated, router]);
 
-  if (!isAuthenticated || !cartItem || !user) {
-    return null; // Don't flash screen during redirect
-  }
+  if (!cartItem || !user || !isAuthenticated) return null;
 
-  const handlePayment = async () => {
-    setIsLoading(true);
+  const price = new Intl.NumberFormat('en-NG', {
+    style: 'currency',
+    currency: cartItem.currency || 'NGN',
+    minimumFractionDigits: 2,
+  }).format(Number(cartItem.price));
+
+  async function checkout() {
+    setLoading(true);
     setError(null);
-
     try {
-      // 1. Create order on the backend
       const orderResponse = await api.post('/orders', {
-        productId: cartItem.id,
-        customerEmail: user.email,
+        productId: cartItem!.id,
+        customerEmail: user!.email,
       });
 
       if (!orderResponse.data.success) {
-        throw new Error(orderResponse.data.message || 'Order creation failed');
+        throw new Error(orderResponse.data.message || 'Order could not be created.');
       }
 
-      const order = orderResponse.data.data;
-
-      // 2. Initialize payment with the gateway mapped to this product
-      // We pass callbackUrl pointing to our frontend verify page
-      const callbackUrl = `${window.location.origin}/verify`;
-      
       const paymentResponse = await api.post('/payments/initialize', {
-        orderId: order.id,
-        gateway: cartItem.paymentGateway,
-        callbackUrl,
+        orderId: orderResponse.data.data.id,
+        callbackUrl: `${window.location.origin}/verify`,
       });
 
-      if (!paymentResponse.data.success) {
-        throw new Error(paymentResponse.data.message || 'Payment initialization failed');
+      if (!paymentResponse.data.success || !paymentResponse.data.data?.authorizationUrl) {
+        throw new Error(paymentResponse.data.message || 'Payment could not be initialized.');
       }
 
-      const { authorizationUrl } = paymentResponse.data.data;
-
-      // 3. Clear cart since order is initialized
+      const { authorizationUrl, reference, accessCode } = paymentResponse.data.data;
       clearCart();
 
-      // 4. Redirect to payment gateway authorization URL
-      window.location.href = authorizationUrl;
-    } catch (err: any) {
-      console.error(err);
-      setError(err.response?.data?.message || err.message || 'Payment flow failed. Please try again.');
-    } finally {
-      setIsLoading(false);
+      if (cartItem!.paymentGateway === 'PAYSTACK') {
+        if (!accessCode) {
+          throw new Error('Paystack access code was not returned from the server.');
+        }
+        const popup = new Paystack();
+        popup.resumeTransaction(accessCode, {
+          onSuccess: () => {
+            window.location.assign(`${window.location.origin}/verify?reference=${encodeURIComponent(reference)}`);
+          },
+          onCancel: () => {
+            setLoading(false);
+          },
+          onError: (err: unknown) => {
+            console.error('Paystack Inline Error:', err);
+            setError('Payment checkout failed. Please try again.');
+            setLoading(false);
+          },
+        });
+      } else {
+        window.location.assign(authorizationUrl);
+      }
+    } catch (requestError: unknown) {
+      setError(getErrorMessage(requestError, 'Unable to start secure checkout.'));
+      setLoading(false);
     }
-  };
-
-  const formattedPrice = new Intl.NumberFormat('en-NG', {
-    style: 'currency',
-    currency: cartItem.currency || 'NGN',
-    minimumFractionDigits: 0,
-  }).format(parseFloat(cartItem.price));
+  }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12 sm:px-6 lg:px-8 font-display">
-      <div className="w-full max-w-md">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-slate-800 transition mb-6"
-        >
-          <ArrowLeft size={14} /> Back to Marketplace
+    <main className="flex min-h-screen items-center justify-center bg-[#062C23] px-5 py-12 text-white">
+      <section className="w-full max-w-xl rounded-[2rem] border border-emerald-100/15 bg-white/[0.08] p-7 shadow-premium-dark backdrop-blur-xl sm:p-9">
+        <Link href="/catalog" className="inline-flex items-center gap-2 text-sm font-bold text-emerald-100/65 hover:text-[#F8D56B]">
+          <ArrowLeft size={16}/> Continue browsing
         </Link>
-
-        <GlassCard className="p-8">
-          <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
-            <CreditCard className="text-indigo-600" size={20} />
-            Confirm Subscription
-          </h2>
-
-          {error ? (
-            <div className="mb-4 rounded-lg bg-rose-50 p-3 text-xs font-semibold text-rose-500 border border-rose-100">
-              {error}
+        <p className="mt-8 text-xs font-bold uppercase tracking-[.22em] text-[#F8D56B]">Secure checkout</p>
+        <h1 className="mt-3 font-display text-3xl font-bold">Confirm your order.</h1>
+        <p className="mt-2 text-sm text-emerald-100/65">Cogna creates your order first, then redirects you to the product’s configured payment gateway.</p>
+        {error && (
+          <p role="alert" className="mt-6 rounded-2xl border border-rose-300/25 bg-rose-950/30 p-4 text-sm text-rose-100">
+            {error}
+          </p>
+        )}
+        <div className="mt-7 rounded-3xl border border-emerald-100/15 bg-black/15 p-5">
+          <p className="text-xs font-bold uppercase tracking-[.16em] text-[#F8D56B]">{cartItem.category.name}</p>
+          <div className="mt-3 flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-bold">{cartItem.name}</h2>
+              <p className="mt-2 text-sm text-emerald-100/60">{cartItem.description || 'Product details are confirmed by Cogna before fulfillment.'}</p>
             </div>
-          ) : null}
-
-          {/* Product Recap */}
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-100 mb-6 space-y-3">
-            <div className="flex justify-between items-start">
-              <div>
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-                  Product
-                </span>
-                <h3 className="text-sm font-bold text-slate-700 mt-0.5">{cartItem.name}</h3>
-              </div>
-              <span className="text-sm font-bold text-slate-800">{formattedPrice}</span>
-            </div>
-
-            <div className="flex justify-between items-center text-xs font-semibold text-slate-500 pt-2 border-t border-slate-200/40">
-              <span>Billing Cycle</span>
-              <span className="text-slate-700">Monthly</span>
-            </div>
-
-            <div className="flex justify-between items-center text-xs font-semibold text-slate-500">
-              <span>Gateway Channel</span>
-              <span className="text-indigo-600 font-bold bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded">
-                {cartItem.paymentGateway}
-              </span>
-            </div>
+            <p className="whitespace-nowrap text-xl font-bold">{price}</p>
           </div>
-
-          {/* Pricing detail list */}
-          <div className="space-y-3 mb-6">
-            <div className="flex justify-between text-xs font-semibold text-slate-600">
-              <span>Subtotal</span>
-              <span>{formattedPrice}</span>
-            </div>
-            <div className="flex justify-between text-xs font-semibold text-slate-600">
-              <span>Setup / Config Fee</span>
-              <span className="text-emerald-600">Free</span>
-            </div>
-            <div className="flex justify-between text-sm font-bold text-slate-800 pt-2 border-t border-slate-100">
-              <span>Total Amount</span>
-              <span>{formattedPrice}</span>
-            </div>
+          <div className="mt-5 flex justify-between border-t border-emerald-100/10 pt-4 text-sm">
+            <span className="text-emerald-100/60">Payment gateway</span>
+            <span className="font-bold text-[#F8D56B]">{cartItem.paymentGateway}</span>
           </div>
-
-          {/* Pay Button */}
-          <Button
-            onClick={handlePayment}
-            className="w-full"
-            isLoading={isLoading}
-          >
-            Authorize Payment
-          </Button>
-
-          {/* Secure disclaimer */}
-          <div className="mt-6 flex items-center justify-center gap-1.5 text-[10px] font-bold text-slate-400">
-            <Lock size={12} className="text-emerald-500" />
-            <span>Payments processed via secure encrypted channels</span>
-          </div>
-        </GlassCard>
-      </div>
-    </div>
+        </div>
+        <button type="button" disabled={loading} onClick={() => void checkout()} className="mt-7 flex w-full items-center justify-center gap-2 rounded-full bg-[#D4AF37] px-5 py-4 text-sm font-bold text-[#062C23] hover:bg-[#F8D56B] disabled:opacity-50">
+          {loading ? <Loader2 className="animate-spin" size={18}/> : <CreditCard size={18}/>}
+          {loading ? 'Preparing checkout…' : 'Continue to secure payment'}
+        </button>
+        <p className="mt-5 flex gap-2 text-xs leading-5 text-emerald-100/60">
+          <ShieldCheck className="shrink-0 text-[#F8D56B]" size={16}/>
+          Your service starts only after payment confirmation and provider fulfillment.
+        </p>
+      </section>
+    </main>
   );
 }

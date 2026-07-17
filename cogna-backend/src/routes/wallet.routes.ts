@@ -38,7 +38,12 @@ export default async function walletRoutes(app: FastifyInstance) {
   })
   app.post('/fund', async (req: FastifyRequest, reply: FastifyReply) => {
     try {
-      const { sub, email } = req.user as { sub: string; email: string }
+      let { sub, email } = req.user as { sub: string; email?: string }
+      if (!email) {
+        const user = await (await import('@/repositories/user.repository')).UserRepository.findById(sub)
+        if (!user) return reply.status(401).send({ ok: false, message: 'Unauthorized' })
+        email = user.email
+      }
       const body = initializeWalletFundingSchema.parse(req.body)
       const result = await WalletService.initializeFunding({ userId: sub, email, ...body })
       return reply.status(201).send(successResponse(result, 'Wallet funding initialized'))

@@ -1,146 +1,39 @@
-import React, { useMemo } from 'react';
-import { useCatalogStore } from '@/stores/catalog';
-import ProductCard, { Product } from './product-card';
-import CategorySelector, { Category } from './category-selector';
-import { Search, ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, SlidersHorizontal } from 'lucide-react';
+import type { ChangeEvent } from 'react';
+import ProductCard, { type Product } from './product-card';
+import type { Category } from './category-selector';
+import CategorySelector from './category-selector';
 
+export type CatalogSort = 'newest' | 'price_asc' | 'price_desc' | 'name_asc';
 interface ProductGridProps {
   products: Product[];
   categories: Category[];
-  onAddToCart?: (product: Product) => void;
+  search: string;
+  selectedCategory: string | null;
+  sort: CatalogSort;
+  page: number;
+  totalPages: number;
+  total: number;
+  onSearchChange: (value: string) => void;
+  onCategoryChange: (value: string | null) => void;
+  onSortChange: (value: CatalogSort) => void;
+  onPageChange: (page: number) => void;
+  onAddToCart: (product: Product) => void;
 }
 
-export function ProductGrid({ products, categories, onAddToCart }: ProductGridProps) {
-  const {
-    searchQuery,
-    setSearchQuery,
-    selectedCategory,
-    page,
-    setPage,
-    limit,
-    sortBy,
-    setSortBy,
-  } = useCatalogStore();
-
-  // Filter & Sort products locally
-  const filteredProducts = useMemo(() => {
-    let result = [...products];
-
-    // Filter by Category
-    if (selectedCategory) {
-      result = result.filter(
-        (p) => p.category.slug.toLowerCase() === selectedCategory.toLowerCase()
-      );
-    }
-
-    // Filter by Search Query
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.description?.toLowerCase().includes(q) ||
-          p.category.name.toLowerCase().includes(q)
-      );
-    }
-
-    // Sort Products
-    result.sort((a, b) => {
-      if (sortBy === 'price_asc') return parseFloat(a.price) - parseFloat(b.price);
-      if (sortBy === 'price_desc') return parseFloat(b.price) - parseFloat(a.price);
-      if (sortBy === 'name_asc') return a.name.localeCompare(b.name);
-      return 0; // 'newest' default fallback (stable sort)
-    });
-
-    return result;
-  }, [products, selectedCategory, searchQuery, sortBy]);
-
-  // Paginate products
-  const totalPages = Math.ceil(filteredProducts.length / limit);
-  const paginatedProducts = useMemo(() => {
-    const startIndex = (page - 1) * limit;
-    return filteredProducts.slice(startIndex, startIndex + limit);
-  }, [filteredProducts, page, limit]);
-
-  return (
-    <div className="space-y-6 font-display">
-      {/* Controls Bar: Category selector, search input & sorting */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-        <CategorySelector categories={categories} />
-        
-        <div className="flex flex-col sm:flex-row items-center gap-3">
-          {/* Search Box */}
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search AI APIs..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 text-xs font-semibold rounded-lg border border-slate-200 bg-white hover:border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none"
-            />
-          </div>
-
-          {/* Sort Dropdown */}
-          <div className="relative w-full sm:w-44 flex items-center gap-2">
-            <SlidersHorizontal size={14} className="text-slate-400" />
-            <select
-              value={sortBy}
-              onChange={(e: any) => setSortBy(e.target.value)}
-              className="w-full px-3 py-2 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:border-slate-300 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none cursor-pointer appearance-none"
-            >
-              <option value="newest">Sort: Newest</option>
-              <option value="price_asc">Price: Low to High</option>
-              <option value="price_desc">Price: High to Low</option>
-              <option value="name_asc">Name: A-Z</option>
-            </select>
-          </div>
-        </div>
+export default function ProductGrid({ products, categories, search, selectedCategory, sort, page, totalPages, total, onSearchChange, onCategoryChange, onSortChange, onPageChange, onAddToCart }: ProductGridProps) {
+  const sorted = [...products].sort((a, b) => sort === 'price_asc' ? Number(a.price) - Number(b.price) : sort === 'price_desc' ? Number(b.price) - Number(a.price) : sort === 'name_asc' ? a.name.localeCompare(b.name) : 0);
+  const handleSort = (event: ChangeEvent<HTMLSelectElement>) => onSortChange(event.target.value as CatalogSort);
+  return <section className="space-y-7">
+    <div className="flex flex-col gap-4 rounded-3xl border border-emerald-100/15 bg-black/15 p-4 backdrop-blur-xl lg:flex-row lg:items-center lg:justify-between">
+      <CategorySelector categories={categories} selectedCategory={selectedCategory} onChange={onCategoryChange}/>
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <label className="relative min-w-0 sm:w-72"><Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-emerald-100/45" size={16}/><input value={search} onChange={(event) => onSearchChange(event.target.value)} placeholder="Search products" className="w-full rounded-2xl border border-emerald-100/15 bg-[#062C23]/80 py-3 pl-10 pr-4 text-sm text-white outline-none placeholder:text-emerald-100/40 focus:border-[#D4AF37]/70"/></label>
+        <label className="flex items-center gap-2 rounded-2xl border border-emerald-100/15 bg-[#062C23]/80 px-3 text-emerald-100/70"><SlidersHorizontal size={15}/><select value={sort} onChange={handleSort} className="bg-transparent py-3 text-xs font-bold outline-none"><option value="newest">Newest</option><option value="price_asc">Price: low first</option><option value="price_desc">Price: high first</option><option value="name_asc">Name: A–Z</option></select></label>
       </div>
-
-      {/* Grid List */}
-      {paginatedProducts.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {paginatedProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onAddToCart={onAddToCart}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-20 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-          <p className="text-sm font-semibold text-slate-500">No AI subscriptions found matching your criteria.</p>
-        </div>
-      )}
-
-      {/* Pagination controls */}
-      {totalPages > 1 ? (
-        <div className="flex items-center justify-center gap-2 pt-6 border-t border-slate-100">
-          <button
-            onClick={() => setPage(Math.max(1, page - 1))}
-            disabled={page === 1}
-            className="p-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-          >
-            <ChevronLeft size={16} className="text-slate-600" />
-          </button>
-          
-          <span className="text-xs font-bold text-slate-500">
-            Page {page} of {totalPages}
-          </span>
-
-          <button
-            onClick={() => setPage(Math.min(totalPages, page + 1))}
-            disabled={page === totalPages}
-            className="p-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-          >
-            <ChevronRight size={16} className="text-slate-600" />
-          </button>
-        </div>
-      ) : null}
     </div>
-  );
+    <div className="flex items-center justify-between text-xs text-emerald-100/55"><span>{total} live {total === 1 ? 'product' : 'products'}</span>{selectedCategory && <button type="button" onClick={() => onCategoryChange(null)} className="font-bold text-[#F8D56B] hover:text-white">Clear category</button>}</div>
+    {sorted.length ? <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">{sorted.map((product) => <ProductCard key={product.id} product={product} onAddToCart={onAddToCart}/>)}</div> : <div className="rounded-3xl border border-dashed border-emerald-100/20 bg-white/[0.04] px-6 py-20 text-center"><p className="text-lg font-bold text-white">No products matched your search.</p><p className="mt-2 text-sm text-emerald-100/60">Try a different term or clear the active category.</p></div>}
+    {totalPages > 1 && <nav aria-label="Catalog pages" className="flex items-center justify-center gap-4 pt-2"><button type="button" disabled={page === 1} onClick={() => onPageChange(page - 1)} className="rounded-full border border-emerald-100/20 p-2.5 text-emerald-100 transition hover:border-[#D4AF37] disabled:opacity-35"><ChevronLeft size={17}/></button><span className="text-xs font-bold text-emerald-100/70">Page {page} of {totalPages}</span><button type="button" disabled={page === totalPages} onClick={() => onPageChange(page + 1)} className="rounded-full border border-emerald-100/20 p-2.5 text-emerald-100 transition hover:border-[#D4AF37] disabled:opacity-35"><ChevronRight size={17}/></button></nav>}
+  </section>;
 }
-
-export default ProductGrid;

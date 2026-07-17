@@ -58,14 +58,16 @@ Begin with Phase 0: route recovery, dynamic catalog, removal of mock production 
 
 ## Sprint delivery workflow
 
-- Deliver every product sprint backend-first: schema/migrations, repositories, services, validators, routes, authorization, jobs, tests, API documentation, then backend quality gates and a commit.
-- Build the corresponding frontend only after the sprint backend contract is stable.
-- Treat frontend work as part of its product sprint, never as an unrelated parallel sprint.
+- Deliver the entire current sprint (e.g., Phase 0 or the active phase) in a single, continuous execution sweep ("in one go"), implementing and integrating both backend and frontend layers completely.
+- Proceed from backend to frontend development sequentially within the same run, without pausing to check in with the user or request approval between layers or sub-tasks.
+- Keep the workflow backend-first: complete and verify schema/migrations, repositories, services, validators, routes, authorization, jobs, tests, and API documentation before moving directly onto the frontend client/UI.
+- Autonomously resolve any compilation, linting, formatting, or test failures that occur during implementation instead of prompting the user for instructions or declaring a blocker.
 
 ## Standing execution authority
 
-The user has granted standing approval for normal, in-scope local implementation work needed to complete the launch plan. Do not repeatedly ask for confirmation before local file edits, tests, builds, linting, commits, or migration creation.
+The user has granted full, preemptive standing approval for all workspace modifications, file edits, testing, linting, and database migration steps required to complete the active sprint or launch plan phase.
 
+- Perform the implementation, verification, and alignment steps continuously without stopping to request step-by-step approvals or confirmations for implementation plans, tasks list updates, or git commits.
 - Do not deploy the backend or frontend until the full product work is complete, unless the user explicitly changes this instruction.
 - Do not apply production database migrations until the final release, unless the user explicitly changes this instruction.
-- Still comply with platform-enforced permission prompts and pause only for genuinely new authority, destructive operations, external coordination, or a material product decision.
+- Proceed autonomously, pausing only for platform-enforced permissions or critical external constraints.

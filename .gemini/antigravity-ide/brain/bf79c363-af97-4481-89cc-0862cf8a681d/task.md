@@ -1,0 +1,28 @@
+# Sprint 6 Task List
+
+- [ ] **Database & Migrations**
+  - [ ] Add `VerificationToken`, `OrderStatusEvent`, `SupportTicket`, `SupportMessage`, `Notification`, `NotificationPreference`, and `Receipt` models to `schema.prisma`
+  - [ ] Generate local Prisma migration and run `prisma generate`
+- [ ] **Backend: Profile, Verification & Security**
+  - [ ] Implement token generation, hashing, verification logic, and routes in `profile.routes.ts`
+  - [ ] Implement profile updates, password change, and notification preferences
+- [ ] **Backend: Customer Portal APIs**
+  - [ ] Implement `/customer/dashboard` aggregation route
+  - [ ] Implement paginated `/customer/orders` and order details (with timeline) routes
+  - [ ] Implement state-safe cancellation with automatic wallet refund trigger
+  - [ ] Implement immutable `/customer/receipts/:reference` and printable templates payload
+  - [ ] Implement paginated, ownership-checked `/customer/support` tickets and messages
+  - [ ] Implement support links visibility in Admin console
+  - [ ] Implement `/customer/notifications` list/read endpoints
+- [ ] **OpenAPI Declarations**
+  - [ ] Update Swagger schema definitions for every new endpoint
+- [ ] **Frontend: Customer Dashboard & Profile Views**
+  - [ ] Build `/dashboard` overview view
+  - [ ] Build `/orders` paginated feed and `/orders/[id]` timeline tracking page
+  - [ ] Build `/profile`, `/settings`, `/security`, and `/notifications` screens
+  - [ ] Build `/support` ticket list and `/support/[id]` interactive chat console
+  - [ ] Enhance `/wallet`, `/wallet/fund`, and checkout workflows
+- [ ] **Release Verification**
+  - [ ] Add backend unit/integration tests (`tests/integration/customer-sprint6.test.ts`)
+  - [ ] Verify backend typechecks and passes all 230+ tests
+  - [ ] Verify frontend build compiles successfully without errors

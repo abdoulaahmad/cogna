@@ -3,10 +3,12 @@ export interface User {
   fullName: string;
   email: string;
   role: 'CUSTOMER' | 'DEVELOPER' | 'ADMIN';
+  adminRole?: 'SUPER_ADMIN' | 'ADMIN' | 'OPERATIONS' | 'SUPPORT' | 'FINANCE' | null;
   status: 'ACTIVE' | 'SUSPENDED' | 'PENDING';
   emailVerified: boolean;
   createdAt: string;
   updatedAt: string;
+  isDeveloper?: boolean;
 }
 
 export interface AuthTokens {

@@ -43,13 +43,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       name: 'Developer Keys',
       href: '/keys',
       icon: <Key size={18} />,
-      roles: ['DEVELOPER', 'ADMIN'],
+      roles: ['DEVELOPER', 'ADMIN'], capability: 'developer',
     },
     {
       name: 'Usage Metrics',
       href: '/metrics',
       icon: <BarChart3 size={18} />,
-      roles: ['DEVELOPER', 'ADMIN'],
+      roles: ['DEVELOPER', 'ADMIN'], capability: 'developer',
     },
     {
       name: 'Admin Console',
@@ -59,7 +59,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     },
   ];
 
-  const visibleNavItems = navItems.filter((item) => item.roles.includes(user.role));
+  const visibleNavItems = navItems.filter((item) => item.roles.includes(user.role) || ('capability' in item && item.capability === 'developer' && user.isDeveloper));
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden font-display">
@@ -129,7 +129,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* Top header bar */}
         <header className="h-16 border-b border-slate-200 bg-white px-8 flex items-center justify-between shrink-0">
           <h1 className="text-sm font-bold text-slate-800">
-            {pathname.startsWith('/admin') ? 'Admin Control Dashboard' : 'Developer Workspace'}
+            {pathname.startsWith('/admin') ? 'Admin Control Dashboard' : 'Cogna Customer Workspace'}
           </h1>
           <div className="flex items-center gap-2">
             <Link
