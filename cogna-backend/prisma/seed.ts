@@ -22,6 +22,7 @@ async function main() {
       email: adminEmail,
       passwordHash: adminPasswordHash,
       role: 'ADMIN',
+      adminRole: 'SUPER_ADMIN',
       emailVerified: true,
       status: 'ACTIVE',
     },
