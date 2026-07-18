@@ -12,18 +12,21 @@ async function main() {
   await prisma.user.deleteMany({});
 
   // 1. Create Admin User
-  const adminPasswordHash = await bcrypt.hash('password123', 12);
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@cogna.store';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'password123';
+  const adminPasswordHash = await bcrypt.hash(adminPassword, 12);
+  
   await prisma.user.create({
     data: {
       fullName: 'Abdullahi A. Ahmad',
-      email: 'admin@cogna.store',
+      email: adminEmail,
       passwordHash: adminPasswordHash,
       role: 'ADMIN',
       emailVerified: true,
       status: 'ACTIVE',
     },
   });
-  console.log('✅ Admin user created: admin@cogna.store (Password: password123)');
+  console.log(`✅ Admin user created: ${adminEmail} (Password: ${adminPassword})`);
 
   // 2. Create Developer User
   const devPasswordHash = await bcrypt.hash('password123', 12);

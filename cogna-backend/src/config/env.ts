@@ -16,6 +16,9 @@ const envSchema = z.object({
   JWT_EXPIRES_IN:        z.string().default('15m'),
   JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
 
+  ADMIN_EMAIL:           z.string().email().default('admin@cogna.store'),
+  ADMIN_PASSWORD:        z.string().default('password123'),
+
   PAYSTACK_SECRET_KEY:   z.string().optional(),
   PAYSTACK_PUBLIC_KEY:   z.string().optional(),
   MONNIFY_API_KEY:       z.string().optional(),
