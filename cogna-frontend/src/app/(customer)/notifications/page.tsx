@@ -13,6 +13,7 @@ import {
   Home
 } from 'lucide-react';
 import Link from 'next/link';
+import CustomerPortalNav from '@/components/layout/customer-portal-nav';
 
 interface NotificationItem {
   id: string;
@@ -65,90 +66,90 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-display">
-      
-      {/* Header */}
-      <header className="h-16 px-8 border-b border-emerald-950/40 bg-slate-950/90 flex items-center justify-between sticky top-0 z-50 backdrop-blur">
-        <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="text-slate-400 hover:text-slate-200">
-            <Home size={16} />
-          </Link>
-          <span className="text-slate-500">/</span>
-          <span className="text-xs font-bold tracking-widest text-emerald-400">ALERT FEED</span>
-        </div>
-        <button
-          onClick={fetchNotifications}
-          className="flex items-center gap-2 px-3 py-1 bg-slate-900 border border-slate-800 rounded-lg text-[10px] font-bold text-slate-300"
-        >
-          <RefreshCw size={12} />
-          Refresh Feed
-        </button>
-      </header>
+    <main className="min-h-screen bg-[#020E0C] text-white lg:pl-64">
+      <CustomerPortalNav current="/notifications" variant="sidebar"/>
+      <div className="min-h-screen px-5 pb-12 pt-[104px] sm:px-7 lg:px-8 xl:px-10">
+        <div className="mx-auto max-w-[1440px]">
+          <section className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold text-[#F8D56B]">Your alerts</p>
+              <h1 className="mt-2 font-display text-3xl font-bold tracking-tight sm:text-4xl">Notifications</h1>
+              <p className="mt-2 text-sm text-emerald-100/55">Updates on your wallet, orders, and account security.</p>
+            </div>
+            <button
+              onClick={() => void fetchNotifications()}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#D4AF37] px-4 py-2.5 text-xs font-black text-[#062C23] hover:bg-[#F8D56B]"
+            >
+              <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
+              Refresh feed
+            </button>
+          </section>
 
-      <div className="max-w-4xl mx-auto p-8 space-y-8">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-100">Inbox Notifications</h1>
-          <p className="text-xs text-slate-400 mt-1">Live alerts containing wallet updates, product purchases, fulfillment reports, and safety updates.</p>
-        </div>
+          {error && (
+            <div className="mt-8 rounded-2xl border border-rose-300/20 bg-rose-950/25 p-6 text-sm text-rose-100">
+              {error}
+              <button type="button" onClick={() => void fetchNotifications()} className="ml-3 font-bold text-[#F8D56B]">Retry</button>
+            </div>
+          )}
 
-        {error && (
-          <div className="p-4 bg-red-950/20 border border-red-900/40 text-red-400 text-xs rounded-xl">
-            {error}
-          </div>
-        )}
-
-        {loading ? (
-          <div className="py-12 flex flex-col items-center justify-center space-y-4">
-            <RefreshCw className="animate-spin text-emerald-500" size={24} />
-            <span className="text-[10px] text-slate-500">Retrieving alert nodes...</span>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {notifications.map((n) => (
-              <div
-                key={n.id}
-                className={`p-5 rounded-2xl border transition flex gap-4 ${
-                  n.read
-                    ? 'bg-slate-900/10 border-slate-900/60 text-slate-400'
-                    : 'bg-slate-900/40 border-emerald-950/30 text-slate-100'
-                }`}
-              >
-                <div className="mt-1">
-                  <span className={`p-2 rounded-xl block ${
-                    n.read ? 'bg-slate-950 text-slate-600' : 'bg-emerald-500/10 text-emerald-400'
-                  }`}>
-                    <Bell size={16} />
-                  </span>
-                </div>
-                <div className="flex-1 space-y-1">
-                  <div className="flex justify-between items-start">
-                    <span className="text-xs font-bold">{n.title}</span>
-                    <span className="text-[9px] text-slate-500">{new Date(n.createdAt).toLocaleString()}</span>
-                  </div>
-                  <p className="text-xs leading-relaxed">{n.message}</p>
-                  
-                  {!n.read && (
-                    <button
-                      onClick={() => handleMarkAsRead(n.id)}
-                      className="mt-3 text-[10px] font-bold text-emerald-400 hover:underline flex items-center gap-1"
-                    >
-                      <CheckCircle size={10} />
-                      Mark as read
-                    </button>
-                  )}
-                </div>
+          <section className="mt-8 rounded-2xl border border-emerald-100/10 bg-[#061915] p-5 sm:p-6">
+            {loading ? (
+              <div className="flex min-h-[300px] items-center justify-center">
+                <RefreshCw className="animate-spin text-[#F8D56B]" size={30} />
               </div>
-            ))}
-
-            {notifications.length === 0 && (
-              <div className="py-12 bg-slate-900/10 border border-slate-900/40 rounded-2xl text-center text-xs text-slate-500">
-                Your notifications box is completely empty.
+            ) : notifications.length > 0 ? (
+              <div className="space-y-4">
+                {notifications.map((n) => (
+                  <div
+                    key={n.id}
+                    className={`flex items-start gap-4 rounded-2xl border p-5 transition ${
+                      n.read
+                        ? 'border-emerald-100/[.03] bg-white/[.02] text-emerald-100/60'
+                        : 'border-emerald-100/15 bg-[linear-gradient(140deg,rgba(7,55,43,.4),rgba(3,25,21,.6))] text-white'
+                    }`}
+                  >
+                    <span className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${
+                      n.read 
+                        ? 'border-white/5 bg-white/5 text-emerald-100/40' 
+                        : 'border-[#F8D56B]/25 bg-[#D4AF37]/10 text-[#F8D56B]'
+                    }`}>
+                      <Bell size={18} />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-4">
+                        <p className="truncate text-sm font-bold">{n.title}</p>
+                        <p className="shrink-0 text-[11px] text-emerald-100/40">
+                          {new Date(n.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <p className={`mt-1 text-xs leading-relaxed ${n.read ? 'text-emerald-100/40' : 'text-emerald-100/70'}`}>
+                        {n.message}
+                      </p>
+                      
+                      {!n.read && (
+                        <button
+                          onClick={() => void handleMarkAsRead(n.id)}
+                          className="mt-3 inline-flex items-center gap-1.5 rounded-lg text-[11px] font-bold text-emerald-300 hover:text-[#F8D56B]"
+                        >
+                          <CheckCircle size={14} />
+                          Mark as read
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex min-h-[200px] flex-col items-center justify-center py-8 text-center">
+                <span className="flex h-16 w-16 items-center justify-center rounded-2xl border border-emerald-100/10 bg-white/[0.02] text-emerald-100/20">
+                  <Bell size={24} />
+                </span>
+                <p className="mt-4 text-sm text-emerald-100/50">Your notifications box is completely empty.</p>
               </div>
             )}
-          </div>
-        )}
-
+          </section>
+        </div>
       </div>
-    </div>
+    </main>
   );
 }

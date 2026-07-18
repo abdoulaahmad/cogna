@@ -22,6 +22,14 @@ export const WalletService = {
     if (!product || !product.active) throw new ConflictError('Product is not available')
     const order = await WalletRepository.purchase({ ...input, providerId: product.providerId, amount: Number(product.price), currency: product.currency })
     if (!order) throw new ConflictError('Insufficient wallet balance')
+    
+    const { fulfillmentQueue } = await import('@/queue/fulfillment.queue')
+    await fulfillmentQueue.add(
+      'fulfill-order',
+      { orderId: order.id, productId: order.productId, userId: order.userId },
+      { jobId: `fulfill:${order.id}` }
+    )
+    
     return order
   },
   async initializeFunding(input: {

@@ -35,22 +35,22 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     : '';
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end font-display">
+    <div className="fixed inset-0 z-[60] flex justify-end font-display">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs" onClick={onClose} />
+      <div className="absolute inset-0 bg-[#02150f]/80 backdrop-blur-sm" onClick={onClose} />
 
       {/* Slide drawer container */}
-      <div className="relative w-full max-w-md h-full bg-white shadow-2xl flex flex-col justify-between z-10 border-l border-slate-200 animate-[slideInRight_0.2s_ease-out]">
+      <div className="relative w-full max-w-md h-full bg-[#0b3027] shadow-2xl flex flex-col justify-between z-10 border-l border-emerald-100/15 animate-[slideInRight_0.2s_ease-out] text-white">
         
         {/* Header */}
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+        <div className="p-5 border-b border-emerald-100/10 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <ShoppingBag size={18} className="text-indigo-600" />
-            <h2 className="text-base font-bold text-slate-800">Your Checkout Cart</h2>
+            <ShoppingBag size={18} className="text-[#F8D56B]" />
+            <h2 className="text-base font-bold text-white">Your Checkout Cart</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition"
+            className="p-1.5 rounded-lg border border-emerald-100/15 text-emerald-100/70 hover:text-white hover:bg-white/5 transition"
           >
             <X size={16} />
           </button>
@@ -61,44 +61,44 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           {cartItem ? (
             <div className="space-y-6">
               {/* Product Info Card */}
-              <GlassCard className="p-4 border-slate-200/50">
+              <GlassCard className="p-4 border-emerald-100/15 bg-white/[0.04]">
                 <div className="flex justify-between items-start">
                   <div>
-                    <span className="text-[9px] font-bold text-indigo-500 uppercase tracking-wider">
+                    <span className="text-[9px] font-bold text-[#F8D56B] uppercase tracking-[.16em]">
                       {cartItem.category.name}
                     </span>
-                    <h3 className="text-sm font-bold text-slate-800 mt-0.5">{cartItem.name}</h3>
+                    <h3 className="text-sm font-bold text-white mt-1">{cartItem.name}</h3>
                   </div>
-                  <span className="text-sm font-bold text-slate-800">{formattedPrice}</span>
+                  <span className="text-sm font-bold text-white">{formattedPrice}</span>
                 </div>
                 
-                <p className="text-xxs font-semibold text-slate-400 mt-3">
-                  Checkout: <span className="text-slate-600 font-bold">Secure payment required</span>
+                <p className="text-xs font-semibold text-emerald-100/60 mt-3">
+                  Checkout: <span className="text-[#F8D56B] font-bold">Secure payment required</span>
                 </p>
               </GlassCard>
 
               {/* Checkout details */}
               <div className="space-y-3">
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Order Summary</h4>
-                <div className="space-y-2 border-b border-slate-100 pb-3 text-xs font-semibold text-slate-600">
+                <h4 className="text-[10px] font-bold text-emerald-100/45 uppercase tracking-[.16em]">Order Summary</h4>
+                <div className="space-y-2 border-b border-emerald-100/10 pb-3 text-xs font-semibold text-emerald-100/70">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
                     <span>{formattedPrice}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Provisioning Fee</span>
-                    <span className="text-emerald-600">Free</span>
+                    <span className="text-[#F8D56B]">Free</span>
                   </div>
                 </div>
-                <div className="flex justify-between text-sm font-bold text-slate-800 pt-1">
+                <div className="flex justify-between text-sm font-bold text-white pt-1">
                   <span>Total Amount</span>
                   <span>{formattedPrice}</span>
                 </div>
               </div>
 
               {/* Security info */}
-              <div className="p-3 bg-slate-50 border border-slate-150 rounded-lg text-xxs font-semibold text-slate-500 flex gap-2">
-                <CreditCard size={14} className="text-indigo-500 shrink-0 mt-0.5" />
+              <div className="p-4 bg-black/15 border border-emerald-100/10 rounded-xl text-xs font-semibold leading-5 text-emerald-100/60 flex gap-3">
+                <CreditCard size={15} className="text-[#F8D56B] shrink-0 mt-0.5" />
                 <span>
                   Checkout creates a payment request. Cogna confirms payment before provider fulfillment begins.
                 </span>
@@ -106,31 +106,31 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             </div>
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-center space-y-4">
-              <div className="p-4 rounded-full bg-slate-50 text-slate-300 border border-slate-100">
+              <div className="p-5 rounded-full bg-emerald-100/5 text-[#F8D56B] border border-emerald-100/10">
                 <ShoppingBag size={32} />
               </div>
               <div>
-                <p className="text-sm font-bold text-slate-800">Your cart is empty</p>
-                <p className="text-xs font-semibold text-slate-400 mt-1">Select an AI subscription plan to begin checking out.</p>
+                <p className="text-sm font-bold text-white">Your cart is empty</p>
+                <p className="text-xs font-semibold text-emerald-100/60 mt-2">Select an AI subscription plan to begin checking out.</p>
               </div>
             </div>
           )}
         </div>
 
         {/* Footer actions */}
-        <div className="p-5 border-t border-slate-100 bg-slate-50 space-y-3">
+        <div className="p-6 border-t border-emerald-100/10 bg-black/10 space-y-3">
           {cartItem ? (
             <>
               <button
                 onClick={handleCheckout}
-                className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white py-3 px-4 rounded-xl text-xs font-bold shadow-sm transition border border-indigo-700/10 focus:outline-none"
+                className="w-full flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#F8D56B] text-[#062C23] py-4 px-4 rounded-full text-sm font-bold transition focus:outline-none"
               >
                 Proceed to Checkout
-                <ArrowRight size={14} />
+                <ArrowRight size={16} />
               </button>
               <button
                 onClick={clearCart}
-                className="w-full text-center text-xs font-bold text-slate-400 hover:text-slate-600 transition"
+                className="w-full text-center text-xs font-bold text-emerald-100/50 hover:text-white transition py-2"
               >
                 Clear Cart
               </button>
@@ -138,7 +138,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           ) : (
             <button
               onClick={onClose}
-              className="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 py-3 px-4 rounded-xl text-xs font-bold transition focus:outline-none"
+              className="w-full bg-white/[0.07] hover:bg-white/[0.1] text-white py-4 px-4 rounded-full text-xs font-bold transition focus:outline-none border border-emerald-100/15"
             >
               Continue Browsing
             </button>

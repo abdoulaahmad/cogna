@@ -4,10 +4,7 @@ import React, { useState } from 'react';
 import { getErrorMessage } from '@/lib/error-message';
 import { useAuthStore } from '@/stores/auth';
 import { api } from '@/lib/api';
-import {
-  Key,
-  Shield,  AlertTriangle,
-  CheckCircle,} from 'lucide-react';
+import { KeyRound, ShieldCheck, AlertTriangle, CheckCircle2, ShieldAlert } from 'lucide-react';
 import CustomerPortalNav from '@/components/layout/customer-portal-nav';
 
 export default function SecurityPage() {
@@ -87,146 +84,156 @@ export default function SecurityPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-display">
-      
-      {/* Upper Navigation Header */}
-      <CustomerPortalNav current="/security" />
-
-      <div className="max-w-4xl mx-auto p-8 space-y-8">
-        
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-100">Password & Security</h1>
-          <p className="text-xs text-slate-400 mt-1">Configure your login credentials, confirm email verification states, and update secret parameters.</p>
-        </div>
-
-        {message && (
-          <div className="p-4 bg-emerald-950/20 border border-emerald-900/40 text-emerald-400 text-xs rounded-xl flex items-center gap-2">
-            <CheckCircle size={16} />
-            {message}
-          </div>
-        )}
-
-        {error && (
-          <div className="p-4 bg-red-950/20 border border-red-900/40 text-red-400 text-xs rounded-xl flex items-center gap-2">
-            <AlertTriangle size={16} />
-            {error}
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <main className="min-h-screen bg-[#020E0C] text-white lg:pl-64">
+      <CustomerPortalNav current="/security" variant="sidebar" />
+      <div className="min-h-screen px-5 pb-12 pt-[104px] sm:px-7 lg:px-8 xl:px-10">
+        <div className="mx-auto max-w-[1440px]">
           
-          {/* Password updating */}
-          <div className="bg-slate-900/30 border border-slate-800 rounded-2xl p-6 space-y-6">
-            <h3 className="text-sm font-bold text-slate-300 flex items-center gap-2">
-              <Key size={16} className="text-emerald-400" />
-              Change Password
-            </h3>
+          <p className="text-xs font-bold uppercase tracking-[.22em] text-[#F8D56B]">Security</p>
+          <h1 className="mt-3 font-display text-4xl font-bold">Protect your account.</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-7 text-emerald-100/65">
+            Configure your login credentials, confirm email verification states, and monitor your account status.
+          </p>
 
-            <form onSubmit={handleChangePassword} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase">Current Password</label>
-                <input
-                  type="password"
-                  required
-                  value={oldPassword}
-                  onChange={(e) => setOldPassword(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800/80 rounded-lg p-2.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 transition"
-                />
-              </div>
+          {message && (
+            <div className="mt-7 p-4 bg-emerald-950/30 border border-emerald-900/40 text-emerald-100 text-sm rounded-2xl flex items-center gap-3">
+              <CheckCircle2 size={18} className="text-[#F8D56B]" />
+              {message}
+            </div>
+          )}
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase">New Password</label>
-                <input
-                  type="password"
-                  required
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800/80 rounded-lg p-2.5 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 transition"
-                />
-              </div>
+          {error && (
+            <div className="mt-7 p-4 bg-rose-950/30 border border-rose-900/40 text-rose-100 text-sm rounded-2xl flex items-center gap-3">
+              <AlertTriangle size={18} className="text-rose-400" />
+              {error}
+            </div>
+          )}
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-xs font-bold rounded-lg transition disabled:opacity-50"
-              >
-                {loading ? 'Updating Password...' : 'Save New Password'}
-              </button>
-            </form>
-          </div>
-
-          {/* Email verification guard console */}
-          <div className="bg-slate-900/30 border border-slate-800 rounded-2xl p-6 space-y-6 flex flex-col justify-between">
-            <div>
-              <h3 className="text-sm font-bold text-slate-300 flex items-center gap-2">
-                <Shield size={16} className="text-emerald-400" />
-                Email Verification
-              </h3>
-
-              {user?.emailVerified ? (
-                <div className="mt-4 p-4 bg-emerald-950/20 border border-emerald-900/40 rounded-xl text-emerald-400 text-xs flex items-center gap-2">
-                  <CheckCircle size={16} />
-                  <span>Your email address <strong>{user?.email}</strong> is fully verified.</span>
+          <div className="mt-8 grid gap-6 lg:grid-cols-2">
+            
+            {/* Password updating */}
+            <section className="rounded-[2rem] border border-emerald-100/15 bg-[#061915] p-6 shadow-premium-dark">
+              <div className="flex items-center gap-3">
+                <span className="rounded-2xl bg-[#D4AF37]/10 p-3 text-[#F8D56B]">
+                  <KeyRound size={20} />
+                </span>
+                <div>
+                  <h2 className="font-display text-xl font-bold">Change Password</h2>
+                  <p className="mt-1 text-xs text-emerald-100/60">Update your account access credentials.</p>
                 </div>
-              ) : (
-                <div className="mt-4 space-y-4">
-                  <div className="p-4 bg-amber-950/20 border border-amber-900/40 rounded-xl text-amber-400 text-xs flex items-center gap-2">
-                    <AlertTriangle size={18} className="shrink-0" />
-                    <span>Your email is not verified. Please request verification.</span>
+              </div>
+
+              <form onSubmit={handleChangePassword} className="mt-6 space-y-4">
+                <label className="block text-xs font-bold text-emerald-100/70">
+                  Current Password
+                  <input
+                    type="password"
+                    required
+                    value={oldPassword}
+                    onChange={(e) => setOldPassword(e.target.value)}
+                    className="mt-2 w-full rounded-2xl border border-emerald-100/15 bg-black/20 px-4 py-3 text-sm outline-none focus:border-[#D4AF37] transition-colors"
+                  />
+                </label>
+
+                <label className="block text-xs font-bold text-emerald-100/70">
+                  New Password
+                  <input
+                    type="password"
+                    required
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="mt-2 w-full rounded-2xl border border-emerald-100/15 bg-black/20 px-4 py-3 text-sm outline-none focus:border-[#D4AF37] transition-colors"
+                  />
+                </label>
+
+                <button
+                  type="submit"
+                  disabled={loading || !oldPassword || !newPassword}
+                  className="rounded-full bg-[#D4AF37] px-5 py-3 text-sm font-bold text-[#062C23] hover:bg-[#F8D56B] disabled:opacity-50 transition-colors w-full sm:w-auto mt-2"
+                >
+                  {loading ? 'Updating Password...' : 'Save New Password'}
+                </button>
+              </form>
+            </section>
+
+            {/* Email verification guard console */}
+            <section className="rounded-[2rem] border border-emerald-100/15 bg-[#061915] p-6 shadow-premium-dark flex flex-col justify-between">
+              <div>
+                <div className="flex items-center gap-3">
+                  <span className="rounded-2xl bg-[#D4AF37]/10 p-3 text-[#F8D56B]">
+                    <ShieldCheck size={20} />
+                  </span>
+                  <div>
+                    <h2 className="font-display text-xl font-bold">Email Verification</h2>
+                    <p className="mt-1 text-xs text-emerald-100/60">Verify your email address to unlock all features.</p>
                   </div>
-
-                  <button
-                    onClick={handleRequestVerification}
-                    disabled={verifying}
-                    className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-xs font-bold rounded-lg border border-slate-700 transition"
-                  >
-                    Request Verification Code
-                  </button>
-
-                  {(verMsg || verErr) && (
-                    <div className="space-y-4">
-                      {verMsg && (
-                        <div className="p-3 bg-emerald-950/20 border border-emerald-900/30 text-emerald-400 text-xs rounded-lg font-mono whitespace-pre-wrap break-all">
-                          {verMsg}
-                        </div>
-                      )}
-                      {verErr && (
-                        <div className="p-3 bg-red-950/20 border border-red-900/30 text-red-400 text-xs rounded-lg">
-                          {verErr}
-                        </div>
-                      )}
-
-                      <form onSubmit={handleConfirmVerification} className="space-y-2">
-                        <input
-                          type="text"
-                          placeholder="Paste Raw Token code here"
-                          required
-                          value={verificationToken}
-                          onChange={(e) => setVerificationToken(e.target.value)}
-                          className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs focus:outline-none focus:border-emerald-500 transition text-slate-300"
-                        />
-                        <button
-                          type="submit"
-                          disabled={verifying}
-                          className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 text-xs font-bold rounded-lg transition"
-                        >
-                          Confirm Code
-                        </button>
-                      </form>
-                    </div>
-                  )}
                 </div>
-              )}
-            </div>
 
-            <div className="text-[10px] text-slate-500 border-t border-slate-800 pt-4 mt-6">
-              Account status: <span className="font-bold text-emerald-400">{user?.status}</span>
-            </div>
+                {user?.emailVerified ? (
+                  <div className="mt-6 p-4 bg-emerald-950/20 border border-emerald-900/40 rounded-2xl text-emerald-100 text-sm flex items-center gap-3">
+                    <CheckCircle2 size={18} className="text-[#F8D56B]" />
+                    <span>Your email address <strong>{user?.email}</strong> is fully verified.</span>
+                  </div>
+                ) : (
+                  <div className="mt-6 space-y-4">
+                    <div className="p-4 bg-amber-950/20 border border-amber-900/40 rounded-2xl text-amber-100 text-sm flex items-start gap-3">
+                      <ShieldAlert size={18} className="text-[#F8D56B] shrink-0 mt-0.5" />
+                      <span>Your email is not verified. Please request verification.</span>
+                    </div>
+
+                    <button
+                      onClick={handleRequestVerification}
+                      disabled={verifying}
+                      className="w-full rounded-full border border-emerald-100/20 px-5 py-3 text-sm font-bold text-emerald-100 hover:border-[#D4AF37] disabled:opacity-50 transition-colors"
+                    >
+                      Request Verification Code
+                    </button>
+
+                    {(verMsg || verErr) && (
+                      <div className="space-y-4 mt-4">
+                        {verMsg && (
+                          <div className="p-4 bg-emerald-950/20 border border-emerald-900/30 text-emerald-100 text-xs rounded-2xl font-mono whitespace-pre-wrap break-all leading-relaxed">
+                            {verMsg}
+                          </div>
+                        )}
+                        {verErr && (
+                          <div className="p-4 bg-rose-950/20 border border-rose-900/30 text-rose-100 text-xs rounded-2xl leading-relaxed">
+                            {verErr}
+                          </div>
+                        )}
+
+                        <form onSubmit={handleConfirmVerification} className="space-y-3 pt-2">
+                          <input
+                            type="text"
+                            placeholder="Paste Verification Token here"
+                            required
+                            value={verificationToken}
+                            onChange={(e) => setVerificationToken(e.target.value)}
+                            className="w-full rounded-2xl border border-emerald-100/15 bg-black/20 px-4 py-3 text-sm outline-none focus:border-[#D4AF37] transition-colors"
+                          />
+                          <button
+                            type="submit"
+                            disabled={verifying || !verificationToken}
+                            className="w-full rounded-full bg-[#D4AF37] px-5 py-3 text-sm font-bold text-[#062C23] hover:bg-[#F8D56B] disabled:opacity-50 transition-colors"
+                          >
+                            Confirm Code
+                          </button>
+                        </form>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="text-xs font-bold text-emerald-100/50 border-t border-emerald-100/10 pt-5 mt-8 flex justify-between items-center">
+                <span>Account Status</span>
+                <span className="uppercase tracking-wider text-[#F8D56B] bg-[#D4AF37]/10 px-3 py-1 rounded-full">{user?.status || 'Unknown'}</span>
+              </div>
+            </section>
+
           </div>
-
         </div>
-
       </div>
-    </div>
+    </main>
   );
 }

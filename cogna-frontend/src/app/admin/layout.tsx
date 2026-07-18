@@ -52,7 +52,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="flex h-20 items-center justify-between border-b border-emerald-100/10 px-6">
         <Link href="/admin/dashboard" className="flex items-center gap-3">
           <span className="grid h-10 w-10 place-items-center rounded-2xl border border-[#D4AF37]/35 bg-[#D4AF37]/10 text-[#F8D56B]"><ShieldCheck size={21}/></span>
-          <span><span className="block text-lg font-black tracking-[.16em] text-[#F8D56B]">COGNA</span><span className="block text-[9px] font-bold uppercase tracking-[.24em] text-emerald-100/45">Operations</span></span>
+          <img src="/logo-cogna.png" alt="Cogna" className="h-6 w-auto" />
         </Link>
         <button type="button" onClick={() => setMenuOpen(false)} className="text-emerald-100/60 lg:hidden" aria-label="Close navigation"><X size={20}/></button>
       </div>
@@ -81,7 +81,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     </div>
   )
 
-  return <div className="min-h-screen bg-[#041612] font-display text-white">
+  return <div className="min-h-screen bg-[#041612] font-display text-white overflow-x-hidden">
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-72 border-r border-emerald-100/10 bg-[#03110e] lg:block">{sidebar}</aside>
     {menuOpen && <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm lg:hidden" onClick={() => setMenuOpen(false)}><aside className="h-full w-[86%] max-w-80 border-r border-emerald-100/10 bg-[#03110e]" onClick={(event) => event.stopPropagation()}>{sidebar}</aside></div>}
 

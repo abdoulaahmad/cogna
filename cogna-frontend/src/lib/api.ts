@@ -101,20 +101,26 @@ api.interceptors.response.use(
           const parsed = JSON.parse(stored);
           parsed.state.accessToken = accessToken;
           parsed.state.refreshToken = refreshToken;
-          localStorage.setItem('cogna-auth', JSON.stringify(parsed));
+          const newValue = JSON.stringify(parsed);
+          localStorage.setItem('cogna-auth', newValue);
+          // Manually dispatch a storage event so Zustand updates its memory state in the current tab
+          window.dispatchEvent(new StorageEvent('storage', { key: 'cogna-auth', newValue }));
         }
       }
 
       processQueue(null, accessToken);
       originalRequest.headers.Authorization = `Bearer ${accessToken}`;
       return api(originalRequest);
-    } catch (refreshError) {
+    } catch (refreshError: any) {
       processQueue(refreshError, null);
       
-      // Clear storage on refresh failure (redirect is handled by layout/router checks)
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('cogna-auth');
-        window.location.href = '/login';
+      // Only log the user out if the refresh token was actually rejected (e.g., expired or invalid)
+      const status = refreshError.response?.status;
+      if (status === 401 || status === 403) {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('cogna-auth');
+          window.location.href = '/login';
+        }
       }
       return Promise.reject(refreshError);
     } finally {

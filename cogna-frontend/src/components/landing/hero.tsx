@@ -23,7 +23,7 @@ export default function Hero() {
     },
     {
       title: 'Developer API',
-      desc: 'Unified API integration specs.',
+      desc: 'Standardized API integration specs.',
       icon: <Code2 className="text-white shrink-0" size={26} />,
     },
   ];
@@ -47,15 +47,15 @@ export default function Hero() {
             </span>
             
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05] mb-4 text-white">
-              Subscribe to <br />
-              Unified Developer <br />
+              Premium AI <br />
+              Subscriptions <br />
               <span className="bg-gradient-to-r from-[#F8D56B] via-[#D4AF37] to-[#B8860B] bg-clip-text text-transparent">
-                APIs
+                At Cheaper Rates
               </span>
             </h1>
             
             <p className="text-xs sm:text-sm font-semibold text-slate-400 leading-relaxed max-w-[85%] lg:max-w-[60%]">
-              Unified payment checkouts, instant developer key credentials provisioning, and secure proxy integrations.
+              Access top-tier AI models and services in one place. Get instant provisioning and secure payments for all your subscription needs at discounted prices.
             </p>
             
             <div className="flex items-center gap-4 mt-8">
@@ -63,7 +63,7 @@ export default function Hero() {
                 href="/catalog"
                 className="rounded-full bg-[#D4AF37] hover:bg-[#B8860B] px-6 py-3 text-xs font-bold text-slate-950 shadow-md border border-[#F8D56B]/20 transition-all duration-200"
               >
-                Browse APIs
+                Browse Catalog
               </Link>
               <Link
                 href="#about"

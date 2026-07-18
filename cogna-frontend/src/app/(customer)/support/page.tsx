@@ -16,6 +16,7 @@ import {
   HelpCircle
 } from 'lucide-react';
 import Link from 'next/link';
+import CustomerPortalNav from '@/components/layout/customer-portal-nav';
 
 interface TicketItem {
   id: string;
@@ -92,161 +93,159 @@ function SupportPageContent() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-display">
-      
-      {/* Header */}
-      <header className="h-16 px-8 border-b border-emerald-950/40 bg-slate-950/90 flex items-center justify-between sticky top-0 z-50 backdrop-blur">
-        <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="text-slate-400 hover:text-slate-200">
-            <Home size={16} />
-          </Link>
-          <span className="text-slate-500">/</span>
-          <span className="text-xs font-bold tracking-widest text-emerald-400">HELP DESK</span>
-        </div>
-        <button
-          onClick={fetchTickets}
-          className="flex items-center gap-2 px-3 py-1 bg-slate-900 border border-slate-800 rounded-lg text-[10px] font-bold text-slate-300"
-        >
-          <RefreshCw size={12} />
-          Reload
-        </button>
-      </header>
+    <main className="min-h-screen bg-[#020E0C] text-white lg:pl-64">
+      <CustomerPortalNav current="/support" variant="sidebar"/>
+      <div className="min-h-screen px-5 pb-12 pt-[104px] sm:px-7 lg:px-8 xl:px-10">
+        <div className="mx-auto max-w-[1440px]">
+          <section className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold text-[#F8D56B]">Help desk</p>
+              <h1 className="mt-2 font-display text-3xl font-bold tracking-tight sm:text-4xl">Support Tickets</h1>
+              <p className="mt-2 text-sm text-emerald-100/55">Open support records, ask questions, and link existing orders.</p>
+            </div>
+            <button
+              onClick={() => void fetchTickets()}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/5 border border-emerald-100/10 px-4 py-2.5 text-xs font-bold text-emerald-300 hover:bg-white/10 hover:text-[#F8D56B]"
+            >
+              <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
+              Reload tickets
+            </button>
+          </section>
 
-      <div className="max-w-5xl mx-auto p-8 space-y-8">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-100">Marketplace Support Desk</h1>
-          <p className="text-xs text-slate-400 mt-1">Open support records, ask question timelines, and link existing subscription failures directly.</p>
-        </div>
+          {success && (
+            <div className="mt-8 flex items-center gap-2 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-6 text-sm font-bold text-emerald-300">
+              <CheckCircle size={18} />
+              {success}
+            </div>
+          )}
 
-        {success && (
-          <div className="p-4 bg-emerald-950/20 border border-emerald-900/40 text-emerald-400 text-xs rounded-xl flex items-center gap-2">
-            <CheckCircle size={16} />
-            {success}
-          </div>
-        )}
+          {error && (
+            <div className="mt-8 rounded-2xl border border-rose-300/20 bg-rose-950/25 p-6 text-sm text-rose-100">
+              {error}
+            </div>
+          )}
 
-        {error && (
-          <div className="p-4 bg-red-950/20 border border-red-900/40 text-red-400 text-xs rounded-xl">
-            {error}
-          </div>
-        )}
+          <div className="mt-8 grid grid-cols-1 items-start gap-8 lg:grid-cols-3">
+            
+            {/* List of active tickets (Takes 2 cols) */}
+            <div className="lg:col-span-2 space-y-4">
+              <h3 className="font-display text-xl font-bold">My Support History</h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          
-          {/* List of active tickets (Takes 2 cols) */}
-          <div className="md:col-span-2 space-y-4">
-            <h3 className="text-sm font-bold text-slate-300">My Support Tickets</h3>
-
-            {loading ? (
-              <div className="py-12 flex justify-center">
-                <RefreshCw className="animate-spin text-emerald-500" size={24} />
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {tickets.map((t) => (
-                  <div
-                    key={t.id}
-                    onClick={() => router.push(`/support/${t.id}`)}
-                    className="p-4 bg-slate-900/30 hover:bg-slate-900/60 border border-slate-800 rounded-2xl flex justify-between items-center cursor-pointer transition"
-                  >
-                    <div className="space-y-1">
-                      <div className="text-xs font-bold text-slate-200">{t.subject}</div>
-                      <div className="text-[9px] text-slate-500 flex items-center gap-1">
-                        <Clock size={10} />
-                        Updated {new Date(t.updatedAt).toLocaleDateString()}
+              {loading ? (
+                <div className="flex min-h-[300px] items-center justify-center rounded-2xl border border-emerald-100/10 bg-[#061915]">
+                  <RefreshCw className="animate-spin text-[#F8D56B]" size={30} />
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {tickets.map((t) => (
+                    <div
+                      key={t.id}
+                      onClick={() => router.push(`/support/${t.id}`)}
+                      className="flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-emerald-100/10 bg-[linear-gradient(140deg,rgba(7,55,43,.4),rgba(3,25,21,.6))] p-5 transition hover:border-[#F8D56B]/30 hover:bg-white/5"
+                    >
+                      <div className="min-w-0 space-y-1">
+                        <div className="truncate text-sm font-bold text-white">{t.subject}</div>
+                        <div className="flex items-center gap-1.5 text-[11px] text-emerald-100/50">
+                          <Clock size={12} />
+                          Updated {new Date(t.updatedAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-3">
+                        <span className="hidden text-[10px] font-mono text-emerald-100/40 sm:block">{t.id.split('-')[0]}</span>
+                        <span className={`rounded-lg px-2 py-1 text-[9px] font-black uppercase tracking-[.1em] ${
+                          t.status === 'OPEN'
+                            ? 'bg-emerald-400/10 text-emerald-300'
+                            : t.status === 'IN_PROGRESS'
+                            ? 'bg-amber-300/10 text-amber-200'
+                            : 'bg-white/5 text-emerald-100/40'
+                        }`}>
+                          {t.status}
+                        </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-[9px] font-mono text-slate-500">{t.id.slice(0, 8)}</span>
-                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
-                        t.status === 'OPEN'
-                          ? 'bg-emerald-950/30 text-emerald-400 border border-emerald-900/30'
-                          : t.status === 'IN_PROGRESS'
-                          ? 'bg-amber-950/30 text-amber-400 border border-amber-900/30'
-                          : 'bg-slate-850 text-slate-500 border border-slate-800'
-                      }`}>
-                        {t.status}
+                  ))}
+
+                  {tickets.length === 0 && (
+                    <div className="flex min-h-[200px] flex-col items-center justify-center rounded-2xl border border-emerald-100/10 bg-[#061915] p-8 text-center">
+                      <span className="flex h-16 w-16 items-center justify-center rounded-2xl border border-emerald-100/10 bg-white/[0.02] text-emerald-100/20">
+                        <MessageSquare size={24} />
                       </span>
+                      <p className="mt-4 text-sm text-emerald-100/50">No support tickets found on your record.</p>
                     </div>
-                  </div>
-                ))}
+                  )}
+                </div>
+              )}
+            </div>
 
-                {tickets.length === 0 && (
-                  <div className="py-12 bg-slate-900/10 border border-slate-900/40 rounded-2xl text-center text-xs text-slate-500">
-                    No support tickets found on your record.
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+            {/* Ticket generation form */}
+            <div className="rounded-2xl border border-emerald-100/10 bg-[#061915] p-6 shadow-[0_16px_50px_rgba(0,0,0,.18)]">
+              <h3 className="flex items-center gap-2 font-display text-lg font-bold">
+                <PlusCircle size={18} className="text-[#F8D56B]" />
+                File New Ticket
+              </h3>
 
-          {/* Ticket generation form */}
-          <div className="bg-slate-900/30 border border-slate-800 rounded-2xl p-6 space-y-6">
-            <h3 className="text-sm font-bold text-slate-300 flex items-center gap-2">
-              <PlusCircle size={16} className="text-emerald-400" />
-              File New Ticket
-            </h3>
+              <form onSubmit={handleCreateTicket} className="mt-6 space-y-5">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-emerald-100/50">Subject Heading</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Missing transaction"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    className="w-full rounded-xl border border-emerald-100/15 bg-black/20 p-3 text-sm text-white placeholder-emerald-100/20 transition focus:border-[#F8D56B] focus:outline-none focus:ring-1 focus:ring-[#F8D56B]"
+                  />
+                </div>
 
-            <form onSubmit={handleCreateTicket} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase">Subject Heading</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Transaction settlement missing"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 transition"
-                />
-              </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-emerald-100/50">Order ID (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="UUID reference"
+                    value={orderId}
+                    onChange={(e) => setOrderId(e.target.value)}
+                    className="w-full rounded-xl border border-emerald-100/15 bg-black/20 p-3 font-mono text-sm text-white placeholder-emerald-100/20 transition focus:border-[#F8D56B] focus:outline-none focus:ring-1 focus:ring-[#F8D56B]"
+                  />
+                </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase">Order Association ID (Optional)</label>
-                <input
-                  type="text"
-                  placeholder="UUID reference"
-                  value={orderId}
-                  onChange={(e) => setOrderId(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 transition"
-                />
-              </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-emerald-100/50">Detailed Message</label>
+                  <textarea
+                    required
+                    rows={4}
+                    placeholder="Describe your issue in detail..."
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    className="w-full resize-none rounded-xl border border-emerald-100/15 bg-black/20 p-3 text-sm text-white placeholder-emerald-100/20 transition focus:border-[#F8D56B] focus:outline-none focus:ring-1 focus:ring-[#F8D56B]"
+                  />
+                </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase">Detail Message description</label>
-                <textarea
-                  required
-                  rows={4}
-                  placeholder="Describe your issue or order discrepancy in detail..."
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 transition resize-none"
-                />
-              </div>
+                <button
+                  type="submit"
+                  disabled={creating}
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#D4AF37] px-4 py-3 text-xs font-black text-[#062C23] hover:bg-[#F8D56B] disabled:opacity-50"
+                >
+                  {creating ? <RefreshCw className="animate-spin" size={16} /> : <MessageSquare size={16} />}
+                  {creating ? 'Submitting...' : 'Submit Support Ticket'}
+                </button>
+              </form>
+            </div>
 
-              <button
-                type="submit"
-                disabled={creating}
-                className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-xs font-bold rounded-lg transition disabled:opacity-50"
-              >
-                {creating ? 'Submitting ticket...' : 'Submit Support Ticket'}
-              </button>
-            </form>
           </div>
 
         </div>
-
       </div>
-    </div>
+    </main>
   );
 }
 
 export default function SupportPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center space-y-4">
-        <RefreshCw className="animate-spin text-emerald-500" size={32} />
-        <span className="text-xs font-semibold text-slate-400">Loading help desk...</span>
-      </div>
+      <main className="min-h-screen bg-[#020E0C] lg:pl-64 flex flex-col items-center justify-center space-y-4">
+        <RefreshCw className="animate-spin text-[#F8D56B]" size={32} />
+        <span className="text-xs font-semibold text-emerald-100/50">Loading help desk...</span>
+      </main>
     }>
       <SupportPageContent />
     </Suspense>

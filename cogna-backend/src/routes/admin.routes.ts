@@ -299,9 +299,9 @@ export default async function adminRoutes(app: FastifyInstance) {
         return acc
       }, {} as Record<string, number>)
 
-      // Support backlog (represented by users pending email verification or approval)
-      const supportBacklog = await prisma.user.count({
-        where: { status: 'PENDING' }
+      // Support backlog (open support tickets)
+      const supportBacklog = await prisma.supportTicket.count({
+        where: { status: 'OPEN' }
       })
 
       return reply.send(successResponse({

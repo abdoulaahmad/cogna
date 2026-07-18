@@ -68,9 +68,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div>
           {/* Brand header */}
           <div className="h-16 px-6 border-b border-slate-100 flex items-center justify-between">
-            <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text text-transparent">
-              COGNA
-            </span>
+            <img src="/logo-cogna.png" alt="Cogna" className="h-6 w-auto" />
             <Link
               href="/"
               className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition"

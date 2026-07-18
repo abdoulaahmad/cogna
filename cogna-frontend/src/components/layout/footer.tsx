@@ -22,11 +22,15 @@ export default function Footer() {
             
             {/* BRAND */}
             <div className="space-y-6 text-left">
-              <span className="text-2xl font-bold tracking-widest text-[#D4AF37] block font-display">
-                COGNA
-              </span>
+              <Link href="/" className="block focus:outline-none">
+                <img
+                  src="/logo-cogna.png"
+                  alt="Cogna Logo"
+                  className="h-8 w-auto object-contain"
+                />
+              </Link>
               <p className="text-xs font-semibold text-slate-400 leading-relaxed max-w-[280px]">
-                Premium API subscriptions marketplace. Connecting you to powerful AI tools with instant provisioning and unified checkout.
+                Premium AI subscriptions marketplace. Connecting you to powerful AI tools with instant provisioning at discounted rates.
               </p>
               
               {/* Social Circles */}
@@ -74,7 +78,7 @@ export default function Footer() {
               <ul className="space-y-3.5 text-xs font-semibold text-slate-400">
                 <li>
                   <Link href="/catalog" className="hover:text-[#D4AF37] transition-colors duration-200">
-                    Browse APIs
+                    Browse Catalog
                   </Link>
                 </li>
                 <li>

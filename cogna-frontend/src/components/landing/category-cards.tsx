@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { MessageSquare, Image as ImageIcon, Video, Code, Shield, Zap, RefreshCw, Headphones, ArrowRight } from 'lucide-react';
+import { MessageSquare, Image as ImageIcon, Video, Code, Shield, Zap, Star, Headphones, ArrowRight } from 'lucide-react';
 
 interface CategoryItem {
   name: string;
@@ -213,9 +213,9 @@ export default function CategoryCards() {
       icon: <Zap size={20} className="text-[#18B88A]" />,
     },
     {
-      title: 'Cancel Anytime',
-      desc: 'No lock-ins. Change or cancel anytime.',
-      icon: <RefreshCw size={20} className="text-[#18B88A]" />,
+      title: 'Unbeatable Prices',
+      desc: 'Premium AI tools at a fraction of the original cost.',
+      icon: <Star size={20} className="text-[#18B88A]" />,
     },
     {
       title: '24/7 Support',
@@ -293,9 +293,6 @@ export default function CategoryCards() {
 
               {/* Bottom part stats and link */}
               <div className="pt-4 border-t border-slate-100 flex flex-col gap-4">
-                <div className="text-xs font-semibold text-slate-500">
-                  <span className="font-extrabold text-[#18B88A] text-sm mr-1">{cat.productCount}</span> Products
-                </div>
                 <Link
                   href={`/catalog?category=${cat.slug}`}
                   className={`text-xs font-bold flex items-center gap-1 transition-all duration-200 ${cat.exploreColor}`}
