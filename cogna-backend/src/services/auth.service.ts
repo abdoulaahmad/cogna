@@ -119,7 +119,4 @@ export const AuthService = {
       createdAt:     user.createdAt,
     }
   },
-
-    }
-  },
 }
