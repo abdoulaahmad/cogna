@@ -27,7 +27,8 @@ export const VerificationTokenService = {
       throw new ValidationError('Please wait 60 seconds before requesting another token');
     }
 
-    const rawToken = randomBytes(32).toString('hex');
+    // Generate a 6-digit numeric OTP for better UX when copying
+    const rawToken = Math.floor(100000 + Math.random() * 900000).toString();
     const tokenHash = hashToken(rawToken);
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes expiry
 

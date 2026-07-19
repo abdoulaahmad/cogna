@@ -94,18 +94,18 @@ api.interceptors.response.use(
 
       const { accessToken, refreshToken } = response.data.data;
 
-      // Update localStorage manually to ensure Zustand is in sync
+      // Ensure Zustand is completely in sync to avoid the token rotation race condition
       if (typeof window !== 'undefined') {
-        const stored = localStorage.getItem('cogna-auth');
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          parsed.state.accessToken = accessToken;
-          parsed.state.refreshToken = refreshToken;
-          const newValue = JSON.stringify(parsed);
-          localStorage.setItem('cogna-auth', newValue);
-          // Manually dispatch a storage event so Zustand updates its memory state in the current tab
-          window.dispatchEvent(new StorageEvent('storage', { key: 'cogna-auth', newValue }));
-        }
+        import('@/stores/auth').then(({ useAuthStore }) => {
+          const store = useAuthStore.getState();
+          if (store.user) {
+            store.setAuth({
+              user: store.user,
+              accessToken,
+              refreshToken,
+            });
+          }
+        }).catch(console.error);
       }
 
       processQueue(null, accessToken);

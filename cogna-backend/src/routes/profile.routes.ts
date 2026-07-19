@@ -7,6 +7,7 @@ import { AuditLogService } from '@/services/audit-log.service';
 import { NotFoundError, UnauthorizedError } from '@/utils/errors';
 import { successResponse } from '@/utils/response';
 import { handleRouteError } from '@/utils/handle-error';
+import { EmailService } from '@/services/email.service';
 
 const BCRYPT_ROUNDS = 12;
 
@@ -106,9 +107,11 @@ export default async function profileRoutes(app: FastifyInstance) {
       }
 
       const rawToken = await VerificationTokenService.createToken(user.id, 'PASSWORD_RESET');
+      
+      // Send the email (mocked if SMTP is not configured)
+      await EmailService.sendPasswordResetEmail(email, rawToken);
 
-      // In development/testing, return the token for programmatic validation
-      return reply.send(successResponse({ email, token: rawToken }, 'If the email exists, a password reset link will be sent'));
+      return reply.send(successResponse({ email }, 'If the email exists, a password reset link will be sent'));
     } catch (error) { return handleRouteError(error, reply); }
   });
 
