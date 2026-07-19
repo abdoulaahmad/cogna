@@ -6,7 +6,8 @@ import { UserCapabilityRepository } from '@/repositories/user-capability.reposit
 import { ConflictError, NotFoundError, UnauthorizedError } from '@/utils/errors'
 import { env } from '@/config/env'
 import type { RegisterInput, LoginInput } from '@/validators/auth.validator'
-
+import { VerificationTokenService } from '@/services/verification-token.service'
+import { EmailService } from '@/services/email.service'
 
 const BCRYPT_ROUNDS = 12
 
@@ -22,6 +23,10 @@ export const AuthService = {
       email:    input.email,
       passwordHash,
     })
+
+    // Generate email verification token and send email
+    const token = await VerificationTokenService.createToken(user.id, 'EMAIL_VERIFICATION')
+    await EmailService.sendVerificationEmail(user.email, token)
 
     return {
       id:       user.id,

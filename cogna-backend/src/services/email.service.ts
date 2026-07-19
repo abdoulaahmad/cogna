@@ -46,4 +46,39 @@ export const EmailService = {
       throw new Error('Failed to send email. Please check SMTP configuration.', { cause: error });
     }
   },
+
+  /**
+   * Send an email verification OTP.
+   */
+  async sendVerificationEmail(email: string, token: string) {
+    if (!env.SMTP_PASSWORD) {
+      console.warn('⚠️ SMTP_PASSWORD not set. Logging email to console instead of sending.');
+      console.log(`\n\n--- MOCK EMAIL TO: ${email} ---\nEmail Verification OTP: ${token}\n----------------------------------\n\n`);
+      return;
+    }
+
+    const mailOptions = {
+      from: `"${env.APP_NAME}" <${env.SMTP_FROM}>`,
+      to: email,
+      subject: 'Verify your email address',
+      text: `Your email verification code is: ${token}\n\nThis code is valid for 15 minutes.`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>Email Verification</h2>
+          <p>Thank you for registering! Please use the following 6-digit code to verify your email address:</p>
+          <div style="background-color: #f4f4f4; padding: 16px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 4px; border-radius: 8px;">
+            ${token}
+          </div>
+          <p style="color: #666; font-size: 14px; margin-top: 24px;">This code is valid for 15 minutes.</p>
+        </div>
+      `,
+    };
+
+    try {
+      await transporter.sendMail(mailOptions);
+    } catch (error) {
+      console.error('Failed to send email:', error);
+      throw new Error('Failed to send email. Please check SMTP configuration.', { cause: error });
+    }
+  },
 };
