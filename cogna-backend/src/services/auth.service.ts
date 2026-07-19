@@ -6,7 +6,7 @@ import { UserCapabilityRepository } from '@/repositories/user-capability.reposit
 import { ConflictError, NotFoundError, UnauthorizedError } from '@/utils/errors'
 import { env } from '@/config/env'
 import type { RegisterInput, LoginInput } from '@/validators/auth.validator'
-import { VerificationTokenService } from '@/services/verification-token.service'
+
 
 const BCRYPT_ROUNDS = 12
 

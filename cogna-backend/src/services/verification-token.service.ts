@@ -1,5 +1,5 @@
 import prisma from '@/config/database';
-import { createHash, randomBytes } from 'crypto';
+import { createHash } from 'crypto';
 import { ValidationError, NotFoundError } from '@/utils/errors';
 
 export function hashToken(token: string): string {
