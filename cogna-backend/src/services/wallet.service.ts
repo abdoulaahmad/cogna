@@ -27,7 +27,7 @@ export const WalletService = {
     await fulfillmentQueue.add(
       'fulfill-order',
       { orderId: order.id, productId: order.productId, userId: order.userId },
-      { jobId: `fulfill:${order.id}` }
+      { jobId: `fulfill_${order.id}` }
     )
     
     return order
