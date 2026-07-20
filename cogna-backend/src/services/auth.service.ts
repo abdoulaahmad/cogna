@@ -125,4 +125,38 @@ export const AuthService = {
       createdAt:     user.createdAt,
     }
   },
+
+  // ── Forgot Password ───────────────────────────────────────────────────
+  async forgotPassword(email: string) {
+    const user = await UserRepository.findByEmail(email)
+    if (!user) {
+      // Return success anyway to prevent email enumeration
+      return { message: 'If that email exists, a password reset link has been sent' }
+    }
+    const token = await VerificationTokenService.createToken(user.id, 'PASSWORD_RESET')
+    await EmailService.sendPasswordResetEmail(user.email, token)
+    return { message: 'If that email exists, a password reset link has been sent' }
+  },
+
+  // ── Reset Password ────────────────────────────────────────────────────
+  async resetPassword(input: ResetPasswordInput) {
+    const verification = await VerificationTokenService.verifyToken(input.token, 'PASSWORD_RESET')
+    const passwordHash = await bcrypt.hash(input.password, BCRYPT_ROUNDS)
+    await UserRepository.update(verification.userId, { passwordHash })
+    return { message: 'Password has been successfully reset' }
+  },
+
+  // ── Resend Verification ───────────────────────────────────────────────
+  async resendVerification(email: string) {
+    const user = await UserRepository.findByEmail(email)
+    if (!user) {
+      return { message: 'If that email exists, a verification link has been sent' }
+    }
+    if (user.emailVerified) {
+      throw new ConflictError('Email is already verified')
+    }
+    const token = await VerificationTokenService.createToken(user.id, 'EMAIL_VERIFICATION')
+    await EmailService.sendVerificationEmail(user.email, token)
+    return { message: 'Verification email sent successfully' }
+  },
 }

@@ -5,11 +5,46 @@ import {
   registerSchema,
   loginSchema,
   refreshTokenSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
 } from '@/validators/auth.validator'
 import { successResponse } from '@/utils/response'
 import { handleRouteError } from '@/utils/handle-error'
 
 export default async function authRoutes(app: FastifyInstance) {
+  // POST /api/v1/auth/forgot-password
+  app.post('/forgot-password', async (req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const body = forgotPasswordSchema.parse(req.body)
+      const result = await AuthService.forgotPassword(body.email)
+      return reply.send(successResponse(result))
+    } catch (error) {
+      return handleRouteError(error, reply)
+    }
+  })
+
+  // POST /api/v1/auth/reset-password
+  app.post('/reset-password', async (req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const body = resetPasswordSchema.parse(req.body)
+      const result = await AuthService.resetPassword(body)
+      return reply.send(successResponse(result))
+    } catch (error) {
+      return handleRouteError(error, reply)
+    }
+  })
+
+  // POST /api/v1/auth/resend-verification
+  app.post('/resend-verification', async (req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const body = forgotPasswordSchema.parse(req.body) // uses { email }
+      const result = await AuthService.resendVerification(body.email)
+      return reply.send(successResponse(result))
+    } catch (error) {
+      return handleRouteError(error, reply)
+    }
+  })
+
   // POST /api/v1/auth/register
   app.post('/register', async (req: FastifyRequest, reply: FastifyReply) => {
     try {
