@@ -30,4 +30,8 @@ export const UserRepository = {
   async updatePassword(id: string, passwordHash: string): Promise<User> {
     return prisma.user.update({ where: { id }, data: { passwordHash } })
   },
+
+  async resetPasswordAndVerifyEmail(id: string, passwordHash: string): Promise<User> {
+    return prisma.user.update({ where: { id }, data: { passwordHash, emailVerified: true, status: 'ACTIVE' } })
+  },
 }
