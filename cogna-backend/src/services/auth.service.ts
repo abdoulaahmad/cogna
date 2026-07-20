@@ -5,7 +5,7 @@ import { RefreshTokenRepository } from '@/repositories/refresh-token.repository'
 import { UserCapabilityRepository } from '@/repositories/user-capability.repository'
 import { ConflictError, NotFoundError, UnauthorizedError } from '@/utils/errors'
 import { env } from '@/config/env'
-import type { RegisterInput, LoginInput } from '@/validators/auth.validator'
+import type { RegisterInput, LoginInput, ResetPasswordInput } from '@/validators/auth.validator'
 import { VerificationTokenService } from '@/services/verification-token.service'
 import { EmailService } from '@/services/email.service'
 
@@ -140,9 +140,9 @@ export const AuthService = {
 
   // ── Reset Password ────────────────────────────────────────────────────
   async resetPassword(input: ResetPasswordInput) {
-    const verification = await VerificationTokenService.verifyToken(input.token, 'PASSWORD_RESET')
+    const userId = await VerificationTokenService.consumeToken(input.token, 'PASSWORD_RESET')
     const passwordHash = await bcrypt.hash(input.password, BCRYPT_ROUNDS)
-    await UserRepository.update(verification.userId, { passwordHash })
+    await UserRepository.updatePassword(userId, passwordHash)
     return { message: 'Password has been successfully reset' }
   },
 
