@@ -21,5 +21,6 @@ export async function handleRouteError(error: unknown, reply: FastifyReply) {
   if (error instanceof AppError) {
     return reply.status(error.statusCode).send(errorResponse(error.message, error.errors))
   }
+  console.error('[500 Internal Server Error]:', error);
   return reply.status(500).send(errorResponse('Internal server error'))
 }
