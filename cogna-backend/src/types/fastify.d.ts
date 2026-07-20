@@ -13,6 +13,11 @@ declare module 'fastify' {
       request: import('fastify').FastifyRequest,
       reply:   import('fastify').FastifyReply
     ) => Promise<void>
+    /** Authenticate using either JWT or X-API-Key */
+    authenticateAny: (
+      request: import('fastify').FastifyRequest,
+      reply:   import('fastify').FastifyReply
+    ) => Promise<void>
     /** Enforce admin role permission boundaries */
     requireAdminRole: (
       allowedRoles: import('@prisma/client').AdminRole[]

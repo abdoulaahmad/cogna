@@ -6,11 +6,19 @@ import { handleRouteError } from '@/utils/handle-error'
 
 export default async function orderRoutes(app: FastifyInstance) {
 
-  // All order routes require authentication
-  app.addHook('onRequest', app.authenticate)
+  // All order routes require authentication (JWT or API Key)
+  app.addHook('onRequest', app.authenticateAny)
 
   // POST /api/v1/orders
-  app.post('/', async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post(
+    '/',
+    {
+      schema: {
+        tags: ['Orders'],
+        security: [{ bearerAuth: [] }, { apiKey: [] }],
+      },
+    },
+    async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const { sub } = req.user as { sub: string }
       const body  = createOrderSchema.parse(req.body)
@@ -22,7 +30,15 @@ export default async function orderRoutes(app: FastifyInstance) {
   })
 
   // GET /api/v1/orders
-  app.get('/', async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get(
+    '/',
+    {
+      schema: {
+        tags: ['Orders'],
+        security: [{ bearerAuth: [] }, { apiKey: [] }],
+      },
+    },
+    async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const { sub } = req.user as { sub: string }
       const { page = 1, limit = 20 } = req.query as { page?: number; limit?: number }
@@ -34,7 +50,15 @@ export default async function orderRoutes(app: FastifyInstance) {
   })
 
   // GET /api/v1/orders/:id
-  app.get('/:id', async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get(
+    '/:id',
+    {
+      schema: {
+        tags: ['Orders'],
+        security: [{ bearerAuth: [] }, { apiKey: [] }],
+      },
+    },
+    async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const { sub, role } = req.user as { sub: string; role: string }
       const { id } = req.params as { id: string }

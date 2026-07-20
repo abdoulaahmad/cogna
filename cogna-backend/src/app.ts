@@ -50,6 +50,25 @@ export async function buildApp() {
     }
   })
 
+  // Decorate fastify instance with authenticateAny method (JWT or API Key)
+  app.decorate('authenticateAny', async function (request: FastifyRequest, reply: FastifyReply) {
+    if (request.headers['x-api-key']) {
+      // Use API Key auth
+      await app.authenticateApiKey(request, reply)
+      // Map API key context to user session format so routes work seamlessly
+      if (request.apiKeyContext) {
+        request.user = { sub: request.apiKeyContext.userId, role: 'CUSTOMER' }
+      }
+    } else {
+      // Use JWT auth
+      try {
+        await request.jwtVerify()
+      } catch (err) {
+        reply.send(err)
+      }
+    }
+  })
+
   await app.register(rateLimit, {
     max: 100,
     timeWindow: '1 minute',
@@ -80,6 +99,7 @@ export async function buildApp() {
         },
       },
     },
+    hideUntagged: true,
   })
 
   await app.register(swaggerUi, {

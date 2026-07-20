@@ -7,7 +7,7 @@ import { handleRouteError } from '@/utils/handle-error'
 export default async function productRoutes(app: FastifyInstance) {
 
   // GET /api/v1/products
-  app.get('/', async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get('/', { schema: { tags: ['Catalog'] } }, async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const query = listProductsSchema.parse(req.query)
       const { items, total, page, limit } = await ProductService.listProducts(query)
@@ -18,7 +18,7 @@ export default async function productRoutes(app: FastifyInstance) {
   })
 
   // GET /api/v1/products/search
-  app.get('/search', async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get('/search', { schema: { tags: ['Catalog'] } }, async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const { q } = req.query as { q?: string }
       const products = await ProductService.searchProducts(q ?? '')
@@ -29,7 +29,7 @@ export default async function productRoutes(app: FastifyInstance) {
   })
 
   // GET /api/v1/products/category/:slug
-  app.get('/category/:slug', async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get('/category/:slug', { schema: { tags: ['Catalog'] } }, async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const { slug } = req.params as { slug: string }
       const products = await ProductService.getProductsByCategory(slug)
@@ -40,7 +40,7 @@ export default async function productRoutes(app: FastifyInstance) {
   })
 
   // GET /api/v1/products/slug/:slug
-  app.get('/slug/:slug', async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get('/slug/:slug', { schema: { tags: ['Catalog'] } }, async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const { slug } = req.params as { slug: string }
       const product = await ProductService.getProductBySlug(slug)
@@ -51,7 +51,7 @@ export default async function productRoutes(app: FastifyInstance) {
   })
 
   // GET /api/v1/products/:id
-  app.get('/:id', async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get('/:id', { schema: { tags: ['Catalog'] } }, async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const { id } = req.params as { id: string }
       const product = await ProductService.getProductById(id)
