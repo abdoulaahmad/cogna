@@ -45,6 +45,7 @@ export const AuthService = {
     const validPassword = await bcrypt.compare(input.password, user.passwordHash)
     if (!validPassword) throw new UnauthorizedError('Invalid email or password')
 
+    if (!user.emailVerified) throw new UnauthorizedError('Please verify your email address before logging in')
     if (user.status === 'SUSPENDED') throw new UnauthorizedError('Your account has been suspended')
 
     // Generate tokens

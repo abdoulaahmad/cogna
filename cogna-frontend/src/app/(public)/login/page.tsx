@@ -28,6 +28,10 @@ export default function LoginPage() {
       else router.replace(profile.role === 'ADMIN' ? '/admin/dashboard' : '/dashboard');
     } catch (requestError: unknown) {
       const message = axios.isAxiosError(requestError) ? requestError.response?.data?.message : requestError instanceof Error ? requestError.message : null;
+      if (message === 'Please verify your email address before logging in') {
+        router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+        return;
+      }
       setError(message || 'Unable to sign in with those credentials.');
     } finally { setLoading(false); }
   }
