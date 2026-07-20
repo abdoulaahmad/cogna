@@ -5,7 +5,7 @@ import { fulfillmentQueue } from '@/queue/fulfillment.queue'
 
 async function start() {
   const app = await buildApp()
-  const worker = startFulfillmentWorker()
+  startFulfillmentWorker()
   
   // Schedule the status polling job to run every 60 seconds
   try {
