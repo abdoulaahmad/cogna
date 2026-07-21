@@ -67,7 +67,7 @@ export default function PayPage() {
         }
 
         clearCart();
-        window.location.assign(`${window.location.origin}/orders/${response.data.data.id}`);
+        router.push(`/orders/${response.data.data.id}`);
         return;
       }
 

@@ -7,6 +7,7 @@ export interface AuditLogMetadata {
   afterSnapshot?: Record<string, unknown>;
   requestState?: string;
   approvalState?: string;
+  [key: string]: unknown;
 }
 
 export const AuditLogService = {

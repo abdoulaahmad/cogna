@@ -6,6 +6,7 @@ import { OrderRepository } from '@/repositories/order.repository'
 import { FulfillmentService } from '@/services/fulfillment.service'
 import { fulfillmentQueue } from '@/queue/fulfillment.queue'
 import prisma from '@/config/database'
+import { z } from 'zod'
 import {
   createProductSchema,
   updateProductSchema,
@@ -392,15 +393,18 @@ export default async function adminRoutes(app: FastifyInstance) {
     } catch (error) { return handleRouteError(error, reply) }
   })
 
+  const walletAdjustmentRequestSchema = z.object({
+    amount: z.number({ error: 'amount must be a positive number' }).positive('amount must be greater than 0'),
+    direction: z.enum(['CREDIT', 'DEBIT'] as const),
+    reason: z.string().min(5, 'reason must be at least 5 characters'),
+  })
+
   app.post('/wallets/:id/adjustments/request', {
     preHandler: app.requireAdminRole([AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.FINANCE, AdminRole.OPERATIONS])
   }, async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const { id } = req.params as { id: string }
-      const { amount, direction, reason } = req.body as { amount: number; direction: 'CREDIT' | 'DEBIT'; reason: string }
-      if (!amount || amount <= 0 || !direction || !reason) {
-        throw new ValidationError('amount, direction, and reason are required')
-      }
+      const body = walletAdjustmentRequestSchema.parse(req.body)
 
       const wallet = await prisma.wallet.findUnique({ where: { id } })
       if (!wallet) throw new NotFoundError('Wallet')
@@ -410,15 +414,15 @@ export default async function adminRoutes(app: FastifyInstance) {
         data: {
           walletId: id,
           makerId: sub,
-          amount,
-          direction,
-          reason,
+          amount: body.amount,
+          direction: body.direction,
+          reason: body.reason,
           status: 'PENDING'
         }
       })
 
       await AuditLogService.recordAuditEvent(sub, 'WALLET_ADJUSTMENT_REQUESTED', 'wallet_adjustment_requests', request.id, req.ip, {
-        reason: `Initiated adjustment request of ${direction} ${amount}`,
+        reason: `Initiated adjustment request of ${body.direction} ${body.amount}`,
         requestState: 'PENDING'
       })
 

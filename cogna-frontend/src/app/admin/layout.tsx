@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useAuthStore } from '@/stores/auth'
 import {
   Activity, Boxes, ClipboardList, CreditCard, FolderTree, History,
-  Home, LayoutDashboard, LogOut, Menu, Package, ShieldCheck, UsersRound, WalletCards, X,
+  Home, LayoutDashboard, LogOut, Menu, Package, ShieldCheck, UserCog, UsersRound, WalletCards, X,
 } from 'lucide-react'
 
 type NavItem = { name: string; href: string; icon: React.ComponentType<{ size?: number; className?: string }> }
@@ -24,6 +24,7 @@ const navigation: Array<{ label: string; items: NavItem[] }> = [
     { name: 'Payment gateways', href: '/admin/payment-gateways', icon: CreditCard },
   ] },
   { label: 'Finance & control', items: [
+    { name: 'User accounts', href: '/admin/users', icon: UserCog },
     { name: 'Wallet adjustments', href: '/admin/adjustments', icon: WalletCards },
     { name: 'Audit logs', href: '/admin/audit-logs', icon: History },
   ] },

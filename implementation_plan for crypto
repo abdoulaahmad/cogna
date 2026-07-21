@@ -1,0 +1,71 @@
+# Add Plisio USDT (BSC) Dedicated Deposit Addresses
+
+This plan outlines the steps to give every user a dedicated USDT (BSC) deposit address using Plisio, allowing them to fund their wallet via crypto. The system will automatically detect incoming deposits and credit their wallet balance.
+
+## Open Questions
+
+> [!WARNING]
+> **Currency Conversion**
+> Plisio operates in USD/Crypto, but your internal wallet balance appears to use Naira (`NGN`). When a user deposits 100 USDT, do you want to credit their wallet in NGN based on a specific exchange rate (e.g., 1 USDT = 1,600 NGN), or are we converting the entire wallet system to USD?
+
+> [!WARNING]
+> **Plisio API Features**
+> Plisio supports creating "Invoices" (where a user types in an amount and gets an address for a single payment) OR a "White Label Wallet" (which gives a permanent, reusable address). I will implement the permanent, reusable address approach since you specifically requested a "dedicated USDT wallet to fund."
+
+## Proposed Changes
+
+---
+
+### Database Schema (Prisma)
+
+#### [MODIFY] [schema.prisma](file:///c:/Users/abdoulaahmad/Documents/cogna/cogna-backend/prisma/schema.prisma)
+- Update `PaymentGateway` enum to include `PLISIO`.
+- Add `usdtBscAddress` (String, nullable, unique) to the `Wallet` model.
+- *Migration*: Create and apply a new migration `add_plisio_crypto`.
+
+---
+
+### Backend Services & Configuration
+
+#### [MODIFY] [env.ts](file:///c:/Users/abdoulaahmad/Documents/cogna/cogna-backend/src/config/env.ts)
+- Add `PLISIO_SECRET_KEY` string to the configuration.
+
+#### [NEW] [plisio.service.ts](file:///c:/Users/abdoulaahmad/Documents/cogna/cogna-backend/src/services/plisio.service.ts)
+- Create a new service to interact with Plisio's API.
+- `generateDepositAddress(userId)`: Calls Plisio's `/operations/deposit` API to generate a permanent BEP-20 USDT address.
+- `verifyWebhookSignature(payload)`: Ensures webhooks genuinely come from Plisio.
+
+#### [MODIFY] [wallet.service.ts](file:///c:/Users/abdoulaahmad/Documents/cogna/cogna-backend/src/services/wallet.service.ts)
+- Add a new method `getCryptoAddress(userId)`: 
+  - Checks if the user's `Wallet` already has a `usdtBscAddress`.
+  - If not, it calls `PlisioService.generateDepositAddress`, saves it to the DB, and returns it.
+- Add `processPlisioWebhook(payload)`:
+  - Finds the wallet by the deposit address or order ID.
+  - Creates a `WalletFunding` record with status `COMPLETED`.
+  - Creates a `WalletTransaction` to credit the user's balance.
+
+#### [MODIFY] [wallet.controller.ts](file:///c:/Users/abdoulaahmad/Documents/cogna/cogna-backend/src/controllers/wallet.controller.ts)
+- Expose `GET /api/wallet/crypto-address` to fetch the user's dedicated address.
+- Expose `POST /api/webhooks/plisio` for Plisio to ping when a deposit is confirmed on the blockchain.
+
+---
+
+### Frontend
+
+#### [MODIFY] cogna-frontend/src/app/(authenticated)/wallet/fund/page.tsx (or similar component)
+- Add a new "Crypto / USDT" tab to the funding options.
+- On click, fetch the user's static deposit address from `GET /api/wallet/crypto-address`.
+- Display the address clearly along with a generated QR code (using a library like `qrcode.react`).
+- Add instructions (e.g., "Send only USDT on the Binance Smart Chain (BEP-20) network. Deposits will be credited after 15 network confirmations.").
+
+## Verification Plan
+
+### Automated Tests
+- Test Plisio webhook payload verification using a mock secret.
+- Test that crediting via the webhook updates the `Wallet` balance and `WalletTransaction` ledger correctly.
+
+### Manual Verification
+- Log in to the frontend as a test user and click "Fund via Crypto".
+- Ensure a valid BSC address is generated and displayed with a QR code.
+- Simulate a webhook ping using Postman/cURL with the Plisio payload structure.
+- Verify the internal wallet balance increases by the correct equivalent amount in NGN/USD.

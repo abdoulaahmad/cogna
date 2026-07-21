@@ -96,6 +96,20 @@ api.interceptors.response.use(
 
       // Ensure Zustand is completely in sync to avoid the token rotation race condition
       if (typeof window !== 'undefined') {
+        try {
+          const authData = localStorage.getItem('cogna-auth');
+          if (authData) {
+            const parsed = JSON.parse(authData);
+            if (parsed.state) {
+              parsed.state.accessToken = accessToken;
+              parsed.state.refreshToken = refreshToken;
+              localStorage.setItem('cogna-auth', JSON.stringify(parsed));
+            }
+          }
+        } catch (e) {
+          console.error('Failed to sync auth to localStorage', e);
+        }
+
         import('@/stores/auth').then(({ useAuthStore }) => {
           const store = useAuthStore.getState();
           if (store.user) {
