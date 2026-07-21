@@ -99,7 +99,7 @@ export default function AdminUsersPage() {
       <AdminPageHeader
         eyebrow="Identity & access management"
         title="User accounts"
-        description="Manage admin roles and account status. Role changes take effect on next login — the user must log out and back in."
+        description="Manage admin roles and account status. Role changes take effect on next login ï¿½ the user must log out and back in."
         action={
           <button onClick={() => void load()} className={secondaryButton}>
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />Refresh
@@ -128,7 +128,7 @@ export default function AdminUsersPage() {
         </div>
 
         {loading ? (
-          <AdminLoading label="Loading users…" />
+          <AdminLoading label="Loading usersï¿½" />
         ) : !visible.length ? (
           <AdminEmpty icon={Users} title="No users found" description="Registered accounts appear here." />
         ) : (
@@ -163,7 +163,7 @@ export default function AdminUsersPage() {
                           {u.adminRole}
                         </span>
                       ) : (
-                        <span className="text-emerald-100/28">—</span>
+                        <span className="text-emerald-100/28">ï¿½</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
@@ -243,7 +243,7 @@ export default function AdminUsersPage() {
 
                 <button disabled={saving} type="submit" className={`${primaryButton} w-full`} id="save-user-edit">
                   <ShieldCheck size={15} />
-                  {saving ? 'Saving…' : 'Save changes'}
+                  {saving ? 'Savingï¿½' : 'Save changes'}
                 </button>
               </form>
             </div>
