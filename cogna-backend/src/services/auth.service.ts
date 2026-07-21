@@ -142,7 +142,13 @@ export const AuthService = {
   async resetPassword(input: ResetPasswordInput) {
     const userId = await VerificationTokenService.consumeToken(input.token, 'PASSWORD_RESET')
     const passwordHash = await bcrypt.hash(input.password, BCRYPT_ROUNDS)
-    await UserRepository.resetPasswordAndVerifyEmail(userId, passwordHash)
+    await UserRepository.updatePassword(userId, passwordHash)
+    
+    // Also mark the email as verified since they proved ownership
+    const user = await UserRepository.findById(userId)
+    if (user && !user.emailVerified) {
+      await UserRepository.markEmailVerified(userId)
+    }
     return { message: 'Password has been successfully reset' }
   },
 
