@@ -244,6 +244,7 @@ model Product {
   currency            String         @default("NGN")
   deliveryTime        String?        @map("delivery_time")
   image               String?
+  position            Int            @default(0)
   active              Boolean        @default(true)
   paymentGateway      PaymentGateway @default(PAYSTACK) @map("payment_gateway")
   providerApiOverride Json?          @map("provider_api_override") // per-product overrides
@@ -256,6 +257,7 @@ model Product {
 
   @@index([slug])
   @@index([categoryId])
+  @@index([position])
   @@map("products")
 }
 

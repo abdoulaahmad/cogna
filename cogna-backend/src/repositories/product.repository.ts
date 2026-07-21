@@ -28,7 +28,7 @@ export const ProductRepository = {
       prisma.product.findMany({
         where,
         include: { category: true },
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
         skip:  (opts.page - 1) * opts.limit,
         take:  opts.limit,
       }),
@@ -59,7 +59,7 @@ export const ProductRepository = {
     return prisma.product.findMany({
       where:   { category: { slug: categorySlug }, active: true },
       include: { category: true },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
     })
   },
 
@@ -74,7 +74,7 @@ export const ProductRepository = {
         ],
       },
       include: { category: true },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
       take:    50,
     })
   },
@@ -91,6 +91,7 @@ export const ProductRepository = {
     currency:            string
     deliveryTime?:       string
     image?:              string
+    position?:           number
     active:              boolean
     paymentGateway:      'PAYSTACK' | 'MONNIFY'
     providerApiOverride?: Record<string, string>
@@ -115,6 +116,7 @@ export const ProductRepository = {
       currency:            string
       deliveryTime:        string
       image:               string
+      position:            number
       active:              boolean
       paymentGateway:      'PAYSTACK' | 'MONNIFY'
       providerApiOverride: Record<string, string>
@@ -125,6 +127,18 @@ export const ProductRepository = {
       data,
       include: { category: true },
     })
+  },
+
+  /** Batch update positions for products (admin only) */
+  async reorderBatch(items: Array<{ id: string; position: number }>): Promise<void> {
+    await prisma.$transaction(
+      items.map((item) =>
+        prisma.product.update({
+          where: { id: item.id },
+          data:  { position: item.position },
+        })
+      )
+    )
   },
 
   /** Soft-delete a product by setting active = false (admin only) */

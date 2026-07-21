@@ -21,6 +21,7 @@ export const createProductSchema = z.object({
   currency:            z.string().length(3).default('NGN'),
   deliveryTime:        z.string().optional(),
   image:               z.string().url().optional(),
+  position:            z.number().int().min(0).default(0),
   active:              z.boolean().default(true),
   paymentGateway:      z.string().default('PAYSTACK').transform((v) => v as 'PAYSTACK' | 'MONNIFY'),
   providerApiOverride: z.record(z.string(), z.string()).optional(),
@@ -29,7 +30,18 @@ export const createProductSchema = z.object({
 // ─── Update product (admin) ───────────────────────────────────────────────────
 export const updateProductSchema = createProductSchema.partial()
 
+// ─── Reorder products (admin) ─────────────────────────────────────────────────
+export const reorderProductsSchema = z.object({
+  items: z.array(
+    z.object({
+      id: z.string().uuid(),
+      position: z.number().int().min(0),
+    })
+  ).min(1),
+})
+
 // ─── Types ────────────────────────────────────────────────────────────────────
-export type ListProductsQuery  = z.infer<typeof listProductsSchema>
-export type CreateProductInput = z.infer<typeof createProductSchema>
-export type UpdateProductInput = z.infer<typeof updateProductSchema>
+export type ListProductsQuery    = z.infer<typeof listProductsSchema>
+export type CreateProductInput   = z.infer<typeof createProductSchema>
+export type UpdateProductInput   = z.infer<typeof updateProductSchema>
+export type ReorderProductsInput = z.infer<typeof reorderProductsSchema>

@@ -10,6 +10,7 @@ import { z } from 'zod'
 import {
   createProductSchema,
   updateProductSchema,
+  reorderProductsSchema,
 } from '@/validators/product.validator'
 import {
   createCategorySchema,
@@ -61,6 +62,15 @@ export default async function adminRoutes(app: FastifyInstance) {
         providerApiOverride: body.providerApiOverride,
       })
       return reply.status(201).send(successResponse(product, 'Product created'))
+    } catch (error) { return handleRouteError(error, reply) }
+  })
+
+  // PATCH /api/v1/admin/products/reorder
+  app.patch('/products/reorder', async (req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { items } = reorderProductsSchema.parse(req.body)
+      await ProductRepository.reorderBatch(items)
+      return reply.send(successResponse(null, 'Product display positions updated'))
     } catch (error) { return handleRouteError(error, reply) }
   })
 
