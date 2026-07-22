@@ -83,3 +83,4 @@
     "seed": "ts-node -r tsconfig-paths/register prisma/seed.ts"
   }
 }
+
