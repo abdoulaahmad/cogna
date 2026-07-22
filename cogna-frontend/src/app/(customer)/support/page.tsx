@@ -72,8 +72,27 @@ function SupportPageContent() {
     setSuccess(null);
     setError(null);
     try {
-      const payload: { subject: string; message: string; orderId?: string } = { subject, message };
-      if (orderId) payload.orderId = orderId;
+      const trimmedSubject = subject.trim();
+      const trimmedMessage = message.trim();
+      const trimmedOrderId = orderId.trim();
+
+      if (trimmedSubject.length < 2 || trimmedMessage.length < 2) {
+        setError('Subject and message must be at least 2 characters long.');
+        setCreating(false);
+        return;
+      }
+
+      const payload: { subject: string; message: string; orderId?: string } = { subject: trimmedSubject, message: trimmedMessage };
+      
+      if (trimmedOrderId) {
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        if (!uuidRegex.test(trimmedOrderId)) {
+          setError('Order ID must be a valid UUID (e.g. 123e4567-e89b-12d3-a456-426614174000). You can also leave it blank.');
+          setCreating(false);
+          return;
+        }
+        payload.orderId = trimmedOrderId;
+      }
 
       const res = await api.post('/customer/support/tickets', payload);
       if (res.data.success) {
@@ -190,6 +209,7 @@ function SupportPageContent() {
                   <input
                     type="text"
                     required
+                    minLength={2}
                     placeholder="e.g. Missing transaction"
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
@@ -212,6 +232,7 @@ function SupportPageContent() {
                   <label className="text-[10px] font-bold uppercase tracking-wider text-emerald-100/50">Detailed Message</label>
                   <textarea
                     required
+                    minLength={2}
                     rows={4}
                     placeholder="Describe your issue in detail..."
                     value={message}
