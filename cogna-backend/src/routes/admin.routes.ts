@@ -278,6 +278,88 @@ export default async function adminRoutes(app: FastifyInstance) {
       return reply.send(successResponse(configuration, 'Paystack configuration updated'))
     } catch (error) { return handleRouteError(error, reply) }
   })
+  // ─── Support Tickets ───────────────────────────────────────────────────────
+  app.get('/support/tickets', {
+    preHandler: app.requireAdminRole([AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.SUPPORT])
+  }, async (_req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const tickets = await prisma.supportTicket.findMany({
+        orderBy: { updatedAt: 'desc' },
+        include: { user: { select: { email: true, fullName: true } } }
+      })
+      return reply.send(successResponse(tickets))
+    } catch (error) { return handleRouteError(error, reply) }
+  })
+
+  app.get('/support/tickets/:id', {
+    preHandler: app.requireAdminRole([AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.SUPPORT])
+  }, async (req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { id } = req.params as { id: string }
+      const ticket = await prisma.supportTicket.findUnique({
+        where: { id },
+        include: {
+          user: { select: { email: true, fullName: true } },
+          order: { select: { id: true, status: true, productId: true } },
+          messages: { orderBy: { createdAt: 'asc' }, include: { sender: { select: { email: true, role: true, adminRole: true } } } }
+        }
+      })
+      if (!ticket) throw new NotFoundError('Support ticket')
+      return reply.send(successResponse(ticket))
+    } catch (error) { return handleRouteError(error, reply) }
+  })
+
+  const updateTicketStatusSchema = z.object({
+    status: z.enum(['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'])
+  })
+
+  app.patch('/support/tickets/:id/status', {
+    preHandler: app.requireAdminRole([AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.SUPPORT])
+  }, async (req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { id } = req.params as { id: string }
+      const { status } = updateTicketStatusSchema.parse(req.body)
+      
+      const existing = await prisma.supportTicket.findUnique({ where: { id } })
+      if (!existing) throw new NotFoundError('Support ticket')
+
+      const updated = await prisma.supportTicket.update({
+        where: { id },
+        data: { status }
+      })
+      return reply.send(successResponse(updated, 'Ticket status updated'))
+    } catch (error) { return handleRouteError(error, reply) }
+  })
+
+  const ticketMessageSchema = z.object({
+    message: z.string().min(1)
+  })
+
+  app.post('/support/tickets/:id/messages', {
+    preHandler: app.requireAdminRole([AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.SUPPORT])
+  }, async (req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { id } = req.params as { id: string }
+      const { message } = ticketMessageSchema.parse(req.body)
+      const { sub } = req.user as { sub: string }
+
+      const existing = await prisma.supportTicket.findUnique({ where: { id } })
+      if (!existing) throw new NotFoundError('Support ticket')
+
+      const result = await prisma.$transaction(async (tx) => {
+        const created = await tx.supportMessage.create({
+          data: { ticketId: id, senderId: sub, message }
+        })
+        if (existing.status === 'OPEN') {
+          await tx.supportTicket.update({ where: { id }, data: { status: 'IN_PROGRESS' } })
+        }
+        return created
+      })
+
+      return reply.status(201).send(successResponse(result, 'Message sent successfully'))
+    } catch (error) { return handleRouteError(error, reply) }
+  })
+
   // ─── Admin Dashboard Metrics ───────────────────────────────────────────────
   app.get('/dashboard/metrics', {
     preHandler: app.requireAdminRole([AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.OPERATIONS, AdminRole.SUPPORT, AdminRole.FINANCE])

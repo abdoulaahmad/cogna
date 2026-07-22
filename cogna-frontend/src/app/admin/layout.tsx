@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useAuthStore } from '@/stores/auth'
 import {
-  Activity, Boxes, ClipboardList, CreditCard, FolderTree, History,
+  Activity, Boxes, ClipboardList, CreditCard, FolderTree, Headphones, History,
   Home, LayoutDashboard, LogOut, Menu, Package, ShieldCheck, UserCog, UsersRound, WalletCards, X,
 } from 'lucide-react'
 
@@ -15,6 +15,7 @@ const navigation: Array<{ label: string; items: NavItem[] }> = [
   { label: 'Overview', items: [
     { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
     { name: 'Orders', href: '/admin/orders', icon: ClipboardList },
+    { name: 'Support tickets', href: '/admin/tickets', icon: Headphones },
   ] },
   { label: 'Commerce', items: [
     { name: 'Products', href: '/admin/products', icon: Package },

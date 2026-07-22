@@ -92,8 +92,8 @@ export default function KeysPage() {
                     <div key={key.id} className="flex flex-wrap items-center justify-between gap-4 py-4 first:pt-0">
                       <div>
                         <p className="font-bold text-base">{key.name}</p>
-                        <p className="mt-1 font-mono text-xs text-emerald-100/50">{key.apiKey}</p>
-                        <div className="mt-3 flex items-center gap-2">
+                        <p className="mt-1 font-mono text-xs text-emerald-100/50 break-all">{key.apiKey}</p>
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
                           <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${key.environment === 'LIVE' ? 'bg-rose-400/10 text-rose-300' : 'bg-emerald-400/10 text-emerald-300'}`}>
                             {key.environment}
                           </span>
