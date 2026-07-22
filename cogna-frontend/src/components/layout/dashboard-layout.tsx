@@ -13,7 +13,7 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isAuthenticated, clearAuth } = useAuthStore();
+  const { user, isAuthenticated, clearAuth, hasHydrated } = useAuthStore();
 
   const handleLogout = () => {
     clearAuth();
@@ -22,12 +22,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   // Guard: Redirect if not authenticated (must wrap in useEffect in actual page, but good to check here)
   React.useEffect(() => {
+    if (!hasHydrated) return;
     if (!isAuthenticated) {
       router.push('/login');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, router, hasHydrated]);
 
-  if (!isAuthenticated || !user) {
+  if (!hasHydrated || !isAuthenticated || !user) {
     return null;
   }
 

@@ -54,7 +54,15 @@ export default function AdminProductsPage() {
         api.get('/admin/categories'),
         api.get('/admin/providers'),
       ])
-      setProducts(p.data.data.items || [])
+      // Sort by position first, then stable tie-break on id
+      const rawSorted = (p.data.data.items || []).slice().sort((a: { position?: number; id: string }, b: { position?: number; id: string }) => {
+        const posDiff = (a.position ?? 0) - (b.position ?? 0)
+        if (posDiff !== 0) return posDiff
+        return a.id < b.id ? -1 : a.id > b.id ? 1 : 0
+      })
+      // Normalize so local position === array index, preventing snap-back bugs
+      const sorted = rawSorted.map((item: { position?: number; id: string }, idx: number) => ({ ...item, position: idx }))
+      setProducts(sorted)
       setCategories(c.data.data || [])
       setProviders(v.data.data || [])
     } catch (e: unknown) {
@@ -122,11 +130,12 @@ export default function AdminProductsPage() {
     }
   }
 
-  async function moveProduct(index: number, direction: 'top' | 'up' | 'down' | 'bottom') {
+  async function moveProduct(productId: string, direction: 'top' | 'up' | 'down' | 'bottom') {
     if (!products.length) return
     const newList = [...products]
+    const index = newList.findIndex(p => p.id === productId)
+    if (index < 0) return
     const target = newList[index]
-    if (!target) return
 
     if (direction === 'top' && index > 0) {
       newList.splice(index, 1)
@@ -144,12 +153,12 @@ export default function AdminProductsPage() {
       return
     }
 
-    const updatedWithPositions = newList.map((item, idx) => ({ ...item, position: idx }))
+    const updatedWithPositions = newList.map((item, i) => ({ ...item, position: i }))
     setProducts(updatedWithPositions)
 
     try {
       await api.patch('/admin/products/reorder', {
-        items: updatedWithPositions.map((item, idx) => ({ id: item.id, position: idx })),
+        items: updatedWithPositions.map((item, i) => ({ id: item.id, position: i })),
       })
     } catch (err: unknown) {
       setError(getErrorMessage(err, 'Unable to save product ordering.'))
@@ -319,8 +328,8 @@ export default function AdminProductsPage() {
                     <div className="flex items-center gap-1 rounded-full border border-white/10 bg-black/40 p-1">
                       <button
                         type="button"
-                        onClick={() => void moveProduct(idx, 'top')}
-                        disabled={idx === 0}
+                        onClick={() => void moveProduct(p.id, 'top')}
+                        disabled={products.findIndex(x => x.id === p.id) === 0}
                         className="rounded-full p-1 text-emerald-100/50 hover:bg-white/10 hover:text-[#F8D56B] disabled:opacity-20"
                         title="Move to Beginning"
                       >
@@ -328,8 +337,8 @@ export default function AdminProductsPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => void moveProduct(idx, 'up')}
-                        disabled={idx === 0}
+                        onClick={() => void moveProduct(p.id, 'up')}
+                        disabled={products.findIndex(x => x.id === p.id) === 0}
                         className="rounded-full p-1 text-emerald-100/50 hover:bg-white/10 hover:text-[#F8D56B] disabled:opacity-20"
                         title="Move Up"
                       >
@@ -337,8 +346,8 @@ export default function AdminProductsPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => void moveProduct(idx, 'down')}
-                        disabled={idx === visible.length - 1}
+                        onClick={() => void moveProduct(p.id, 'down')}
+                        disabled={products.findIndex(x => x.id === p.id) === products.length - 1}
                         className="rounded-full p-1 text-emerald-100/50 hover:bg-white/10 hover:text-[#F8D56B] disabled:opacity-20"
                         title="Move Down"
                       >
@@ -346,8 +355,8 @@ export default function AdminProductsPage() {
                       </button>
                       <button
                         type="button"
-                        onClick={() => void moveProduct(idx, 'bottom')}
-                        disabled={idx === visible.length - 1}
+                        onClick={() => void moveProduct(p.id, 'bottom')}
+                        disabled={products.findIndex(x => x.id === p.id) === products.length - 1}
                         className="rounded-full p-1 text-emerald-100/50 hover:bg-white/10 hover:text-[#F8D56B] disabled:opacity-20"
                         title="Move to End"
                       >

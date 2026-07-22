@@ -30,8 +30,9 @@ function ResetPasswordContent() {
       setTimeout(() => {
         router.replace('/login');
       }, 2000);
-    } catch (requestError: unknown) {
-      const message = axios.isAxiosError(requestError) ? requestError.response?.data?.message : requestError instanceof Error ? requestError.message : null;
+    } catch (requestError: any) {
+      const data = requestError.response?.data;
+      const message = data?.errors?.[0]?.message || data?.message || requestError.message || null;
       setError(message || 'Invalid token or password requirements not met.');
     } finally {
       setLoading(false);

@@ -33,15 +33,16 @@ const navigation: Array<{ label: string; items: NavItem[] }> = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
-  const { user, isAuthenticated, clearAuth } = useAuthStore()
+  const { user, isAuthenticated, clearAuth, hasHydrated } = useAuthStore()
   const [menuOpen, setMenuOpen] = React.useState(false)
 
   React.useEffect(() => {
+    if (!hasHydrated) return
     if (!isAuthenticated) router.replace('/login?redirect=/admin/dashboard')
     else if (user?.role !== 'ADMIN') router.replace('/dashboard')
-  }, [isAuthenticated, router, user])
+  }, [isAuthenticated, router, user, hasHydrated])
 
-  if (!isAuthenticated || user?.role !== 'ADMIN') return null
+  if (!hasHydrated || !isAuthenticated || user?.role !== 'ADMIN') return null
 
   const signOut = () => {
     clearAuth()

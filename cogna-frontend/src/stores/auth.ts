@@ -10,6 +10,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  hasHydrated: boolean;
   
   // Actions
   setAuth: (data: AuthData) => void;
@@ -17,6 +18,7 @@ interface AuthState {
   updateUser: (user: Partial<User>) => void;
   setError: (error: string | null) => void;
   setLoading: (isLoading: boolean) => void;
+  setHydrated: (state: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -28,6 +30,7 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: false,
       error: null,
+      hasHydrated: false,
 
       setAuth: (data) =>
         set({
@@ -54,6 +57,7 @@ export const useAuthStore = create<AuthState>()(
 
       setError: (error) => set({ error }),
       setLoading: (isLoading) => set({ isLoading }),
+      setHydrated: (state) => set({ hasHydrated: state }),
     }),
     {
       name: 'cogna-auth',
@@ -65,6 +69,9 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHydrated(true);
+      },
     }
   )
 );

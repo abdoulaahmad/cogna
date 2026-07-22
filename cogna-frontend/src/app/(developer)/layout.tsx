@@ -7,12 +7,13 @@ import { api } from '@/lib/api';
 
 export default function DeveloperLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { user, isAuthenticated, updateUser } = useAuthStore();
+  const { user, isAuthenticated, updateUser, hasHydrated } = useAuthStore();
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
     let active = true;
     async function verifyCapability() {
+      if (!hasHydrated) return;
       if (!isAuthenticated) { router.replace('/login'); return; }
       try {
         const response = await api.get('/auth/me');
@@ -25,7 +26,7 @@ export default function DeveloperLayout({ children }: { children: React.ReactNod
     }
     void verifyCapability();
     return () => { active = false; };
-  }, [isAuthenticated, router, updateUser]);
+  }, [isAuthenticated, router, updateUser, hasHydrated]);
 
   if (checking || !isAuthenticated || (!user?.isDeveloper && user?.role !== 'DEVELOPER' && user?.role !== 'ADMIN')) {
     return <main className="min-h-screen bg-[#062C23] text-white" aria-busy="true" />;

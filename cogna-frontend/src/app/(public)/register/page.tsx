@@ -29,8 +29,9 @@ export default function RegisterPage() {
       const response = await api.post('/auth/register', { fullName: fullName.trim(), email: email.trim(), password });
       if (!response.data.success) throw new Error(response.data.message || 'Unable to create account.');
       router.replace(`/verify-email?email=${encodeURIComponent(email.trim())}`);
-    } catch (requestError: unknown) {
-      const message = axios.isAxiosError(requestError) ? requestError.response?.data?.message : requestError instanceof Error ? requestError.message : null;
+    } catch (requestError: any) {
+      const data = requestError.response?.data;
+      const message = data?.errors?.[0]?.message || data?.message || requestError.message || null;
       setError(message || 'Unable to create your account.');
     } finally {
       setLoading(false);
