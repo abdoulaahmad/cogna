@@ -56,8 +56,6 @@ export const ProductRepository = {
     return (result._max.position ?? -1) + 1
   },
 
-
-
   /** Find a single product by its UUID */
   async findById(id: string): Promise<ProductWithCategory | null> {
     return prisma.product.findUnique({
