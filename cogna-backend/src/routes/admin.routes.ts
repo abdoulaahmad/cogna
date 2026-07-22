@@ -45,9 +45,7 @@ export default async function adminRoutes(app: FastifyInstance) {
   // GET /api/v1/admin/products
   app.get('/products', async (_req: FastifyRequest, reply: FastifyReply) => {
     try {
-      const { items, total } = await ProductRepository.findAll({
-        page: 1, limit: 100, active: undefined,
-      })
+      const { items, total } = await ProductRepository.findAllAdmin()
       return reply.send(successResponse({ items, total }))
     } catch (error) { return handleRouteError(error, reply) }
   })
@@ -55,9 +53,14 @@ export default async function adminRoutes(app: FastifyInstance) {
   // POST /api/v1/admin/products
   app.post('/products', async (req: FastifyRequest, reply: FastifyReply) => {
     try {
-      const body    = createProductSchema.parse(req.body)
+      const body = createProductSchema.parse(req.body)
+      // Auto-assign position to end of list if not explicitly provided
+      const position = body.position !== undefined
+        ? body.position
+        : await ProductRepository.getNextPosition()
       const product = await ProductRepository.create({
         ...body,
+        position,
         price:               body.price,
         providerApiOverride: body.providerApiOverride,
       })

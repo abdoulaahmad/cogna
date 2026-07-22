@@ -38,6 +38,22 @@ export const ProductRepository = {
     return { items, total }
   },
 
+  /** Fetch ALL products for admin (no limit, ordered by position then name) */
+  async findAllAdmin(): Promise<{ items: ProductWithCategory[]; total: number }> {
+    const items = await prisma.product.findMany({
+      include: { category: true },
+      orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
+    })
+    return { items, total: items.length }
+  },
+
+  /** Get the next available position (max existing position + 1) */
+  async getNextPosition(): Promise<number> {
+    const result = await prisma.product.aggregate({ _max: { position: true } })
+    return (result._max.position ?? -1) + 1
+  },
+
+
   /** Find a single product by its UUID */
   async findById(id: string): Promise<ProductWithCategory | null> {
     return prisma.product.findUnique({
