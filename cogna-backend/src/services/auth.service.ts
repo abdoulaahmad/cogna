@@ -93,20 +93,16 @@ export const AuthService = {
     const user = await UserRepository.findById(stored.userId)
     if (!user) throw new NotFoundError('User')
 
-    // Rotate: delete old, issue new
-    await RefreshTokenRepository.deleteByToken(refreshToken)
+    // We do NOT rotate the refresh token here to prevent multi-tab concurrency issues 
+    // where one tab deletes the token while another is trying to use it.
+    // The refresh token remains valid until its original expiration (7 days).
 
     const newAccessToken = signJwt(
       { sub: user.id, email: user.email, role: user.role, adminRole: user.adminRole },
       { expiresIn: env.JWT_EXPIRES_IN }
     )
-    const newRefreshToken = uuidv4()
-    const expiresAt = new Date()
-    expiresAt.setDate(expiresAt.getDate() + 7)
 
-    await RefreshTokenRepository.create({ userId: user.id, token: newRefreshToken, expiresAt })
-
-    return { accessToken: newAccessToken, refreshToken: newRefreshToken }
+    return { accessToken: newAccessToken, refreshToken }
   },
 
   // ── Get Me ────────────────────────────────────────────────────────────
