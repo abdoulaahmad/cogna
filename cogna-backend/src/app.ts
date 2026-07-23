@@ -32,7 +32,13 @@ export async function buildApp() {
 
   // ── Plugins ────────────────────────────────────────────────────────────
   await app.register(cors, {
-    origin: env.APP_URL,
+    origin: (origin, cb) => {
+      if (!origin || origin === env.APP_URL || origin === 'http://localhost:3000' || origin.endsWith('.vercel.app')) {
+        cb(null, true)
+        return
+      }
+      cb(new Error('Not allowed by CORS'), false)
+    },
     credentials: true,
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   })
