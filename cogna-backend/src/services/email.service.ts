@@ -49,11 +49,9 @@ const generateOtpTemplate = (title: string, description: string, token: string) 
 
       <!-- OTP Boxes -->
       <div style="display: inline-block;">
-        ${token.split('').map(digit => `
-          <div style="display: inline-block; width: 44px; height: 56px; line-height: 56px; margin: 0 4px; background-color: #030a08; border: 1px solid #112a22; border-radius: 8px; font-size: 28px; font-weight: bold; color: #18B88A; font-family: monospace;">
-            ${digit}
-          </div>
-        `).join('')}
+        ${token.split('').map(digit => 
+          '<div style="display: inline-block; width: 44px; height: 56px; line-height: 56px; margin: 0 4px; background-color: #030a08; border: 1px solid #112a22; border-radius: 8px; font-size: 28px; font-weight: bold; color: #18B88A; font-family: monospace;">' + digit + '</div>'
+        ).join('')}
       </div>
 
       <p style="color: #6b8e82; font-size: 13px; margin: 24px 0 0 0;">
