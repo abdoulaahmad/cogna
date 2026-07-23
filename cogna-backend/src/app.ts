@@ -33,7 +33,7 @@ export async function buildApp() {
   // ── Plugins ────────────────────────────────────────────────────────────
   await app.register(cors, {
     origin: (origin, cb) => {
-      if (!origin || origin === env.APP_URL || origin === 'http://localhost:3000' || origin.endsWith('.vercel.app')) {
+      if (!origin || origin === env.APP_URL || origin === 'http://localhost:3000' || origin.endsWith('.vercel.app') || origin.endsWith('cogna.store')) {
         cb(null, true)
         return
       }
