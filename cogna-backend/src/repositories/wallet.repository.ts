@@ -39,10 +39,10 @@ export const WalletRepository = {
     return prisma.walletFunding.findUnique({ where: { reference } })
   },
 
-  saveCheckout(fundingId: string, authorizationUrl: string, gatewayReference: string) {
+  saveCheckout(fundingId: string, authorizationUrl: string, gatewayReference?: string | null) {
     return prisma.walletFunding.update({
       where: { id: fundingId },
-      data: { status: 'PENDING', authorizationUrl, gatewayReference },
+      data: { status: 'PENDING', authorizationUrl, gatewayReference: gatewayReference ?? null },
     })
   },
 

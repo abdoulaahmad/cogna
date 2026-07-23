@@ -1,5 +1,6 @@
 import { PaystackAdapter } from './PaystackAdapter'
 import { MonnifyAdapter }  from './MonnifyAdapter'
+import { PlisioAdapter }   from './PlisioAdapter'
 import type { IPaymentGateway }   from './IPaymentGateway'
 import type { PaymentGatewayType } from '@/types/payment-gateway.types'
 
@@ -25,6 +26,9 @@ export function getPaymentGateway(
         contractCode: overrideConfig?.contractCode,
         baseUrl:      overrideConfig?.baseUrl,
       })
+
+    case 'PLISIO':
+      return new PlisioAdapter(overrideConfig?.secretKey)
 
     default: {
       const exhaustive: never = gatewayType

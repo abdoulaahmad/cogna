@@ -278,7 +278,66 @@ export default async function adminRoutes(app: FastifyInstance) {
       return reply.send(successResponse(configuration, 'Paystack configuration updated'))
     } catch (error) { return handleRouteError(error, reply) }
   })
-  // ─── Support Tickets ───────────────────────────────────────────────────────
+
+  // ─── Crypto Settings (USDT/NGN Rate & Plisio Wallet Address) ─────────────────
+  const cryptoSettingsSchema = z.object({
+    rateNgn: z.number().positive({ message: 'Exchange rate must be a positive number' }),
+    walletAddress: z.string().min(20, 'USDT BEP20 wallet address is required'),
+    plisioSecretKey: z.string().optional(),
+    testMode: z.boolean().optional(),
+  })
+
+  app.get('/crypto-settings', {
+    preHandler: app.requireAdminRole([AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.FINANCE, AdminRole.OPERATIONS])
+  }, async (_req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const [rateSetting, walletSetting, testModeSetting] = await Promise.all([
+        prisma.setting.findUnique({ where: { key: 'usdt_rate_ngn' } }),
+        prisma.setting.findUnique({ where: { key: 'plisio_wallet_address' } }),
+        prisma.setting.findUnique({ where: { key: 'plisio_test_mode' } }),
+      ])
+      return reply.send(successResponse({
+        rateNgn: rateSetting ? Number(rateSetting.value) : null,
+        walletAddress: walletSetting?.value ?? null,
+        testMode: testModeSetting?.value === 'true',
+        configured: Boolean(rateSetting && walletSetting),
+      }))
+    } catch (error) { return handleRouteError(error, reply) }
+  })
+
+  app.put('/crypto-settings', {
+    preHandler: app.requireAdminRole([AdminRole.SUPER_ADMIN])
+  }, async (req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { sub } = req.user as { sub: string }
+      const { rateNgn, walletAddress, plisioSecretKey, testMode } = cryptoSettingsSchema.parse(req.body)
+
+      await prisma.$transaction([
+        prisma.setting.upsert({ where: { key: 'usdt_rate_ngn' }, create: { key: 'usdt_rate_ngn', value: String(rateNgn) }, update: { value: String(rateNgn) } }),
+        prisma.setting.upsert({ where: { key: 'plisio_wallet_address' }, create: { key: 'plisio_wallet_address', value: walletAddress }, update: { value: walletAddress } }),
+        prisma.setting.upsert({ where: { key: 'plisio_test_mode' }, create: { key: 'plisio_test_mode', value: testMode ? 'true' : 'false' }, update: { value: testMode ? 'true' : 'false' } }),
+      ])
+
+      // Optionally save the Plisio API key to payment gateway configuration
+      if (plisioSecretKey) {
+        const { encryptCredential } = await import('@/utils/credential-crypto')
+        await prisma.paymentGatewayConfiguration.upsert({
+          where: { gateway: 'PLISIO' },
+          create: { gateway: 'PLISIO', secretKey: encryptCredential(plisioSecretKey), enabled: true },
+          update: { secretKey: encryptCredential(plisioSecretKey), enabled: true },
+        })
+      }
+
+      await AuditLogService.recordAuditEvent(sub, 'CRYPTO_SETTINGS_UPDATE', 'settings', 'plisio', req.ip, {
+        reason: 'Crypto settings updated through the admin portal',
+        rateNgn, walletAddress: walletAddress.slice(0, 6) + '...' + walletAddress.slice(-4),
+      })
+
+      return reply.send(successResponse({ rateNgn, walletAddress, testMode: testMode ?? false }, 'Crypto settings updated'))
+    } catch (error) { return handleRouteError(error, reply) }
+  })
+
+  // ─── Support Tickets ──────────────────────────────────────────────────────
   app.get('/support/tickets', {
     preHandler: app.requireAdminRole([AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.SUPPORT])
   }, async (_req: FastifyRequest, reply: FastifyReply) => {

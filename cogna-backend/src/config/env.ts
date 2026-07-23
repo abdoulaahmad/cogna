@@ -26,6 +26,10 @@ const envSchema = z.object({
   MONNIFY_BASE_URL:      z.string().url().default('https://sandbox.monnify.com'),
   MONNIFY_CONTRACT_CODE: z.string().optional(),
 
+  PLISIO_SECRET_KEY:     z.string().optional(),
+  PLISIO_TEST_MODE:      z.string().optional(), // 'true' to skip real Plisio API calls
+
+
   PROVIDER_ENCRYPTION_KEY: z.string().min(32).optional(),
 
   AKUNDING_API_KEY:      z.string().optional(),

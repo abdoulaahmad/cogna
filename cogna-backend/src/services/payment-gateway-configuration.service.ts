@@ -83,6 +83,52 @@ export const PaymentGatewayConfigurationService = {
     return this.getPaystackStatus()
   },
 
+  async getPlisioStatus() {
+    const record = await PaymentGatewayConfigurationRepository.findByGateway(PaymentGateway.PLISIO)
+    let storedSecret: string | null = null
+
+    try {
+      if (record) storedSecret = decryptCredential(record.secretKey)
+    } catch (error) {
+      console.warn(`Failed to decrypt Plisio credentials: ${(error as Error).message}`)
+    }
+
+    const secretKey = storedSecret ?? env.PLISIO_SECRET_KEY ?? null
+    const testMode = env.PLISIO_TEST_MODE === 'true'
+
+    return {
+      gateway: 'PLISIO' as const,
+      configured: Boolean(secretKey) || testMode,
+      enabled: record ? record.enabled : (Boolean(secretKey) || testMode),
+      testMode,
+      source: record ? 'ADMIN_PORTAL' as const : secretKey ? 'ENVIRONMENT' as const : 'NONE' as const,
+      secretKey: maskKey(secretKey),
+      webhookPath: '/api/v1/wallet/webhook/plisio',
+      updatedAt: record?.updatedAt ?? null,
+    }
+  },
+
+  async updatePlisio(input: { secretKey?: string; enabled: boolean }) {
+    const current = await PaymentGatewayConfigurationRepository.findByGateway(PaymentGateway.PLISIO)
+    let currentSecret = env.PLISIO_SECRET_KEY
+
+    try {
+      if (current) currentSecret = decryptCredential(current.secretKey)
+    } catch (error) {
+      console.warn(`Failed to decrypt current Plisio credentials during update: ${(error as Error).message}`)
+    }
+
+    const effectiveSecret = input.secretKey ?? currentSecret
+    if (!effectiveSecret && env.PLISIO_TEST_MODE !== 'true') throw new ConflictError('Plisio secret key is required unless PLISIO_TEST_MODE is enabled')
+
+    await PaymentGatewayConfigurationRepository.upsert(PaymentGateway.PLISIO, {
+      enabled: input.enabled,
+      secretKey: effectiveSecret ?? '__TEST_MODE__',
+      ...(input.secretKey !== undefined && { secretKey: input.secretKey }),
+    })
+    return this.getPlisioStatus()
+  },
+
   async getGateway(gatewayType: PaymentGatewayType): Promise<IPaymentGateway> {
     const record = await PaymentGatewayConfigurationRepository.findByGateway(gatewayType)
     if (!record) {
@@ -91,6 +137,9 @@ export const PaymentGatewayConfigurationService = {
       }
       if (gatewayType === 'MONNIFY' && (!env.MONNIFY_API_KEY || !env.MONNIFY_SECRET_KEY || !env.MONNIFY_CONTRACT_CODE)) {
         throw new ConflictError('Monnify is not configured')
+      }
+      if (gatewayType === 'PLISIO' && !env.PLISIO_SECRET_KEY && env.PLISIO_TEST_MODE !== 'true') {
+        throw new ConflictError('Plisio is not configured. Add the API key in Admin → Crypto settings or set PLISIO_TEST_MODE=true for testing.')
       }
       return getPaymentGateway(gatewayType)
     }
@@ -108,6 +157,9 @@ export const PaymentGatewayConfigurationService = {
         return getPaymentGateway(gatewayType)
       }
       if (gatewayType === 'MONNIFY' && env.MONNIFY_API_KEY && env.MONNIFY_SECRET_KEY && env.MONNIFY_CONTRACT_CODE) {
+        return getPaymentGateway(gatewayType)
+      }
+      if (gatewayType === 'PLISIO' && (env.PLISIO_SECRET_KEY || env.PLISIO_TEST_MODE === 'true')) {
         return getPaymentGateway(gatewayType)
       }
       throw new ConflictError(`${gatewayType} credentials could not be decrypted and no environment fallback is configured.`)

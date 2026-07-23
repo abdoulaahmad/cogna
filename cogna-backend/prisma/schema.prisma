@@ -58,6 +58,7 @@ enum PaymentStatus {
 enum PaymentGateway {
   PAYSTACK
   MONNIFY
+  PLISIO
 }
 
 enum WalletTransactionType {
@@ -378,6 +379,8 @@ model WalletFunding {
   idempotencyKey      String              @unique @map("idempotency_key")
   amount              Decimal             @db.Decimal(14, 2)
   currency            String              @default("NGN")
+  cryptoAmountUsdt    Decimal?            @map("crypto_amount_usdt") @db.Decimal(18, 8)
+  ngnRateLocked       Decimal?            @map("ngn_rate_locked")    @db.Decimal(14, 2)
   status              WalletFundingStatus @default(INITIALIZED)
   metadata            Json?
   createdAt           DateTime            @default(now()) @map("created_at")
