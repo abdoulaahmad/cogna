@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, CreditCard, Loader2, ShieldCheck, Wallet, KeyRound, X } from 'lucide-react';
@@ -29,9 +29,13 @@ export default function PayPage() {
   const [pin, setPin] = useState('');
   const [pinError, setPinError] = useState<string | null>(null);
 
+  // Prevents the !cartItem guard from redirecting to /catalog after a
+  // successful purchase clears the cart.
+  const purchasedRef = useRef(false);
+
   useEffect(() => {
     if (!isAuthenticated) { router.replace('/login?redirect=/pay'); return; }
-    if (!cartItem) { router.replace('/catalog'); return; }
+    if (!cartItem && !purchasedRef.current) { router.replace('/catalog'); return; }
 
     // Load wallet balance and PIN status in parallel
     Promise.all([
@@ -89,6 +93,7 @@ export default function PayPage() {
         });
 
         if (!response.data.success) throw new Error(response.data.message || 'Wallet purchase failed.');
+        purchasedRef.current = true;
         clearCart();
         router.push(`/orders/${response.data.data.id}`);
         return;
@@ -110,6 +115,7 @@ export default function PayPage() {
       }
 
       const { authorizationUrl, reference, accessCode } = paymentResponse.data.data;
+      purchasedRef.current = true;
       clearCart();
 
       if (cartItem!.paymentGateway === 'PAYSTACK') {
@@ -139,7 +145,22 @@ export default function PayPage() {
       return;
     }
     setShowPinPrompt(false);
-    await checkout(pin);
+    let checkoutError: string | null = null;
+    setError(null);
+    try {
+      await checkout(pin);
+    } catch {
+      // checkout() handles its own errors internally, this is a safety net
+    }
+    // Re-show the PIN prompt if an error was set during checkout (wrong PIN etc.)
+    // We read from the React setter pattern by checking via a flag set in checkout.
+    // Since checkout() sets error state, we re-open the prompt after the tick.
+    setTimeout(() => {
+      setError((current) => {
+        if (current) setShowPinPrompt(true);
+        return current;
+      });
+    }, 0);
     setPin('');
   }
 
