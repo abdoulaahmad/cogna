@@ -118,10 +118,12 @@ model User {
   passwordHash  String     @map("password_hash")
   role          UserRole   @default(CUSTOMER)
   adminRole     AdminRole? @map("admin_role")
-  emailVerified Boolean    @default(false) @map("email_verified")
-  status        UserStatus @default(PENDING)
-  createdAt     DateTime   @default(now()) @map("created_at")
-  updatedAt     DateTime   @updatedAt @map("updated_at")
+  emailVerified         Boolean    @default(false) @map("email_verified")
+  status                UserStatus @default(PENDING)
+  transactionPinHash    String?    @map("transaction_pin_hash")
+  transactionPinEnabled Boolean    @default(true) @map("transaction_pin_enabled")
+  createdAt             DateTime   @default(now()) @map("created_at")
+  updatedAt             DateTime   @updatedAt @map("updated_at")
 
   // Relations
   refreshTokens          RefreshToken[]

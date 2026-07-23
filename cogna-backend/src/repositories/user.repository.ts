@@ -11,10 +11,11 @@ export const UserRepository = {
   },
 
   async create(data: {
-    fullName: string
-    email: string
-    passwordHash: string
-    role?: UserRole
+    fullName:            string
+    email:               string
+    passwordHash:        string
+    role?:               UserRole
+    transactionPinHash?: string
   }): Promise<User> {
     return prisma.user.create({ data })
   },
@@ -33,5 +34,13 @@ export const UserRepository = {
 
   async resetPasswordAndVerifyEmail(id: string, passwordHash: string): Promise<User> {
     return prisma.user.update({ where: { id }, data: { passwordHash, emailVerified: true, status: 'ACTIVE' } })
+  },
+
+  async updateTransactionPin(id: string, pinHash: string | null): Promise<User> {
+    return prisma.user.update({ where: { id }, data: { transactionPinHash: pinHash } })
+  },
+
+  async updateTransactionPinStatus(id: string, enabled: boolean): Promise<User> {
+    return prisma.user.update({ where: { id }, data: { transactionPinEnabled: enabled } })
   },
 }

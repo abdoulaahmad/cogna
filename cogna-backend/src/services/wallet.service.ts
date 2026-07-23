@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto'
 import { PaymentGatewayConfigurationService } from '@/services/payment-gateway-configuration.service'
 import { WalletRepository } from '@/repositories/wallet.repository'
-import { ConflictError, ForbiddenError, NotFoundError } from '@/utils/errors'
+import { ConflictError, ForbiddenError, NotFoundError, UnauthorizedError } from '@/utils/errors'
 import type { PaymentGatewayType } from '@/types/payment-gateway.types'
 import prisma from '@/config/database'
 
@@ -21,9 +21,22 @@ export const WalletService = {
     if (!refund) throw new ConflictError('Eligible wallet purchase was not found')
     return refund
   },
-  async purchase(input: { userId: string; productId: string; customerEmail: string; idempotencyKey: string }) {
+  async purchase(input: { userId: string; productId: string; customerEmail: string; idempotencyKey: string; transactionPin?: string }) {
     const product = await (await import('@/repositories/product.repository')).ProductRepository.findById(input.productId)
     if (!product || !product.active) throw new ConflictError('Product is not available')
+
+    // ── Transaction PIN verification ───────────────────────────────────────
+    const { UserRepository } = await import('@/repositories/user.repository')
+    const { TransactionPinService } = await import('@/services/transaction-pin.service')
+    const user = await UserRepository.findById(input.userId)
+    if (user && user.transactionPinEnabled) {
+      if (!input.transactionPin) {
+        throw new UnauthorizedError('Transaction PIN is required to complete this purchase')
+      }
+      await TransactionPinService.verifyPin(input.userId, input.transactionPin)
+    }
+    // ──────────────────────────────────────────────────────────────────────
+
     const order = await WalletRepository.purchase({ ...input, providerId: product.providerId, amount: Number(product.price), currency: product.currency })
     if (!order) throw new ConflictError('Insufficient wallet balance')
     

@@ -214,4 +214,44 @@ export default async function profileRoutes(app: FastifyInstance) {
       return reply.send(successResponse(updated, 'Preferences updated successfully'));
     } catch (error) { return handleRouteError(error, reply); }
   });
+
+  // ─── GET /profile/pin/status ──────────────────────────────────────────────
+  app.get('/profile/pin/status', { onRequest: [app.authenticate] }, async (req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { sub } = req.user as { sub: string };
+      const { TransactionPinService } = await import('@/services/transaction-pin.service');
+      const status = await TransactionPinService.getPinStatus(sub);
+      return reply.send(successResponse(status));
+    } catch (error) { return handleRouteError(error, reply); }
+  });
+
+  // ─── POST /profile/pin — Set or change transaction PIN ────────────────────
+  app.post('/profile/pin', { onRequest: [app.authenticate] }, async (req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { sub } = req.user as { sub: string };
+      const { setPinSchema } = await import('@/validators/pin.validator');
+      const { TransactionPinService } = await import('@/services/transaction-pin.service');
+      const body = setPinSchema.parse(req.body);
+      await TransactionPinService.setPin(sub, { newPin: body.newPin, currentPin: body.currentPin, password: body.password });
+      await AuditLogService.recordAuditEvent(sub, 'TRANSACTION_PIN_CHANGED', 'users', sub, req.ip, {
+        reason: 'User set or changed their transaction PIN',
+      });
+      return reply.send(successResponse(null, 'Transaction PIN updated successfully'));
+    } catch (error) { return handleRouteError(error, reply); }
+  });
+
+  // ─── PUT /profile/pin/status — Enable or disable PIN requirement ──────────
+  app.put('/profile/pin/status', { onRequest: [app.authenticate] }, async (req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { sub } = req.user as { sub: string };
+      const { pinStatusSchema } = await import('@/validators/pin.validator');
+      const { TransactionPinService } = await import('@/services/transaction-pin.service');
+      const body = pinStatusSchema.parse(req.body);
+      await TransactionPinService.setPinStatus(sub, { enabled: body.enabled, currentPin: body.currentPin, password: body.password });
+      await AuditLogService.recordAuditEvent(sub, body.enabled ? 'TRANSACTION_PIN_ENABLED' : 'TRANSACTION_PIN_DISABLED', 'users', sub, req.ip, {
+        reason: `User ${body.enabled ? 'enabled' : 'disabled'} transaction PIN requirement`,
+      });
+      return reply.send(successResponse(null, `Transaction PIN ${body.enabled ? 'enabled' : 'disabled'} successfully`));
+    } catch (error) { return handleRouteError(error, reply); }
+  });
 }

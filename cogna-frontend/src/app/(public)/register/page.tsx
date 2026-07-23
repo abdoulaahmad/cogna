@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowRight, Loader2, LockKeyhole, Mail, UserRound } from 'lucide-react';
 import axios from 'axios';
 import { api } from '@/lib/api';
+import PinInput from '@/components/ui/PinInput';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -14,25 +15,46 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [transactionPin, setTransactionPin] = useState('');
+  const [confirmPin, setConfirmPin] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
+    if (transactionPin.length !== 6) {
+      setError('Transaction PIN must be exactly 6 digits');
+      return;
+    }
+    if (transactionPin !== confirmPin) {
+      setError('Transaction PINs do not match');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
-      const response = await api.post('/auth/register', { fullName: fullName.trim(), email: email.trim(), password });
+      const response = await api.post('/auth/register', {
+        fullName: fullName.trim(),
+        email: email.trim(),
+        password,
+        transactionPin,
+      });
       if (!response.data.success) throw new Error(response.data.message || 'Unable to create account.');
       router.replace(`/verify-email?email=${encodeURIComponent(email.trim())}`);
-    } catch (requestError: any) {
-      const data = requestError.response?.data;
-      const message = data?.errors?.[0]?.message || data?.message || requestError.message || null;
-      setError(message || 'Unable to create your account.');
+    } catch (requestError: unknown) {
+      if (axios.isAxiosError(requestError)) {
+        const data = requestError.response?.data;
+        const message = data?.errors?.[0]?.message || data?.message || requestError.message || null;
+        setError(message || 'Unable to create your account.');
+      } else {
+        setError('Unable to create your account.');
+      }
     } finally {
       setLoading(false);
     }
@@ -53,7 +75,36 @@ export default function RegisterPage() {
           <Field label="Email address" icon={<Mail size={16} />} value={email} onChange={setEmail} type="email" autoComplete="email" />
           <Field label="Password" icon={<LockKeyhole size={16} />} value={password} onChange={setPassword} type="password" autoComplete="new-password" hint="At least 8 characters, including an uppercase letter and number." />
           <Field label="Confirm Password" icon={<LockKeyhole size={16} />} value={confirmPassword} onChange={setConfirmPassword} type="password" autoComplete="new-password" />
-          <button disabled={loading} className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-[#D4AF37] px-5 py-3.5 text-sm font-bold text-[#062C23] transition hover:bg-[#F8D56B] disabled:opacity-50">
+
+          {/* Transaction PIN */}
+          <div className="pt-2">
+            <div className="mb-4 rounded-2xl border border-[#D4AF37]/20 bg-[#D4AF37]/5 px-4 py-3">
+              <p className="text-xs font-bold text-[#F8D56B]">Transaction PIN</p>
+              <p className="mt-1 text-[11px] leading-5 text-emerald-100/55">
+                Set a 6-digit PIN to protect your wallet purchases. You can change or disable it anytime from Security settings.
+              </p>
+            </div>
+            <div className="space-y-4">
+              <PinInput
+                id="transaction-pin"
+                label="Set Transaction PIN"
+                value={transactionPin}
+                onChange={setTransactionPin}
+                hint="6 digits only"
+              />
+              <PinInput
+                id="confirm-pin"
+                label="Confirm Transaction PIN"
+                value={confirmPin}
+                onChange={setConfirmPin}
+              />
+            </div>
+          </div>
+
+          <button
+            disabled={loading}
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-[#D4AF37] px-5 py-3.5 text-sm font-bold text-[#062C23] transition hover:bg-[#F8D56B] disabled:opacity-50"
+          >
             {loading ? <Loader2 className="animate-spin" size={17} /> : <>Create account <ArrowRight size={17} /></>}
           </button>
         </form>

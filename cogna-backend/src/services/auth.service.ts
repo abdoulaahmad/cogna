@@ -17,11 +17,14 @@ export const AuthService = {
     const existing = await UserRepository.findByEmail(input.email)
     if (existing) throw new ConflictError('An account with this email already exists')
 
-    const passwordHash = await bcrypt.hash(input.password, BCRYPT_ROUNDS)
+    const passwordHash       = await bcrypt.hash(input.password, BCRYPT_ROUNDS)
+    const transactionPinHash = await bcrypt.hash(input.transactionPin, BCRYPT_ROUNDS)
+
     const user = await UserRepository.create({
       fullName: input.fullName,
       email:    input.email,
       passwordHash,
+      transactionPinHash,
     })
 
     // Generate email verification token and send email
