@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Bell, BookOpen, Boxes, ChevronDown, Code2, Headphones, KeyRound, LayoutDashboard, LogOut, Menu, ReceiptText, UserRound, WalletCards, X } from 'lucide-react';
+import { Bell, BookOpen, Boxes, ChevronDown, Code2, Headphones, KeyRound, LayoutDashboard, LogOut, Menu, ReceiptText, ShieldCheck, UserRound, WalletCards, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth';
@@ -17,6 +17,7 @@ const sidebarLinks = [
   { href: '/notifications', label: 'Notifications', icon: Bell },
   { href: '/support', label: 'Support', icon: Headphones },
   { href: '/profile', label: 'Account', icon: UserRound },
+  { href: '/security', label: 'Security', icon: ShieldCheck },
 ];
 const developerLinks = [
   { href: '/keys', label: 'API Keys', icon: KeyRound },
