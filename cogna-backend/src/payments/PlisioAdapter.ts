@@ -105,7 +105,8 @@ export class PlisioAdapter implements IPaymentGateway {
       amount: String(options.amount),
       order_number: options.reference,
       order_name: `Cogna Wallet Funding — ${options.reference}`,
-      callback_url: options.callbackUrl ?? '',
+      callback_url: `${env.APP_URL?.replace('3000', '4000') ?? 'http://localhost:4000'}/api/v1/payments/webhook/plisio`,
+      source_url: options.callbackUrl ?? '',
       ...(options.email ? { email: options.email } : {}),
     })
 
