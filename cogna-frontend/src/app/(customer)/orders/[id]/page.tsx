@@ -176,7 +176,7 @@ export default function OrderDetailPage() {
                           `;
                           const opt = {
                             margin:       1,
-                            filename:     \`order_${order.id}.pdf\`,
+                            filename:     `order_${order.id}.pdf`,
                             image:        { type: 'jpeg', quality: 0.98 },
                             html2canvas:  { scale: 2 },
                             jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
@@ -197,7 +197,7 @@ export default function OrderDetailPage() {
                           const url = URL.createObjectURL(blob);
                           const a = document.createElement("a");
                           a.href = url;
-                          a.download = \`delivery_${order.id}.txt\`;
+                          a.download = `delivery_${order.id}.txt`;
                           document.body.appendChild(a);
                           a.click();
                           document.body.removeChild(a);
