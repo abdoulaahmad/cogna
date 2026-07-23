@@ -49,11 +49,11 @@ const generateOtpTemplate = (title: string, description: string, token: string) 
 
       <!-- OTP Boxes -->
       <div style="display: inline-block;">
-        ${token.split('').map(digit => \`
+        ${token.split('').map(digit => `
           <div style="display: inline-block; width: 44px; height: 56px; line-height: 56px; margin: 0 4px; background-color: #030a08; border: 1px solid #112a22; border-radius: 8px; font-size: 28px; font-weight: bold; color: #18B88A; font-family: monospace;">
-            \${digit}
+            ${digit}
           </div>
-        \`).join('')}
+        `).join('')}
       </div>
 
       <p style="color: #6b8e82; font-size: 13px; margin: 24px 0 0 0;">
@@ -108,15 +108,15 @@ export const EmailService = {
   async sendPasswordResetEmail(email: string, token: string) {
     if (!env.SMTP_PASSWORD) {
       console.warn('⚠️ SMTP_PASSWORD not set. Logging email to console instead of sending.');
-      console.log(\`\n\n--- MOCK EMAIL TO: \${email} ---\nPassword Reset OTP: \${token}\n----------------------------------\n\n\`);
+      console.log(`\n\n--- MOCK EMAIL TO: ${email} ---\nPassword Reset OTP: ${token}\n----------------------------------\n\n`);
       return;
     }
 
     const mailOptions = {
-      from: \`"\${env.APP_NAME}" <\${env.SMTP_FROM}>\`,
+      from: `"${env.APP_NAME}" <${env.SMTP_FROM}>`,
       to: email,
       subject: 'Password Reset Request',
-      text: \`Your password reset code is: \${token}\n\nThis code is valid for 15 minutes.\nIf you did not request this, please ignore this email.\`,
+      text: `Your password reset code is: ${token}\n\nThis code is valid for 15 minutes.\nIf you did not request this, please ignore this email.`,
       html: generateOtpTemplate(
         'Password Reset',
         'You recently requested to reset your password. Use the following 6-digit code to complete the process:',
@@ -138,15 +138,15 @@ export const EmailService = {
   async sendVerificationEmail(email: string, token: string) {
     if (!env.SMTP_PASSWORD) {
       console.warn('⚠️ SMTP_PASSWORD not set. Logging email to console instead of sending.');
-      console.log(\`\n\n--- MOCK EMAIL TO: \${email} ---\nEmail Verification OTP: \${token}\n----------------------------------\n\n\`);
+      console.log(`\n\n--- MOCK EMAIL TO: ${email} ---\nEmail Verification OTP: ${token}\n----------------------------------\n\n`);
       return;
     }
 
     const mailOptions = {
-      from: \`"\${env.APP_NAME}" <\${env.SMTP_FROM}>\`,
+      from: `"${env.APP_NAME}" <${env.SMTP_FROM}>`,
       to: email,
       subject: 'Verify your email address',
-      text: \`Your email verification code is: \${token}\n\nThis code is valid for 15 minutes.\`,
+      text: `Your email verification code is: ${token}\n\nThis code is valid for 15 minutes.`,
       html: generateOtpTemplate(
         'Verify Your Email',
         'Use the verification code below to verify your email address and continue securing your Cogna account.',
