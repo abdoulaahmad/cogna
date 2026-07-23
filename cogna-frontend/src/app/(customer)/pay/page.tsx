@@ -100,7 +100,7 @@ export default function PayPage() {
         const popup = new Paystack();
         popup.resumeTransaction(accessCode, {
           onSuccess: () => {
-            window.location.assign(`${window.location.origin}/verify?reference=${encodeURIComponent(reference)}`);
+            router.push(`/verify?reference=${encodeURIComponent(reference)}`);
           },
           onCancel: () => {
             setLoading(false);

@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useAuthStore } from '@/stores/auth'
 import {
-  Activity, Boxes, ClipboardList, CreditCard, FolderTree, Headphones, History,
+  Activity, Bitcoin, Boxes, ClipboardList, CreditCard, FolderTree, Headphones, History,
   Home, LayoutDashboard, LogOut, Menu, Package, ShieldCheck, UserCog, UsersRound, WalletCards, X,
 } from 'lucide-react'
 
@@ -27,6 +27,7 @@ const navigation: Array<{ label: string; items: NavItem[] }> = [
   { label: 'Finance & control', items: [
     { name: 'User accounts', href: '/admin/users', icon: UserCog },
     { name: 'Wallet adjustments', href: '/admin/adjustments', icon: WalletCards },
+    { name: 'Crypto settings', href: '/admin/crypto-settings', icon: Bitcoin },
     { name: 'Audit logs', href: '/admin/audit-logs', icon: History },
   ] },
 ]
