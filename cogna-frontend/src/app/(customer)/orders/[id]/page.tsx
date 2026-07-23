@@ -141,26 +141,73 @@ export default function OrderDetailPage() {
                     <p className="text-xs font-bold uppercase tracking-[.2em] text-[#F8D56B]">
                       Your delivery
                     </p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const content = order.deliveryItems.join("\\n\\n");
-                        const blob = new Blob([content], {
-                          type: "text/plain",
-                        });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement("a");
-                        a.href = url;
-                        a.download = `delivery_${order.id}.txt`;
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(url);
-                      }}
-                      className="flex items-center gap-1.5 rounded-full bg-[#D4AF37]/20 px-3 py-1.5 text-xs font-bold text-[#F8D56B] hover:bg-[#D4AF37]/30 transition-colors"
-                    >
-                      <Download size={14} /> Download .txt
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          // @ts-ignore
+                          const html2pdf = (await import("html2pdf.js")).default;
+                          const container = document.createElement("div");
+                          container.style.padding = "40px";
+                          container.style.fontFamily = "sans-serif";
+                          container.style.color = "#000";
+                          let itemsHtml = order.deliveryItems.map(item => 
+                            item.startsWith("http") 
+                              ? `<a href="${item}" style="word-break: break-all; color: #18B88A;">${item}</a>`
+                              : `<code style="display: block; padding: 10px; background: #f4f4f4; border-radius: 4px; word-break: break-all;">${item}</code>`
+                          ).join("<br/><br/>");
+                          container.innerHTML = `
+                            <div style="text-align: center; margin-bottom: 30px;">
+                              <h1 style="color: #062C23; margin-bottom: 5px;">Cogna Order Receipt</h1>
+                              <p style="color: #666; font-size: 14px;">Order ID: ${order.id}</p>
+                              <p style="color: #666; font-size: 14px;">Date: ${new Date(order.createdAt).toLocaleString()}</p>
+                            </div>
+                            <div style="margin-bottom: 30px; border-bottom: 1px solid #ccc; padding-bottom: 20px;">
+                              <h2 style="margin-bottom: 10px;">${order.product.name}</h2>
+                              <p style="font-size: 18px; font-weight: bold;">Amount: ${money(order.amount, order.currency)}</p>
+                            </div>
+                            <div>
+                              <h3 style="margin-bottom: 15px; color: #D4AF37;">Delivery Content</h3>
+                              ${itemsHtml}
+                            </div>
+                            <div style="margin-top: 50px; text-align: center; font-size: 12px; color: #888; border-top: 1px solid #eee; padding-top: 20px;">
+                              <p>Thank you for using Cogna. For support, contact support@cogna.store</p>
+                            </div>
+                          `;
+                          const opt = {
+                            margin:       1,
+                            filename:     \`order_${order.id}.pdf\`,
+                            image:        { type: 'jpeg', quality: 0.98 },
+                            html2canvas:  { scale: 2 },
+                            jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+                          };
+                          html2pdf().set(opt).from(container).save();
+                        }}
+                        className="flex items-center gap-1.5 rounded-full bg-[#D4AF37]/20 px-3 py-1.5 text-xs font-bold text-[#F8D56B] hover:bg-[#D4AF37]/30 transition-colors"
+                      >
+                        <Download size={14} /> Download .pdf
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const content = order.deliveryItems.join("\\n\\n");
+                          const blob = new Blob([content], {
+                            type: "text/plain",
+                          });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = url;
+                          a.download = \`delivery_${order.id}.txt\`;
+                          document.body.appendChild(a);
+                          a.click();
+                          document.body.removeChild(a);
+                          URL.revokeObjectURL(url);
+                        }}
+                        className="flex items-center gap-1.5 rounded-full bg-white/5 border border-emerald-100/10 px-3 py-1.5 text-xs font-bold text-emerald-100/60 hover:bg-white/10 hover:text-emerald-100 transition-colors"
+                      >
+                        <Download size={14} /> .txt
+                      </button>
+                    </div>
                   </div>
                   <div className="mt-4 space-y-3">
                     {order.deliveryItems.map((item, index) =>
