@@ -5,14 +5,38 @@ import { handleRouteError } from '@/utils/handle-error'
 import { successResponse } from '@/utils/response'
 
 export default async function walletRoutes(app: FastifyInstance) {
-  app.addHook('onRequest', app.authenticate)
-
-  app.get('/', async (req: FastifyRequest, reply: FastifyReply) => {
+  /**
+   * POST /api/v1/wallet/webhook/:gateway — inbound webhooks (unauthenticated)
+   * Plisio sends form-urlencoded; verify_hash is extracted from body for validation.
+   */
+  app.post('/webhook/:gateway', { config: { rawBody: true } }, async (req: FastifyRequest, reply: FastifyReply) => {
     try {
-      const { sub } = req.user as { sub: string }
-      return reply.send(successResponse(await WalletService.getSummary(sub)))
+      const { gateway } = req.params as { gateway: string }
+      const raw = req.rawBody
+      if (!raw) return reply.status(400).send({ ok: false })
+      const payload = Buffer.isBuffer(raw) ? raw.toString('utf8') : raw
+      const gatewayUpper = gateway.toUpperCase() as 'PAYSTACK' | 'MONNIFY' | 'PLISIO'
+
+      // Plisio: signature IS the verify_hash inside the form body; no separate header.
+      const signature = gatewayUpper === 'PLISIO'
+        ? (Object.fromEntries(new URLSearchParams(payload).entries())['verify_hash'] ?? '')
+        : (req.headers['x-paystack-signature'] as string) ?? (req.headers['monnify-signature'] as string) ?? ''
+
+      const ok = await WalletService.handleFundingWebhook(gatewayUpper, payload, signature)
+      return reply.status(ok ? 200 : 400).send({ ok })
     } catch (error) { return handleRouteError(error, reply) }
   })
+
+  // Authenticated routes
+  app.register(async (child) => {
+    child.addHook('onRequest', child.authenticate)
+
+    child.get('/', async (req: FastifyRequest, reply: FastifyReply) => {
+      try {
+        const { sub } = req.user as { sub: string }
+        return reply.send(successResponse(await WalletService.getSummary(sub)))
+      } catch (error) { return handleRouteError(error, reply) }
+    })
 
   app.get('/transactions', async (req: FastifyRequest, reply: FastifyReply) => {
     try {
@@ -103,25 +127,5 @@ export default async function walletRoutes(app: FastifyInstance) {
     }
   })
 
-  /**
-   * POST /api/v1/wallet/webhook/:gateway — inbound webhooks (unauthenticated)
-   * Plisio sends form-urlencoded; verify_hash is extracted from body for validation.
-   */
-  app.post('/webhook/:gateway', { config: { rawBody: true } }, async (req: FastifyRequest, reply: FastifyReply) => {
-    try {
-      const { gateway } = req.params as { gateway: string }
-      const raw = req.rawBody
-      if (!raw) return reply.status(400).send({ ok: false })
-      const payload = Buffer.isBuffer(raw) ? raw.toString('utf8') : raw
-      const gatewayUpper = gateway.toUpperCase() as 'PAYSTACK' | 'MONNIFY' | 'PLISIO'
-
-      // Plisio: signature IS the verify_hash inside the form body; no separate header.
-      const signature = gatewayUpper === 'PLISIO'
-        ? (Object.fromEntries(new URLSearchParams(payload).entries())['verify_hash'] ?? '')
-        : (req.headers['x-paystack-signature'] as string) ?? (req.headers['monnify-signature'] as string) ?? ''
-
-      const ok = await WalletService.handleFundingWebhook(gatewayUpper, payload, signature)
-      return reply.status(ok ? 200 : 400).send({ ok })
-    } catch (error) { return handleRouteError(error, reply) }
   })
 }
