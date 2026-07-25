@@ -112,12 +112,12 @@ enum ProviderStatus {
 // ─────────────────────────────────────────────
 
 model User {
-  id            String     @id @default(uuid())
-  fullName      String     @map("full_name")
-  email         String     @unique
-  passwordHash  String     @map("password_hash")
-  role          UserRole   @default(CUSTOMER)
-  adminRole     AdminRole? @map("admin_role")
+  id                    String     @id @default(uuid())
+  fullName              String     @map("full_name")
+  email                 String     @unique
+  passwordHash          String     @map("password_hash")
+  role                  UserRole   @default(CUSTOMER)
+  adminRole             AdminRole? @map("admin_role")
   emailVerified         Boolean    @default(false) @map("email_verified")
   status                UserStatus @default(PENDING)
   transactionPinHash    String?    @map("transaction_pin_hash")
@@ -261,6 +261,7 @@ model Product {
   @@index([slug])
   @@index([categoryId])
   @@index([position])
+  @@index([active, position])
   @@map("products")
 }
 
@@ -292,6 +293,7 @@ model Order {
 
   @@index([userId])
   @@index([status])
+  @@index([userId, createdAt(sort: Desc)])
   @@map("orders")
 }
 
@@ -317,6 +319,7 @@ model Payment {
   user  User  @relation(fields: [userId], references: [id])
 
   @@index([reference])
+  @@index([userId, createdAt(sort: Desc)])
   @@map("payments")
 }
 
@@ -365,7 +368,7 @@ model WalletTransaction {
   funding WalletFunding?
   refunds Refund[]
 
-  @@index([walletId, createdAt])
+  @@index([walletId, createdAt(sort: Desc)])
   @@map("wallet_transactions")
 }
 
@@ -382,7 +385,7 @@ model WalletFunding {
   amount              Decimal             @db.Decimal(14, 2)
   currency            String              @default("NGN")
   cryptoAmountUsdt    Decimal?            @map("crypto_amount_usdt") @db.Decimal(18, 8)
-  ngnRateLocked       Decimal?            @map("ngn_rate_locked")    @db.Decimal(14, 2)
+  ngnRateLocked       Decimal?            @map("ngn_rate_locked") @db.Decimal(14, 2)
   status              WalletFundingStatus @default(INITIALIZED)
   metadata            Json?
   createdAt           DateTime            @default(now()) @map("created_at")
@@ -392,7 +395,7 @@ model WalletFunding {
   user              User               @relation(fields: [userId], references: [id], onDelete: Restrict)
   walletTransaction WalletTransaction? @relation(fields: [walletTransactionId], references: [id], onDelete: Restrict)
 
-  @@index([userId, createdAt])
+  @@index([userId, createdAt(sort: Desc)])
   @@map("wallet_fundings")
 }
 
