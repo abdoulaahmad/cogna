@@ -105,7 +105,7 @@ export class PlisioAdapter implements IPaymentGateway {
       amount: String(options.amount),
       order_number: options.reference,
       order_name: `Cogna Wallet Funding — ${options.reference}`,
-      callback_url: `${env.APP_URL?.replace('3000', '4000') ?? 'http://localhost:4000'}/api/v1/payments/webhook/plisio`,
+      callback_url: `${env.APP_URL?.replace('3000', '4000') ?? 'http://localhost:4000'}/api/v1/wallet/webhook/plisio`,
       source_url: options.callbackUrl ?? '',
       ...(options.email ? { email: options.email } : {}),
     })
@@ -128,7 +128,7 @@ export class PlisioAdapter implements IPaymentGateway {
     }
   }
 
-  async verifyPayment(reference: string): Promise<PaymentVerifyResult> {
+  async verifyPayment(reference: string, gatewayReference?: string): Promise<PaymentVerifyResult> {
     if (!this.secretKey && !isTestMode()) throw new PaymentGatewayError('Plisio secret key is not configured')
 
     if (isTestMode()) {
@@ -143,8 +143,9 @@ export class PlisioAdapter implements IPaymentGateway {
       }
     }
 
+    const idToLookup = gatewayReference || reference
     const params = new URLSearchParams({ api_key: this.secretKey })
-    const url = `${PLISIO_BASE_URL}/operations/${encodeURIComponent(reference)}?${params.toString()}`
+    const url = `${PLISIO_BASE_URL}/operations/${encodeURIComponent(idToLookup)}?${params.toString()}`
 
     let raw: unknown
     try { raw = await httpsGet(url) }

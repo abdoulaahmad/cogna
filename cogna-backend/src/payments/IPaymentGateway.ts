@@ -12,8 +12,8 @@ export interface IPaymentGateway {
   /** Initialize a payment session and return a redirect URL */
   initializePayment(options: InitPaymentOptions): Promise<PaymentInitResult>
 
-  /** Verify a payment by its Cogna reference */
-  verifyPayment(reference: string): Promise<PaymentVerifyResult>
+  /** Verify a payment by its Cogna reference and optional gateway reference */
+  verifyPayment(reference: string, gatewayReference?: string): Promise<PaymentVerifyResult>
 
   /** Validate an inbound webhook signature — returns true if authentic */
   validateWebhook(payload: string, signature: string): boolean

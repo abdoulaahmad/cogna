@@ -88,7 +88,7 @@ export const PaymentService = {
     if (!order) throw new NotFoundError('Order')
 
     const gateway = await PaymentGatewayConfigurationService.getGateway(payment.gateway)
-    const verifyResult = await gateway.verifyPayment(reference)
+    const verifyResult = await gateway.verifyPayment(reference, payment.gatewayReference ?? undefined)
     const newStatus = toPaymentStatus(verifyResult.status)
 
     if (newStatus === 'PAID') {

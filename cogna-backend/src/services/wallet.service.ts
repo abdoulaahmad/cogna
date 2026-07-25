@@ -184,7 +184,7 @@ export const WalletService = {
     if (funding.status === 'COMPLETED') return funding
 
     const gateway = await PaymentGatewayConfigurationService.getGateway(funding.gateway)
-    const result = await gateway.verifyPayment(reference)
+    const result = await gateway.verifyPayment(reference, funding.gatewayReference ?? undefined)
     if (result.status !== 'success') return funding
 
     // For Plisio: the NGN amount is pre-locked in funding.amount, so we skip
