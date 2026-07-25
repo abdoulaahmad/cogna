@@ -113,7 +113,6 @@ export default function FundWalletPage() {
       const res = await api.post('/wallet/fund/crypto', {
         usdtAmount: usdt,
         idempotencyKey: crypto.randomUUID(),
-        callbackUrl: `${window.location.origin}/wallet/crypto-pending`,
       });
 
       if (!res.data.success) throw new Error(res.data.message || 'Crypto funding could not be initialized.');
@@ -167,7 +166,14 @@ export default function FundWalletPage() {
               rel="noopener noreferrer"
               className="block w-full rounded-full bg-[#D4AF37] px-5 py-4 text-center font-bold text-[#062C23] hover:bg-[#F8D56B] transition-colors"
             >
-              Open Plisio payment page →
+              Open Plisio payment page ↗
+            </a>
+
+            <a
+              href={`/wallet/verify?reference=${encodeURIComponent(cryptoPending.reference)}`}
+              className="block w-full rounded-full border border-emerald-100/20 px-5 py-3 text-center text-sm font-bold text-emerald-100/70 hover:border-[#D4AF37] hover:text-[#F8D56B] transition-colors"
+            >
+              I've paid — check my balance →
             </a>
 
             <div className="flex items-start gap-2 text-xs text-emerald-100/50">

@@ -99,14 +99,18 @@ export class PlisioAdapter implements IPaymentGateway {
     }
 
     // options.amount is already the USDT amount (set by initializeCryptoFunding)
+    const frontendUrl = env.APP_URL ?? 'http://localhost:3000'
+    const backendUrl = env.BACKEND_URL ?? frontendUrl.replace(':3000', ':4000')
+    const defaultSuccessUrl = `${frontendUrl}/wallet/verify?reference=${encodeURIComponent(options.reference)}`
     const params = new URLSearchParams({
       api_key: this.secretKey,
       currency: PLISIO_CRYPTO_CURRENCY,
       amount: String(options.amount),
       order_number: options.reference,
       order_name: `Cogna Wallet Funding — ${options.reference}`,
-      callback_url: `${env.APP_URL?.replace('3000', '4000') ?? 'http://localhost:4000'}/api/v1/wallet/webhook/plisio`,
-      source_url: options.callbackUrl ?? '',
+      callback_url: `${backendUrl}/api/v1/wallet/webhook/plisio`,
+      success_url: options.callbackUrl ?? defaultSuccessUrl,
+      cancel_url: `${frontendUrl}/wallet/fund`,
       ...(options.email ? { email: options.email } : {}),
     })
 

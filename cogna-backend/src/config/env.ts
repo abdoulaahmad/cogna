@@ -5,6 +5,7 @@ const envSchema = z.object({
   APP_NAME:              z.string().default('Cogna'),
   APP_ENV:               z.enum(['development', 'test', 'production']).default('development'),
   APP_URL:               z.string().url().default('http://localhost:3000'),
+  BACKEND_URL:           z.string().url().optional(), // Explicit backend URL (e.g. https://my-cogna-backend.herokuapp.com)
   PORT:                  z.coerce.number().default(4000),
 
   DATABASE_URL:          z.string().min(1),
