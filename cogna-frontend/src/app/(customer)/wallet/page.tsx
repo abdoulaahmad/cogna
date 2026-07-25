@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Bitcoin, Clock3, CreditCard, History, RefreshCw, WalletCards } from 'lucide-react';
+import { CreditCard, History, RefreshCw, WalletCards } from 'lucide-react';
 import { api } from '@/lib/api';
 import { getErrorMessage } from '@/lib/error-message';
 import CustomerPortalNav from '@/components/layout/customer-portal-nav';
@@ -56,7 +56,6 @@ export default function WalletPage() {
   }, [load]);
 
   const currency = wallet?.currency || 'NGN';
-  const pendingFundings = fundings.filter(f => f.status === 'PENDING' || f.status === 'INITIATED');
 
   return (
     <main className="min-h-screen bg-[#020E0C] text-white lg:pl-64">
@@ -127,51 +126,7 @@ export default function WalletPage() {
                 </div>
               </section>
 
-              {/* Pending Fundings — shown only when there are unconfirmed deposits */}
-              {pendingFundings.length > 0 && (
-                <section className="mt-6 rounded-[2rem] border border-amber-400/20 bg-amber-400/5 p-6 sm:p-8 backdrop-blur-xl">
-                  <div className="flex items-center gap-3 mb-6">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400/10">
-                      <Clock3 className="text-amber-400" size={19} />
-                    </span>
-                    <div>
-                      <h2 className="font-display text-lg font-bold text-amber-200">Awaiting confirmation</h2>
-                      <p className="text-xs text-amber-300/60 mt-0.5">
-                        These deposits are pending gateway confirmation. Your balance updates automatically once confirmed.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="divide-y divide-amber-400/10">
-                    {pendingFundings.map((f) => (
-                      <div key={f.id} className="flex flex-wrap items-center justify-between gap-4 py-4">
-                        <div className="flex items-center gap-3">
-                          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400/10">
-                            {f.gateway === 'PLISIO'
-                              ? <Bitcoin size={16} className="text-amber-400" />
-                              : <CreditCard size={16} className="text-amber-400" />}
-                          </span>
-                          <div>
-                            <p className="text-sm font-bold text-amber-100">{GATEWAY_LABELS[f.gateway] ?? f.gateway} deposit</p>
-                            <p className="text-xs text-amber-300/50 mt-0.5">{new Date(f.createdAt).toLocaleString()}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="text-right">
-                            <p className="font-display text-lg font-bold text-amber-200">{formatMoney(f.amount, f.currency)}</p>
-                            <p className="text-xs text-amber-300/40 uppercase tracking-wider">{f.status}</p>
-                          </div>
-                          <Link
-                            href={`/wallet/fundings/${encodeURIComponent(f.reference)}/verify`}
-                            className="rounded-full border border-amber-400/30 px-4 py-2 text-xs font-bold text-amber-300 hover:bg-amber-400/10 transition-colors whitespace-nowrap"
-                          >
-                            Check status →
-                          </Link>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              )}
+
 
               {/* Wallet Ledger */}
               <section className="mt-8 rounded-[2rem] border border-emerald-100/15 bg-[#061915] p-6 sm:p-8 backdrop-blur-xl">
