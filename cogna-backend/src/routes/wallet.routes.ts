@@ -23,6 +23,16 @@ export default async function walletRoutes(app: FastifyInstance) {
     } catch (error) { return handleRouteError(error, reply) }
   })
 
+  /** GET /api/v1/wallet/fundings — list all funding attempts for the user (pending, completed, failed) */
+  app.get('/fundings', async (req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { sub } = req.user as { sub: string }
+      const { page = 1, limit = 10 } = req.query as { page?: number; limit?: number }
+      const result = await WalletService.listFundings(sub, Number(page), Number(limit))
+      return reply.send(successResponse(result))
+    } catch (error) { return handleRouteError(error, reply) }
+  })
+
   /** GET /api/v1/wallet/crypto-rate — returns current USDT/NGN rate set by admin */
   app.get('/crypto-rate', async (_req: FastifyRequest, reply: FastifyReply) => {
     try {

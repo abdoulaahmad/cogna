@@ -16,6 +16,10 @@ export const WalletService = {
   async listTransactions(userId: string, page = 1, limit = 20) {
     return WalletRepository.findTransactionsByUserId(userId, page, limit)
   },
+
+  async listFundings(userId: string, page = 1, limit = 10) {
+    return WalletRepository.findFundingsByUserId(userId, page, limit)
+  },
   async refundPurchase(input: { userId: string; orderId: string; reason: string; idempotencyKey: string }) {
     const refund = await WalletRepository.refundPurchase(input)
     if (!refund) throw new ConflictError('Eligible wallet purchase was not found')

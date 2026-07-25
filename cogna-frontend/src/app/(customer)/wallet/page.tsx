@@ -2,21 +2,226 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { CreditCard, History, RefreshCw, WalletCards } from 'lucide-react';
+import { Bitcoin, Clock3, CreditCard, History, RefreshCw, WalletCards } from 'lucide-react';
 import { api } from '@/lib/api';
 import { getErrorMessage } from '@/lib/error-message';
 import CustomerPortalNav from '@/components/layout/customer-portal-nav';
 
 type Wallet = { availableBalance: string; pendingBalance: string; lifetimeFunded: string; lifetimeSpent: string; currency: string };
 type Ledger = { id: string; type: string; direction: 'CREDIT' | 'DEBIT'; amount: string; balanceAfter: string; createdAt: string; reference: string };
+type Funding = { id: string; gateway: string; amount: string; currency: string; status: string; reference: string; createdAt: string; authorizationUrl?: string };
 type TransactionResponse = { success: boolean; data: { items: Ledger[]; total: number } };
-const formatMoney = (amount: string, currency = 'NGN') => new Intl.NumberFormat('en-NG', { style: 'currency', currency, minimumFractionDigits: 2 }).format(Number(amount));
+type FundingResponse = { success: boolean; data: { items: Funding[]; total: number } };
+
+const formatMoney = (amount: string, currency = 'NGN') =>
+  new Intl.NumberFormat('en-NG', { style: 'currency', currency, minimumFractionDigits: 2 }).format(Number(amount));
+
+const GATEWAY_LABELS: Record<string, string> = {
+  PAYSTACK: 'Paystack',
+  MONNIFY: 'Monnify',
+  PLISIO: 'Crypto (USDT)',
+};
 
 export default function WalletPage() {
-  const [wallet, setWallet] = useState<Wallet | null>(null); const [transactions, setTransactions] = useState<Ledger[]>([]); const [loading, setLoading] = useState(true); const [refreshing, setRefreshing] = useState(false); const [error, setError] = useState<string | null>(null);
-  const load = useCallback(async (refresh = false) => { if (refresh) setRefreshing(true); else setLoading(true); setError(null); try { const [summary, history] = await Promise.all([api.get<{ success: boolean; data: Wallet }>('/wallet'), api.get<TransactionResponse>('/wallet/transactions', { params: { page: 1, limit: 10 } })]); if (!summary.data.success || !history.data.success) throw new Error('Wallet data could not be loaded.'); setWallet(summary.data.data); setTransactions(history.data.data.items); } catch (requestError: unknown) { setError(getErrorMessage(requestError, 'Unable to load your wallet right now.')); } finally { setLoading(false); setRefreshing(false); } }, []);
-  useEffect(() => { const timer = window.setTimeout(() => { void load(); }, 0); return () => window.clearTimeout(timer); }, [load]);
+  const [wallet, setWallet] = useState<Wallet | null>(null);
+  const [transactions, setTransactions] = useState<Ledger[]>([]);
+  const [fundings, setFundings] = useState<Funding[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async (refresh = false) => {
+    if (refresh) setRefreshing(true); else setLoading(true);
+    setError(null);
+    try {
+      const [summary, history, fundingHistory] = await Promise.all([
+        api.get<{ success: boolean; data: Wallet }>('/wallet'),
+        api.get<TransactionResponse>('/wallet/transactions', { params: { page: 1, limit: 10 } }),
+        api.get<FundingResponse>('/wallet/fundings', { params: { page: 1, limit: 5 } }),
+      ]);
+      if (!summary.data.success || !history.data.success) throw new Error('Wallet data could not be loaded.');
+      setWallet(summary.data.data);
+      setTransactions(history.data.data.items);
+      if (fundingHistory.data.success) setFundings(fundingHistory.data.data.items);
+    } catch (requestError: unknown) {
+      setError(getErrorMessage(requestError, 'Unable to load your wallet right now.'));
+    } finally {
+      setLoading(false); setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void load(); }, 0);
+    return () => window.clearTimeout(timer);
+  }, [load]);
+
   const currency = wallet?.currency || 'NGN';
-  return <main className="min-h-screen bg-[#020E0C] text-white lg:pl-64"><CustomerPortalNav current="/wallet" variant="sidebar"/><div className="min-h-screen px-5 pb-12 pt-[104px] sm:px-7 lg:px-8 xl:px-10"><div className="mx-auto max-w-[1440px]"><div className="flex flex-wrap items-end justify-between gap-5"><div><p className="text-xs font-bold uppercase tracking-[.22em] text-[#F8D56B]">Cogna wallet</p><h1 className="mt-3 font-display text-4xl font-bold">Your balance, on demand.</h1><p className="mt-2 text-sm text-emerald-100/65">Fund securely, view immutable ledger activity, and spend from one account.</p></div><div className="flex gap-3"><button type="button" onClick={() => void load(true)} disabled={refreshing} className="rounded-full border border-emerald-100/15 p-3 text-emerald-100/70 hover:text-white disabled:opacity-45 hover:bg-white/[0.05] transition-colors" aria-label="Refresh wallet"><RefreshCw className={refreshing ? 'animate-spin' : ''} size={17}/></button><Link href="/wallet/fund" className="inline-flex items-center gap-2 rounded-full bg-[linear-gradient(135deg,#D4AF37,#F8D56B)] px-6 py-3 text-sm font-bold text-[#062C23] shadow-premium hover:opacity-90 transition-opacity"><CreditCard size={17}/> Fund wallet</Link></div></div>{error && <div role="alert" className="mt-8 rounded-2xl border border-rose-300/25 bg-rose-950/30 p-4 text-sm text-rose-100">{error}<button type="button" onClick={() => void load()} className="ml-3 font-bold text-[#F8D56B]">Retry</button></div>}{loading ? <div className="mt-9 flex min-h-72 items-center justify-center rounded-3xl border border-emerald-100/15 bg-white/[0.05]"><RefreshCw className="animate-spin text-[#F8D56B]" size={28}/></div> : <><section className="mt-9 relative overflow-hidden rounded-[2rem] border border-emerald-100/15 bg-[#061915] p-8 sm:p-10 shadow-premium-dark backdrop-blur-xl"><div className="absolute right-0 top-0 h-64 w-64 -translate-y-1/2 translate-x-1/3 rounded-full bg-[#D4AF37]/15 blur-[80px]" /><div className="absolute bottom-0 left-0 h-64 w-64 -translate-x-1/3 translate-y-1/3 rounded-full bg-emerald-400/10 blur-[80px]" /><div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6"><div><div className="flex items-center gap-4 text-emerald-100"><span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#D4AF37,#F8D56B)] text-[#062C23] shadow-premium"><WalletCards size={24}/></span><span className="text-sm font-bold tracking-widest uppercase text-emerald-100/80">Available balance</span></div><p className="mt-8 font-display text-5xl md:text-7xl font-bold tracking-tight bg-gradient-to-br from-white to-emerald-100/60 bg-clip-text text-transparent">{wallet ? formatMoney(wallet.availableBalance, currency) : '—'}</p></div></div><div className="relative z-10 mt-12 grid gap-4 sm:grid-cols-3"><Stat label="Pending" value={wallet ? formatMoney(wallet.pendingBalance, currency) : '—'}/><Stat label="Total funded" value={wallet ? formatMoney(wallet.lifetimeFunded, currency) : '—'}/><Stat label="Total spent" value={wallet ? formatMoney(wallet.lifetimeSpent, currency) : '—'}/></div></section><section className="mt-8 rounded-[2rem] border border-emerald-100/15 bg-[#061915] p-6 sm:p-8 backdrop-blur-xl"><div className="flex items-center justify-between"><div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5"><History className="text-[#F8D56B]" size={19}/></span><h2 className="font-display text-xl font-bold">Wallet ledger</h2></div><span className="text-xs font-bold uppercase tracking-widest text-emerald-100/40">Immutable</span></div><div className="mt-8 divide-y divide-emerald-100/10">{transactions.length ? transactions.map((transaction) => <div key={transaction.id} className="group flex flex-wrap items-center justify-between gap-4 py-5 transition-colors hover:bg-white/[0.02] -mx-4 px-4 rounded-xl"><div><p className="text-sm font-bold text-emerald-50">{transaction.type}</p><p className="mt-1.5 text-xs font-medium text-emerald-100/50">{new Date(transaction.createdAt).toLocaleString()} <span className="mx-1.5 opacity-40">•</span> {transaction.reference}</p></div><div className="text-right"><p className={`font-display text-lg font-bold ${transaction.direction === 'CREDIT' ? 'text-emerald-300' : 'text-rose-300'}`}>{transaction.direction === 'CREDIT' ? '+' : '-'}{formatMoney(transaction.amount, currency)}</p><p className="mt-1 text-xs font-medium text-emerald-100/45">Balance: {formatMoney(transaction.balanceAfter, currency)}</p></div></div>) : <p className="py-12 text-center text-sm font-medium text-emerald-100/60">Your verified funding and purchase activity will appear here.</p>}</div></section></>}</div></div></main>;
+  const pendingFundings = fundings.filter(f => f.status === 'PENDING' || f.status === 'INITIATED');
+
+  return (
+    <main className="min-h-screen bg-[#020E0C] text-white lg:pl-64">
+      <CustomerPortalNav current="/wallet" variant="sidebar" />
+      <div className="min-h-screen px-5 pb-12 pt-[104px] sm:px-7 lg:px-8 xl:px-10">
+        <div className="mx-auto max-w-[1440px]">
+
+          {/* Header */}
+          <div className="flex flex-wrap items-end justify-between gap-5">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[.22em] text-[#F8D56B]">Cogna wallet</p>
+              <h1 className="mt-3 font-display text-4xl font-bold">Your balance, on demand.</h1>
+              <p className="mt-2 text-sm text-emerald-100/65">Fund securely, view immutable ledger activity, and spend from one account.</p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => void load(true)}
+                disabled={refreshing}
+                className="rounded-full border border-emerald-100/15 p-3 text-emerald-100/70 hover:text-white disabled:opacity-45 hover:bg-white/[0.05] transition-colors"
+                aria-label="Refresh wallet"
+              >
+                <RefreshCw className={refreshing ? 'animate-spin' : ''} size={17} />
+              </button>
+              <Link
+                href="/wallet/fund"
+                className="inline-flex items-center gap-2 rounded-full bg-[linear-gradient(135deg,#D4AF37,#F8D56B)] px-6 py-3 text-sm font-bold text-[#062C23] shadow-premium hover:opacity-90 transition-opacity"
+              >
+                <CreditCard size={17} /> Fund wallet
+              </Link>
+            </div>
+          </div>
+
+          {error && (
+            <div role="alert" className="mt-8 rounded-2xl border border-rose-300/25 bg-rose-950/30 p-4 text-sm text-rose-100">
+              {error}
+              <button type="button" onClick={() => void load()} className="ml-3 font-bold text-[#F8D56B]">Retry</button>
+            </div>
+          )}
+
+          {loading ? (
+            <div className="mt-9 flex min-h-72 items-center justify-center rounded-3xl border border-emerald-100/15 bg-white/[0.05]">
+              <RefreshCw className="animate-spin text-[#F8D56B]" size={28} />
+            </div>
+          ) : (
+            <>
+              {/* Balance Card */}
+              <section className="mt-9 relative overflow-hidden rounded-[2rem] border border-emerald-100/15 bg-[#061915] p-8 sm:p-10 shadow-premium-dark backdrop-blur-xl">
+                <div className="absolute right-0 top-0 h-64 w-64 -translate-y-1/2 translate-x-1/3 rounded-full bg-[#D4AF37]/15 blur-[80px]" />
+                <div className="absolute bottom-0 left-0 h-64 w-64 -translate-x-1/3 translate-y-1/3 rounded-full bg-emerald-400/10 blur-[80px]" />
+                <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                  <div>
+                    <div className="flex items-center gap-4 text-emerald-100">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#D4AF37,#F8D56B)] text-[#062C23] shadow-premium">
+                        <WalletCards size={24} />
+                      </span>
+                      <span className="text-sm font-bold tracking-widest uppercase text-emerald-100/80">Available balance</span>
+                    </div>
+                    <p className="mt-8 font-display text-5xl md:text-7xl font-bold tracking-tight bg-gradient-to-br from-white to-emerald-100/60 bg-clip-text text-transparent">
+                      {wallet ? formatMoney(wallet.availableBalance, currency) : '—'}
+                    </p>
+                  </div>
+                </div>
+                <div className="relative z-10 mt-12 grid gap-4 sm:grid-cols-3">
+                  <Stat label="Pending" value={wallet ? formatMoney(wallet.pendingBalance, currency) : '—'} />
+                  <Stat label="Total funded" value={wallet ? formatMoney(wallet.lifetimeFunded, currency) : '—'} />
+                  <Stat label="Total spent" value={wallet ? formatMoney(wallet.lifetimeSpent, currency) : '—'} />
+                </div>
+              </section>
+
+              {/* Pending Fundings — shown only when there are unconfirmed deposits */}
+              {pendingFundings.length > 0 && (
+                <section className="mt-6 rounded-[2rem] border border-amber-400/20 bg-amber-400/5 p-6 sm:p-8 backdrop-blur-xl">
+                  <div className="flex items-center gap-3 mb-6">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400/10">
+                      <Clock3 className="text-amber-400" size={19} />
+                    </span>
+                    <div>
+                      <h2 className="font-display text-lg font-bold text-amber-200">Awaiting confirmation</h2>
+                      <p className="text-xs text-amber-300/60 mt-0.5">
+                        These deposits are pending gateway confirmation. Your balance updates automatically once confirmed.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="divide-y divide-amber-400/10">
+                    {pendingFundings.map((f) => (
+                      <div key={f.id} className="flex flex-wrap items-center justify-between gap-4 py-4">
+                        <div className="flex items-center gap-3">
+                          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400/10">
+                            {f.gateway === 'PLISIO'
+                              ? <Bitcoin size={16} className="text-amber-400" />
+                              : <CreditCard size={16} className="text-amber-400" />}
+                          </span>
+                          <div>
+                            <p className="text-sm font-bold text-amber-100">{GATEWAY_LABELS[f.gateway] ?? f.gateway} deposit</p>
+                            <p className="text-xs text-amber-300/50 mt-0.5">{new Date(f.createdAt).toLocaleString()}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="text-right">
+                            <p className="font-display text-lg font-bold text-amber-200">{formatMoney(f.amount, f.currency)}</p>
+                            <p className="text-xs text-amber-300/40 uppercase tracking-wider">{f.status}</p>
+                          </div>
+                          <Link
+                            href={`/wallet/fundings/${encodeURIComponent(f.reference)}/verify`}
+                            className="rounded-full border border-amber-400/30 px-4 py-2 text-xs font-bold text-amber-300 hover:bg-amber-400/10 transition-colors whitespace-nowrap"
+                          >
+                            Check status →
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* Wallet Ledger */}
+              <section className="mt-8 rounded-[2rem] border border-emerald-100/15 bg-[#061915] p-6 sm:p-8 backdrop-blur-xl">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5">
+                      <History className="text-[#F8D56B]" size={19} />
+                    </span>
+                    <h2 className="font-display text-xl font-bold">Wallet ledger</h2>
+                  </div>
+                  <span className="text-xs font-bold uppercase tracking-widest text-emerald-100/40">Immutable</span>
+                </div>
+                <div className="mt-8 divide-y divide-emerald-100/10">
+                  {transactions.length ? transactions.map((transaction) => (
+                    <div key={transaction.id} className="group flex flex-wrap items-center justify-between gap-4 py-5 transition-colors hover:bg-white/[0.02] -mx-4 px-4 rounded-xl">
+                      <div>
+                        <p className="text-sm font-bold text-emerald-50">{transaction.type}</p>
+                        <p className="mt-1.5 text-xs font-medium text-emerald-100/50">
+                          {new Date(transaction.createdAt).toLocaleString()}
+                          <span className="mx-1.5 opacity-40">•</span>
+                          {transaction.reference}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className={`font-display text-lg font-bold ${transaction.direction === 'CREDIT' ? 'text-emerald-300' : 'text-rose-300'}`}>
+                          {transaction.direction === 'CREDIT' ? '+' : '-'}{formatMoney(transaction.amount, currency)}
+                        </p>
+                        <p className="mt-1 text-xs font-medium text-emerald-100/45">Balance: {formatMoney(transaction.balanceAfter, currency)}</p>
+                      </div>
+                    </div>
+                  )) : (
+                    <p className="py-12 text-center text-sm font-medium text-emerald-100/60">
+                      Your verified funding and purchase activity will appear here.
+                    </p>
+                  )}
+                </div>
+              </section>
+            </>
+          )}
+        </div>
+      </div>
+    </main>
+  );
 }
-function Stat({ label, value }: { label: string; value: string }) { return <div className="rounded-2xl border border-emerald-100/10 bg-white/[0.03] backdrop-blur-md p-5 transition hover:bg-white/[0.06]"><p className="text-[10px] font-bold uppercase tracking-[.16em] text-emerald-100/60">{label}</p><p className="mt-3 font-display text-xl font-bold text-white tracking-tight">{value}</p></div>; }
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-emerald-100/10 bg-white/[0.03] backdrop-blur-md p-5 transition hover:bg-white/[0.06]">
+      <p className="text-[10px] font-bold uppercase tracking-[.16em] text-emerald-100/60">{label}</p>
+      <p className="mt-3 font-display text-xl font-bold text-white tracking-tight">{value}</p>
+    </div>
+  );
+}

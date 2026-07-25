@@ -39,6 +39,19 @@ export const WalletRepository = {
     return prisma.walletFunding.findUnique({ where: { reference } })
   },
 
+  async findFundingsByUserId(userId: string, page = 1, limit = 10) {
+    const [items, total] = await prisma.$transaction([
+      prisma.walletFunding.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.walletFunding.count({ where: { userId } }),
+    ])
+    return { items, total }
+  },
+
   saveCheckout(fundingId: string, authorizationUrl: string, gatewayReference?: string | null) {
     return prisma.walletFunding.update({
       where: { id: fundingId },
