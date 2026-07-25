@@ -1,5 +1,6 @@
 import { prisma } from '@/config/database'
 import { AkudingAdapter } from './akunding.adapter'
+import { VeroxanAdapter } from './veroxan.adapter'
 import type { IProvider } from './provider.interface'
 import { decryptCredential } from '@/utils/credential-crypto'
 
@@ -16,6 +17,10 @@ export async function getProvider(providerId: string): Promise<IProvider> {
 
   if (record.name.toLowerCase().includes('akunding')) {
     return new AkudingAdapter({ apiKey: decryptCredential(record.apiKey), baseUrl: record.baseUrl })
+  }
+
+  if (record.name.toLowerCase().includes('veroxan')) {
+    return new VeroxanAdapter({ apiKey: decryptCredential(record.apiKey), baseUrl: record.baseUrl })
   }
 
   throw new Error(`Unsupported provider: ${record.name}`)
