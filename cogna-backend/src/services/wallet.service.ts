@@ -200,23 +200,64 @@ export const WalletService = {
 
   async handleFundingWebhook(gatewayType: PaymentGatewayType, rawBody: string, signature: string) {
     const gateway = await PaymentGatewayConfigurationService.getGateway(gatewayType)
-    if (!gateway.validateWebhook(rawBody, signature)) return false
-    try {
-      let reference: string | undefined
 
-      if (gatewayType === 'PLISIO') {
-        // Plisio sends form-urlencoded: order_number is our reference
-        const fields = Object.fromEntries(new URLSearchParams(rawBody).entries())
-        reference = fields['order_number']
-      } else {
-        const parsed = JSON.parse(rawBody) as { data?: { reference?: string } }
-        reference = parsed.data?.reference
+    if (gatewayType === 'PLISIO') {
+      // Plisio: read all fields from the form-urlencoded body
+      const fields = Object.fromEntries(new URLSearchParams(rawBody).entries())
+      const reference = fields['order_number']
+      const status = fields['status']   // completed | mismatch | expired | cancelled | new | pending
+      const txnId = fields['txn_id']   // Plisio's own transaction ID
+
+      console.log(`[Plisio webhook] reference=${reference} status=${status} txn_id=${txnId}`)
+
+      // Validate signature
+      if (!gateway.validateWebhook(rawBody, signature)) {
+        console.error('[Plisio webhook] Signature validation failed — verify_hash mismatch')
+        return false
       }
 
+      if (!reference) {
+        console.error('[Plisio webhook] Missing order_number field in payload')
+        return false
+      }
+
+      // Only credit the wallet for terminal success statuses
+      const shouldCredit = status === 'completed' || status === 'mismatch'
+      if (!shouldCredit) {
+        // Non-final status (pending, new, etc.) — acknowledge but do not credit
+        console.log(`[Plisio webhook] Non-creditable status "${status}", skipping credit`)
+        return true  // Return true so Plisio knows we received it
+      }
+
+      try {
+        const funding = await WalletRepository.findFundingByReference(reference)
+        if (!funding) {
+          console.error(`[Plisio webhook] Funding not found for reference=${reference}`)
+          return false
+        }
+        if (funding.status === 'COMPLETED') {
+          console.log(`[Plisio webhook] Funding ${reference} already completed, skipping`)
+          return true
+        }
+        await WalletRepository.creditFunding(funding.id, txnId || reference, fields as Record<string, unknown>)
+        console.log(`[Plisio webhook] Wallet credited for reference=${reference}`)
+        return true
+      } catch (err) {
+        console.error(`[Plisio webhook] Error crediting wallet: ${(err as Error).message}`)
+        return false
+      }
+    }
+
+    // ── Fiat gateways (Paystack / Monnify) ───────────────────────────────────
+    if (!gateway.validateWebhook(rawBody, signature)) return false
+    try {
+      const parsed = JSON.parse(rawBody) as { data?: { reference?: string } }
+      const reference = parsed.data?.reference
       if (!reference) return false
       await this.verifyFunding(reference, gatewayType)
       return true
-    } catch {
+    } catch (err) {
+      console.error(`[${gatewayType} webhook] Error processing webhook: ${(err as Error).message}`)
       return false
     }
   },
