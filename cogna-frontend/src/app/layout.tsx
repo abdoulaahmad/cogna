@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
+import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -29,7 +30,10 @@ export default function RootLayout({
       lang="en"
       className={`${outfit.variable} ${plusJakartaSans.variable} h-full antialiased overflow-x-hidden`}
     >
-      <body className="min-h-full flex flex-col font-sans overflow-x-hidden">{children}</body>
+      <body className="min-h-full flex flex-col font-sans overflow-x-hidden">
+        {children}
+        <WhatsAppButton />
+      </body>
     </html>
   );
 }
