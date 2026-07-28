@@ -28,6 +28,7 @@ const navigation: Array<{ label: string; items: NavItem[] }> = [
     { name: 'User accounts', href: '/admin/users', icon: UserCog },
     { name: 'Wallet adjustments', href: '/admin/adjustments', icon: WalletCards },
     { name: 'Crypto settings', href: '/admin/crypto-settings', icon: Bitcoin },
+    { name: 'Global settings', href: '/admin/settings', icon: Activity },
     { name: 'Audit logs', href: '/admin/audit-logs', icon: History },
   ] },
 ]

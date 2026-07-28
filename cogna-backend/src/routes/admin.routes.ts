@@ -17,6 +17,7 @@ import {
   updateCategorySchema,
   createProviderSchema,
   updateProviderSchema,
+  announcementSchema,
 } from '@/validators/admin.validator'
 import { successResponse, errorResponse } from '@/utils/response'
 import { handleRouteError } from '@/utils/handle-error'
@@ -334,6 +335,43 @@ export default async function adminRoutes(app: FastifyInstance) {
       })
 
       return reply.send(successResponse({ rateNgn, walletAddress, testMode: testMode ?? false }, 'Crypto settings updated'))
+    } catch (error) { return handleRouteError(error, reply) }
+  })
+
+  // ─── Global Announcement Settings ──────────────────────────────────────────
+  app.get('/settings/announcement', {
+    preHandler: app.requireAdminRole([AdminRole.SUPER_ADMIN, AdminRole.ADMIN])
+  }, async (_req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const setting = await prisma.setting.findUnique({ where: { key: 'global_announcement' } })
+      let announcement = { active: false, message: '', tone: 'emerald' }
+      if (setting) {
+        try { announcement = JSON.parse(setting.value) } catch (e) {}
+      }
+      return reply.send(successResponse(announcement))
+    } catch (error) { return handleRouteError(error, reply) }
+  })
+
+  app.put('/settings/announcement', {
+    preHandler: app.requireAdminRole([AdminRole.SUPER_ADMIN, AdminRole.ADMIN])
+  }, async (req: FastifyRequest, reply: FastifyReply) => {
+    try {
+      const { sub } = req.user as { sub: string }
+      const body = announcementSchema.parse(req.body)
+      
+      await prisma.setting.upsert({
+        where: { key: 'global_announcement' },
+        create: { key: 'global_announcement', value: JSON.stringify(body) },
+        update: { value: JSON.stringify(body) }
+      })
+
+      await AuditLogService.recordAuditEvent(sub, 'ANNOUNCEMENT_SETTINGS_UPDATE', 'settings', 'global_announcement', req.ip, {
+        reason: 'Global announcement updated through the admin portal',
+        active: body.active,
+        tone: body.tone,
+      })
+
+      return reply.send(successResponse(body, 'Global announcement updated'))
     } catch (error) { return handleRouteError(error, reply) }
   })
 

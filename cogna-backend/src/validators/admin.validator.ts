@@ -26,3 +26,11 @@ export type CreateCategoryInput = z.infer<typeof createCategorySchema>
 export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>
 export type CreateProviderInput = z.infer<typeof createProviderSchema>
 export type UpdateProviderInput = z.infer<typeof updateProviderSchema>
+
+// ─── Settings ─────────────────────────────────────────────────────────────────
+export const announcementSchema = z.object({
+  active: z.boolean(),
+  message: z.string().min(1, 'Message is required'),
+  tone: z.string().min(1, 'Tone is required'),
+})
+export type AnnouncementInput = z.infer<typeof announcementSchema>
