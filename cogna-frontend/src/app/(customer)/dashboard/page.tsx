@@ -17,6 +17,7 @@ type Dashboard = {
   orderStats: { pendingCount: number; completedCount: number };
   recentOrders: Array<{ id: string; status: string; amount: string; currency: string; createdAt: string; product: { name: string } }>;
   recentTransactions: Array<{ id: string; type: string; direction: string; amount: string; balanceAfter: string; createdAt: string }>;
+  announcement?: { active: boolean; message: string; tone: string } | null;
 };
 
 const money = (amount: number | string, currency = 'NGN') => new Intl.NumberFormat('en-NG', { style: 'currency', currency, minimumFractionDigits: 2 }).format(Number(amount));
@@ -50,6 +51,11 @@ export default function CustomerDashboardPage() {
 
   return <main className="min-h-screen bg-[#020E0C] text-white lg:pl-64"><CustomerPortalNav current="/dashboard" variant="sidebar"/><div className="min-h-screen px-5 pb-12 pt-[104px] sm:px-7 lg:px-8 xl:px-10">
     <div className="mx-auto max-w-[1440px]">
+      {dashboard?.announcement?.active && (
+        <div className={`mb-6 flex items-center justify-between gap-4 rounded-2xl border px-5 py-4 shadow-sm ${dashboard.announcement.tone === 'gold' ? 'border-[#D4AF37]/20 bg-[#D4AF37]/10 text-[#F8D56B]' : 'border-emerald-400/20 bg-emerald-400/10 text-emerald-300'}`}>
+          <p className="text-sm font-bold leading-relaxed">{dashboard.announcement.message}</p>
+        </div>
+      )}
       <section className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between"><div><p className="text-xs font-semibold text-emerald-100/45">Welcome back</p><h1 className="mt-2 font-display text-3xl font-bold tracking-tight sm:text-4xl">{firstName} <span aria-hidden="true">👋</span></h1><p className="mt-2 text-sm text-emerald-100/55">Here&apos;s what&apos;s happening with your Cogna account.</p></div>{dashboard && <div className="flex min-w-[280px] items-center justify-between gap-5 rounded-2xl border border-emerald-100/10 bg-[#061B17] px-5 py-4 shadow-[0_18px_50px_rgba(0,0,0,.22)]"><div><p className="text-[10px] font-bold uppercase tracking-[.16em] text-emerald-100/40">Wallet balance</p><p className="mt-1 text-2xl font-bold">{money(dashboard.wallet.availableBalance,currency)}</p></div><Link href="/wallet/fund" className="inline-flex items-center gap-2 rounded-xl bg-[#D4AF37] px-4 py-2.5 text-xs font-black text-[#062C23] hover:bg-[#F8D56B]">Add funds <CreditCard size={15}/></Link></div>}</section>
 
       {loading ? <div className="flex min-h-[520px] items-center justify-center"><RefreshCw className="animate-spin text-[#F8D56B]" size={30}/></div> : error ? <div className="mt-8 rounded-2xl border border-rose-300/20 bg-rose-950/25 p-6 text-sm text-rose-100">{error}<button type="button" onClick={() => void load()} className="ml-3 font-bold text-[#F8D56B]">Retry</button></div> : dashboard ? <>
