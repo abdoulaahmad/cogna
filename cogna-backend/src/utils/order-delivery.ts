@@ -5,6 +5,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function extractDeliveryItems(providerResponse: unknown): string[] {
   if (!isRecord(providerResponse) || !isRecord(providerResponse.rawResponse)) return []
   const rawResponse = providerResponse.rawResponse
+  
+  if (typeof rawResponse.data === 'string' && rawResponse.data.length > 0) {
+    return [rawResponse.data]
+  }
+
   const payload = isRecord(rawResponse.data) ? rawResponse.data : rawResponse
   if (!Array.isArray(payload.items)) return []
   return payload.items.filter((item): item is string => typeof item === 'string')
