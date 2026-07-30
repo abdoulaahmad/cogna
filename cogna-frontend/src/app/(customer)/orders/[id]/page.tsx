@@ -45,25 +45,35 @@ export default function OrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const load = useCallback(async (background = false) => {
+    if (!background) setLoading(true);
+    if (!background) setError(null);
     try {
       const response = await api.get(`/customer/orders/${id}`);
       if (!response.data.success) throw new Error("Order could not be loaded.");
       setOrder(response.data.data);
     } catch (requestError: unknown) {
-      setError(getErrorMessage(requestError, "Order could not be loaded."));
+      if (!background) setError(getErrorMessage(requestError, "Order could not be loaded."));
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   }, [id]);
+  
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      void load();
-    }, 0);
-    return () => window.clearTimeout(timer);
+    void load(false);
   }, [load]);
+
+  useEffect(() => {
+    let interval: number;
+    if (order && (order.status === "PENDING" || order.status === "PROCESSING")) {
+      interval = window.setInterval(() => {
+        void load(true);
+      }, 3000);
+    }
+    return () => {
+      if (interval) window.clearInterval(interval);
+    };
+  }, [order?.status, load]);
   async function cancel() {
     if (
       !confirm(
