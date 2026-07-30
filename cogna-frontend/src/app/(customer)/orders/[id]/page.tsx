@@ -11,6 +11,7 @@ import {
   Printer,
   RefreshCw,
   Download,
+  Copy,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { getErrorMessage } from "@/lib/error-message";
@@ -45,6 +46,7 @@ export default function OrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  const [copied, setCopied] = useState(false);
   const load = useCallback(async (background = false) => {
     if (!background) setLoading(true);
     if (!background) setError(null);
@@ -216,6 +218,18 @@ export default function OrderDetailPage() {
                         className="flex items-center gap-1.5 rounded-full bg-white/5 border border-emerald-100/10 px-3 py-1.5 text-xs font-bold text-emerald-100/60 hover:bg-white/10 hover:text-emerald-100 transition-colors"
                       >
                         <Download size={14} /> .txt
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const content = order.deliveryItems.join("\n\n");
+                          navigator.clipboard.writeText(content);
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 2000);
+                        }}
+                        className="flex items-center gap-1.5 rounded-full bg-white/5 border border-emerald-100/10 px-3 py-1.5 text-xs font-bold text-emerald-100/60 hover:bg-white/10 hover:text-emerald-100 transition-colors"
+                      >
+                        <Copy size={14} /> {copied ? "Copied!" : "Copy"}
                       </button>
                     </div>
                   </div>
