@@ -59,7 +59,7 @@ describe('Auth API Integration', () => {
 
       const response = await request(app.server)
         .post('/api/v1/auth/register')
-        .send({ fullName: 'Test User', email: 'test@example.com', password: 'Password123!' })
+        .send({ fullName: 'Test User', email: 'test@example.com', password: 'Password123!', transactionPin: '123456' })
 
       expect(response.status).toBe(201)
       expect(response.body.success).toBe(true)
@@ -74,7 +74,7 @@ describe('Auth API Integration', () => {
 
       const response = await request(app.server)
         .post('/api/v1/auth/register')
-        .send({ fullName: 'Test User', email: 'test@example.com', password: 'Password123!' })
+        .send({ fullName: 'Test User', email: 'test@example.com', password: 'Password123!', transactionPin: '123456' })
 
       expect(response.status).toBe(409)
       expect(response.body.success).toBe(false)

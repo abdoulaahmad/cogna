@@ -32,12 +32,19 @@ export default fp(async function apiKeyAuthPlugin(app: FastifyInstance) {
       throw new UnauthorizedError('API key has expired');
     }
 
+    let parsedScopes: string[] = []
+    try {
+      parsedScopes = typeof keyRecord.scopes === 'string' ? JSON.parse(keyRecord.scopes) : (keyRecord.scopes ?? [])
+    } catch {
+      parsedScopes = []
+    }
+
     // Attach key context metadata to request
     req.apiKeyContext = {
       id: keyRecord.id,
       userId: keyRecord.userId,
       environment: keyRecord.environment,
-      scopes: keyRecord.scopes,
+      scopes: parsedScopes,
     };
   });
 

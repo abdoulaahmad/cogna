@@ -4,3 +4,9 @@ dist/
 .env.test
 coverage/
 *.log
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+dev.db
+test.db

@@ -41,3 +41,9 @@ coverage/
 # ── Misc ──────────────────────────────────────────────────────────────────
 *.tsbuildinfo
 .vercel
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+dev.db
+test.db

@@ -6,11 +6,12 @@ import type { FastifyInstance } from 'fastify'
 // ── Mock repositories used directly by admin.routes.ts ─────────────────────
 vi.mock('@/repositories/product.repository', () => ({
   ProductRepository: {
-    findAll:    vi.fn(),
-    findById:   vi.fn(),
-    create:     vi.fn(),
-    update:     vi.fn(),
-    softDelete: vi.fn(),
+    findAll:      vi.fn(),
+    findAllAdmin: vi.fn(),
+    findById:     vi.fn(),
+    create:       vi.fn(),
+    update:       vi.fn(),
+    softDelete:   vi.fn(),
   },
 }))
 
@@ -104,7 +105,7 @@ describe('Admin API Integration', () => {
 
   describe('GET /api/v1/admin/products', () => {
     it('should return product list for admin', async () => {
-      vi.mocked(ProductRepository.findAll).mockResolvedValueOnce({ items: [mockProduct], total: 1 })
+      vi.mocked(ProductRepository.findAllAdmin).mockResolvedValueOnce({ items: [mockProduct], total: 1 })
 
       const res = await request(app.server)
         .get('/api/v1/admin/products')

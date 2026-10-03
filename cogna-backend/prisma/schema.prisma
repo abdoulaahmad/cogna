@@ -1,13 +1,13 @@
 // Prisma Schema — Cogna Platform
-// Database: PostgreSQL | ORM: Prisma
-
+// Database: SQLite / Turso (libSQL) | ORM: Prisma
+ 
 generator client {
   provider = "prisma-client-js"
   output   = "../node_modules/.prisma/client"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
 }
 
 // ─────────────────────────────────────────────
@@ -178,7 +178,7 @@ model ApiKey {
   name        String
   apiKey      String            @unique @map("api_key")
   environment ApiKeyEnvironment @default(TEST)
-  scopes      String[]          @default([])
+  scopes      String            @default("[]")
   expiresAt   DateTime?         @map("expires_at")
   status      ApiKeyStatus      @default(ACTIVE)
   lastUsedAt  DateTime?         @map("last_used_at")
@@ -243,7 +243,7 @@ model Product {
   name                String
   slug                String         @unique
   description         String?
-  price               Decimal        @db.Decimal(10, 2)
+  price               Decimal
   currency            String         @default("NGN")
   deliveryTime        String?        @map("delivery_time")
   image               String?
@@ -276,7 +276,7 @@ model Order {
   providerId       String      @map("provider_id")
   providerOrderId  String?     @map("provider_order_id")
   status           OrderStatus @default(PENDING)
-  amount           Decimal     @db.Decimal(10, 2)
+  amount           Decimal
   currency         String      @default("NGN")
   customerEmail    String      @map("customer_email")
   providerResponse Json?       @map("provider_response")
@@ -308,7 +308,7 @@ model Payment {
   gateway          PaymentGateway
   gatewayReference String?        @map("gateway_reference") // ref from the gateway
   reference        String         @unique // internal ref
-  amount           Decimal        @db.Decimal(10, 2)
+  amount           Decimal
   currency         String         @default("NGN")
   status           PaymentStatus  @default(PENDING)
   metadata         Json? // gateway-specific response data
@@ -329,10 +329,10 @@ model Wallet {
   id               String   @id @default(uuid())
   userId           String   @unique @map("user_id")
   currency         String   @default("NGN")
-  availableBalance Decimal  @default(0) @map("available_balance") @db.Decimal(14, 2)
-  pendingBalance   Decimal  @default(0) @map("pending_balance") @db.Decimal(14, 2)
-  lifetimeFunded   Decimal  @default(0) @map("lifetime_funded") @db.Decimal(14, 2)
-  lifetimeSpent    Decimal  @default(0) @map("lifetime_spent") @db.Decimal(14, 2)
+  availableBalance Decimal  @default(0) @map("available_balance")
+  pendingBalance   Decimal  @default(0) @map("pending_balance")
+  lifetimeFunded   Decimal  @default(0) @map("lifetime_funded")
+  lifetimeSpent    Decimal  @default(0) @map("lifetime_spent")
   version          Int      @default(0)
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
@@ -352,10 +352,10 @@ model WalletTransaction {
   orderId           String?                    @map("order_id")
   type              WalletTransactionType
   direction         WalletTransactionDirection
-  amount            Decimal                    @db.Decimal(14, 2)
+  amount            Decimal
   currency          String                     @default("NGN")
-  balanceBefore     Decimal                    @map("balance_before") @db.Decimal(14, 2)
-  balanceAfter      Decimal                    @map("balance_after") @db.Decimal(14, 2)
+  balanceBefore     Decimal                    @map("balance_before")
+  balanceAfter      Decimal                    @map("balance_after")
   reference         String                     @unique
   idempotencyKey    String                     @unique @map("idempotency_key")
   externalReference String?                    @unique @map("external_reference")
@@ -382,10 +382,10 @@ model WalletFunding {
   gatewayReference    String?             @unique @map("gateway_reference")
   authorizationUrl    String?             @map("authorization_url")
   idempotencyKey      String              @unique @map("idempotency_key")
-  amount              Decimal             @db.Decimal(14, 2)
+  amount              Decimal
   currency            String              @default("NGN")
-  cryptoAmountUsdt    Decimal?            @map("crypto_amount_usdt") @db.Decimal(18, 8)
-  ngnRateLocked       Decimal?            @map("ngn_rate_locked") @db.Decimal(14, 2)
+  cryptoAmountUsdt    Decimal?            @map("crypto_amount_usdt")
+  ngnRateLocked       Decimal?            @map("ngn_rate_locked")
   status              WalletFundingStatus @default(INITIALIZED)
   metadata            Json?
   createdAt           DateTime            @default(now()) @map("created_at")
@@ -405,7 +405,7 @@ model Refund {
   orderId             String             @map("order_id")
   walletId            String             @map("wallet_id")
   walletTransactionId String?            @unique @map("wallet_transaction_id")
-  amount              Decimal            @db.Decimal(14, 2)
+  amount              Decimal
   currency            String             @default("NGN")
   reason              String
   status              RefundStatus       @default(REQUESTED)
@@ -544,7 +544,7 @@ model WalletAdjustmentRequest {
   walletId  String                     @map("wallet_id")
   makerId   String                     @map("maker_id")
   checkerId String?                    @map("checker_id")
-  amount    Decimal                    @db.Decimal(14, 2)
+  amount    Decimal
   direction WalletTransactionDirection
   reason    String
   status    AdjustmentRequestStatus    @default(PENDING)
@@ -676,7 +676,7 @@ model Receipt {
   reference String      @unique
   userId    String      @map("user_id")
   type      ReceiptType
-  amount    Decimal     @db.Decimal(14, 2)
+  amount    Decimal
   currency  String      @default("NGN")
   entityId  String      @map("entity_id")
   metadata  Json?

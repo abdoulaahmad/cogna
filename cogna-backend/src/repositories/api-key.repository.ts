@@ -30,7 +30,13 @@ export const ApiKeyRepository = {
     scopes?: string[]
     expiresAt?: Date | null
   }): Promise<ApiKey> {
-    return prisma.apiKey.create({ data })
+    const { scopes, ...rest } = data
+    return prisma.apiKey.create({
+      data: {
+        ...rest,
+        scopes: scopes ? JSON.stringify(scopes) : '[]',
+      },
+    })
   },
 
   /** Revoke a key by setting its status to REVOKED */

@@ -8,9 +8,10 @@ const envSchema = z.object({
   BACKEND_URL:           z.string().url().optional(), // Explicit backend URL (e.g. https://my-cogna-backend.herokuapp.com)
   PORT:                  z.coerce.number().default(4000),
 
-  DATABASE_URL:          z.string().min(1),
-  NEON_DATABASE_URL:     z.string().url().optional(),
-  DATABASE_TEST_URL:     z.string().optional(),
+  DATABASE_URL:          z.string().default('file:./dev.db'),
+  DATABASE_TEST_URL:     z.string().default('file:./test.db'),
+  TURSO_DATABASE_URL:    z.string().optional(),
+  TURSO_AUTH_TOKEN:      z.string().optional(),
 
   JWT_SECRET:            z.string().min(32),
   JWT_REFRESH_SECRET:    z.string().min(32),

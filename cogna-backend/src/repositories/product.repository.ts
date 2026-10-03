@@ -17,8 +17,8 @@ export const ProductRepository = {
       ...(opts.active !== undefined && { active: opts.active }),
       ...(opts.search && {
         OR: [
-          { name:        { contains: opts.search, mode: 'insensitive' as const } },
-          { description: { contains: opts.search, mode: 'insensitive' as const } },
+          { name:        { contains: opts.search } },
+          { description: { contains: opts.search } },
         ],
       }),
       ...(opts.categorySlug && { category: { slug: opts.categorySlug } }),
@@ -87,8 +87,8 @@ export const ProductRepository = {
       where: {
         active: true,
         OR: [
-          { name:        { contains: query, mode: 'insensitive' } },
-          { description: { contains: query, mode: 'insensitive' } },
+          { name:        { contains: query } },
+          { description: { contains: query } },
         ],
       },
       include: { category: true },

@@ -92,6 +92,7 @@ describe('AuthService', () => {
     it('should return accessToken, refreshToken, and user on valid credentials', async () => {
       vi.mocked(UserRepository.findByEmail).mockResolvedValue({
         ...mockUser,
+        emailVerified: true,
         passwordHash: '$2a$12$mockedhash',
       })
       vi.mocked(RefreshTokenRepository.create).mockResolvedValue({
