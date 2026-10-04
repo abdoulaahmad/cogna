@@ -9,7 +9,7 @@ import { getErrorMessage } from '@/lib/error-message';
 import CustomerPortalNav from '@/components/layout/customer-portal-nav';
 import Paystack from '@paystack/inline-js';
 
-type Gateway = 'PAYSTACK' | 'MONNIFY' | 'CRYPTO';
+type Gateway = 'PAYSTACK' | 'CRYPTO';
 
 interface CryptoRate { rateNgn: number | null; walletAddress: string | null }
 
@@ -213,10 +213,9 @@ export default function FundWalletPage() {
         {/* Gateway Selector */}
         <div className="mt-8 mb-6">
           <p className="text-sm font-bold mb-3">Choose payment method</p>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             {([
               { key: 'PAYSTACK', label: 'Paystack', sub: 'Card / Bank', icon: <CreditCard size={18} /> },
-              { key: 'MONNIFY', label: 'Monnify', sub: 'Bank transfer', icon: <CreditCard size={18} /> },
               { key: 'CRYPTO', label: 'Crypto', sub: 'USDT BEP20', icon: <Bitcoin size={18} /> },
             ] as const).map(({ key, label, sub, icon }) => (
               <button

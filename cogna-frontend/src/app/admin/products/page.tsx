@@ -277,7 +277,6 @@ export default function AdminProductsPage() {
               Payment gateway
               <select value={form.paymentGateway} onChange={e => update('paymentGateway', e.target.value as Form['paymentGateway'])} className={fieldClass}>
                 <option value="PAYSTACK">Paystack</option>
-                <option value="MONNIFY">Monnify</option>
               </select>
             </label>
             <label className="text-xs font-bold text-emerald-100/60 md:col-span-2 xl:col-span-3">
