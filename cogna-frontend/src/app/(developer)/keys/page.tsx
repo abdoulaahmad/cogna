@@ -98,7 +98,7 @@ export default function KeysPage() {
                             {key.environment}
                           </span>
                           <span className="text-xs text-emerald-100/65">
-                            · {key.scopes.join(', ')} · {key.expiresAt ? new Date(key.expiresAt).toLocaleDateString() : 'No expiry'}
+                            · {Array.isArray(key.scopes) ? key.scopes.join(', ') : (typeof key.scopes === 'string' ? (()=>{ try { const p = JSON.parse(key.scopes); return Array.isArray(p) ? p.join(', ') : key.scopes } catch { return key.scopes } })() : '')} · {key.expiresAt ? new Date(key.expiresAt).toLocaleDateString() : 'No expiry'}
                           </span>
                         </div>
                       </div>
