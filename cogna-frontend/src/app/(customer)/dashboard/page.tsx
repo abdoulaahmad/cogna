@@ -70,5 +70,72 @@ export default function CustomerDashboardPage() {
 }
 
 function Metric({icon,label,value,action,href,tone}:{icon:ReactNode;label:string;value:string;action:string;href:string;tone:'green'|'gold'}) { return <article className="rounded-2xl border border-emerald-100/10 bg-[#061915] p-5 shadow-[0_16px_50px_rgba(0,0,0,.18)]"><span className={tone==='gold'?'flex h-11 w-11 items-center justify-center rounded-2xl border border-[#D4AF37]/25 bg-[#D4AF37]/10 text-[#F8D56B]':'flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-400/20 bg-emerald-400/10 text-emerald-300'}>{icon}</span><p className="mt-5 text-[10px] font-bold uppercase tracking-[.14em] text-emerald-100/40">{label}</p><p className="mt-1 text-2xl font-bold tracking-tight">{value}</p><Link href={href} className={tone==='gold'?'mt-4 inline-flex items-center gap-2 text-xs font-bold text-[#F8D56B]':'mt-4 inline-flex items-center gap-2 text-xs font-bold text-emerald-300'}>{action}<ArrowRight size={14}/></Link></article> }
-function DashboardProduct({product,onPurchase}:{product:Product;onPurchase:()=>void}) { const price=money(product.price,product.currency||'NGN');return <article className="group relative overflow-hidden rounded-2xl border border-emerald-100/10 bg-[linear-gradient(140deg,rgba(7,55,43,.82),rgba(3,25,21,.96))] p-5"><div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-emerald-400/10 blur-3xl"/><div className="relative flex items-start justify-between">{product.image ? <img src={product.image} alt={product.name} className="h-11 w-11 rounded-2xl object-cover border border-emerald-300/15" /> : <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-300/15 bg-emerald-300/10 text-emerald-300"><Boxes size={20}/></span>}<span className="rounded-lg bg-emerald-400/10 px-2 py-1 text-[9px] font-black uppercase tracking-[.12em] text-emerald-300">Available</span></div><p className="relative mt-5 text-[10px] font-bold uppercase tracking-[.16em] text-[#F8D56B]">{product.category.name}</p><Link href={`/products/${product.slug}`} className="relative mt-1 block truncate text-lg font-bold hover:text-[#F8D56B]">{product.name}</Link><p className="relative mt-2 line-clamp-2 min-h-10 whitespace-pre-wrap text-xs leading-5 text-emerald-100/50">{product.description||'View product details and delivery information.'}</p><div className="relative mt-5 flex items-center justify-between border-t border-emerald-100/[.08] pt-4"><p className="text-base font-black">{price}</p><button type="button" onClick={onPurchase} className="inline-flex items-center gap-2 rounded-xl bg-[#D4AF37] px-3.5 py-2 text-[11px] font-black text-[#062C23] hover:bg-[#F8D56B]"><ShoppingBag size={14}/>Purchase</button></div></article> }
+function DashboardProduct({ product, onPurchase }: { product: Product; onPurchase: () => void }) {
+  const price = money(product.price, product.currency || 'NGN');
+  const hasStockInfo = product.stock !== undefined && product.stock !== null;
+  const isOutOfStock = hasStockInfo && (product.stock as number) <= 0;
+  const available = product.active !== false && !isOutOfStock;
+
+  return (
+    <article className="group relative overflow-hidden rounded-2xl border border-emerald-100/10 bg-[linear-gradient(140deg,rgba(7,55,43,.82),rgba(3,25,21,.96))] p-5">
+      <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-emerald-400/10 blur-3xl" />
+      <div className="relative flex items-start justify-between">
+        {product.image ? (
+          <img src={product.image} alt={product.name} className="h-11 w-11 rounded-2xl object-cover border border-emerald-300/15" />
+        ) : (
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-300/15 bg-emerald-300/10 text-emerald-300">
+            <Boxes size={20} />
+          </span>
+        )}
+
+        {/* Stock / Availability Badge */}
+        {hasStockInfo ? (
+          (product.stock as number) <= 0 ? (
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-rose-400/30 bg-rose-500/15 px-2 py-1 text-[9px] font-black uppercase tracking-[.12em] text-rose-300">
+              <span className="h-1.5 w-1.5 rounded-full bg-rose-400" />
+              Out of stock
+            </span>
+          ) : (product.stock as number) <= 5 ? (
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/30 bg-amber-500/15 px-2 py-1 text-[9px] font-black uppercase tracking-[.12em] text-amber-300">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+              Only {product.stock} left
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-400/30 bg-emerald-500/15 px-2 py-1 text-[9px] font-black uppercase tracking-[.12em] text-emerald-300">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              {(product.stock as number).toLocaleString()} in stock
+            </span>
+          )
+        ) : (
+          <span
+            className={
+              available
+                ? 'rounded-lg bg-emerald-400/10 px-2 py-1 text-[9px] font-black uppercase tracking-[.12em] text-emerald-300'
+                : 'rounded-lg bg-rose-400/10 px-2 py-1 text-[9px] font-black uppercase tracking-[.12em] text-rose-300'
+            }
+          >
+            {available ? 'Available' : 'Unavailable'}
+          </span>
+        )}
+      </div>
+
+      <p className="relative mt-5 text-[10px] font-bold uppercase tracking-[.16em] text-[#F8D56B]">{product.category.name}</p>
+      <Link href={`/products/${product.slug}`} className="relative mt-1 block truncate text-lg font-bold hover:text-[#F8D56B]">{product.name}</Link>
+      <p className="relative mt-2 line-clamp-2 min-h-10 whitespace-pre-wrap text-xs leading-5 text-emerald-100/50">{product.description || 'View product details and delivery information.'}</p>
+      
+      <div className="relative mt-5 flex items-center justify-between border-t border-emerald-100/[.08] pt-4">
+        <p className="text-base font-black">{price}</p>
+        <button
+          type="button"
+          disabled={!available}
+          onClick={onPurchase}
+          className="inline-flex items-center gap-2 rounded-xl bg-[#D4AF37] px-3.5 py-2 text-[11px] font-black text-[#062C23] hover:bg-[#F8D56B] disabled:cursor-not-allowed disabled:opacity-45"
+        >
+          <ShoppingBag size={14} />
+          {available ? 'Purchase' : isOutOfStock ? 'Out of stock' : 'Unavailable'}
+        </button>
+      </div>
+    </article>
+  );
+}
 function ActivityPanel({title,href,empty,children}:{title:string;href:string;empty:string;children:ReactNode[]}) { return <section className="rounded-2xl border border-emerald-100/10 bg-[#061915] p-5 sm:p-6"><div className="flex items-center justify-between"><h2 className="font-display text-lg font-bold">{title}</h2><Link href={href} className="inline-flex items-center gap-2 text-xs font-bold text-emerald-300 hover:text-[#F8D56B]">View all <ArrowRight size={14}/></Link></div><div className="mt-4">{children.length?children:<p className="py-8 text-center text-sm text-emerald-100/45">{empty}</p>}</div></section> }

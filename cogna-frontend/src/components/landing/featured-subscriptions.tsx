@@ -138,12 +138,31 @@ export default function FeaturedSubscriptions() {
                         getCategoryIcon(prod.category.slug)
                       )}
                     </div>
-                    {/* Just default to Popular for the first item for UI fidelity */}
-                    {displayedProducts[0].id === prod.id && (
-                      <span className="border border-[#18B88A]/35 text-[#18B88A] bg-[#18B88A]/5 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider">
-                        Popular
-                      </span>
-                    )}
+                    <div className="flex flex-col items-end gap-1.5">
+                      {displayedProducts[0].id === prod.id && (
+                        <span className="border border-[#18B88A]/35 text-[#18B88A] bg-[#18B88A]/5 px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider">
+                          Popular
+                        </span>
+                      )}
+                      {prod.stock !== undefined && prod.stock !== null && (
+                        prod.stock <= 0 ? (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-rose-400/30 bg-rose-500/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-rose-300">
+                            <span className="h-1.5 w-1.5 rounded-full bg-rose-400" />
+                            Out of stock
+                          </span>
+                        ) : prod.stock <= 5 ? (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-amber-400/30 bg-amber-500/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-300">
+                            <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                            Only {prod.stock} left
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-500/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-300">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                            {prod.stock.toLocaleString()} in stock
+                          </span>
+                        )
+                      )}
+                    </div>
                   </div>
 
                   {/* Details */}
