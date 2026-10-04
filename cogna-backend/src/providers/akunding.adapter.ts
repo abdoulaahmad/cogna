@@ -114,4 +114,48 @@ export class AkudingAdapter implements IProvider {
       rawResponse: isRecord(body) ? body : undefined,
     }
   }
+
+  /**
+   * Fetch bulk stock for all products from Akunding in a single call.
+   */
+  async getProductStocks(): Promise<Record<string, { stock: number; available: boolean }>> {
+    try {
+      const res = await fetch(`${this.baseUrl}/products`, {
+        headers: { Authorization: `Bearer ${this.apiKey}` },
+      })
+      if (!res.ok) return {}
+      const body: unknown = await res.json()
+      if (!Array.isArray(body)) return {}
+      const stocks: Record<string, { stock: number; available: boolean }> = {}
+      for (const item of body) {
+        if (isRecord(item) && item.id !== undefined) {
+          const stock = typeof item.stock === 'number' ? item.stock : 0
+          const available = typeof item.available === 'boolean' ? item.available : stock > 0
+          stocks[String(item.id)] = { stock, available }
+        }
+      }
+      return stocks
+    } catch {
+      return {}
+    }
+  }
+
+  /**
+   * Fetch stock for a specific Akunding product.
+   */
+  async getProductStock(providerProductId: string): Promise<{ stock: number; available: boolean } | null> {
+    try {
+      const res = await fetch(`${this.baseUrl}/products/${encodeURIComponent(providerProductId)}`, {
+        headers: { Authorization: `Bearer ${this.apiKey}` },
+      })
+      if (!res.ok) return null
+      const body: unknown = await res.json()
+      if (!isRecord(body)) return null
+      const stock = typeof body.stock === 'number' ? body.stock : 0
+      const available = typeof body.available === 'boolean' ? body.available : stock > 0
+      return { stock, available }
+    } catch {
+      return null
+    }
+  }
 }

@@ -1,6 +1,7 @@
 import { ProductRepository } from '@/repositories/product.repository'
 import { NotFoundError } from '@/utils/errors'
 import type { ListProductsQuery } from '@/validators/product.validator'
+import { StockService } from './product-stock.service'
 
 export function sanitizePublicProduct<T extends Record<string, unknown>>(product: T): T {
   if (!product) return product
@@ -23,8 +24,10 @@ export const ProductService = {
       limit:        query.limit,
     })
 
+    const withStocks = await StockService.attachStocks(items)
+
     return {
-      items: items.map(sanitizePublicProduct),
+      items: withStocks.map(sanitizePublicProduct),
       total,
       page: query.page,
       limit: query.limit,
@@ -37,7 +40,8 @@ export const ProductService = {
   async getProductById(id: string) {
     const product = await ProductRepository.findById(id)
     if (!product) throw new NotFoundError('Product')
-    return sanitizePublicProduct(product)
+    const withStock = await StockService.attachStock(product)
+    return sanitizePublicProduct(withStock)
   },
 
   /**
@@ -46,7 +50,8 @@ export const ProductService = {
   async getProductBySlug(slug: string) {
     const product = await ProductRepository.findBySlug(slug)
     if (!product) throw new NotFoundError('Product')
-    return sanitizePublicProduct(product)
+    const withStock = await StockService.attachStock(product)
+    return sanitizePublicProduct(withStock)
   },
 
   /**
@@ -54,7 +59,8 @@ export const ProductService = {
    */
   async getProductsByCategory(categorySlug: string) {
     const products = await ProductRepository.findByCategory(categorySlug)
-    return products.map(sanitizePublicProduct)
+    const withStocks = await StockService.attachStocks(products)
+    return withStocks.map(sanitizePublicProduct)
   },
 
   /**
@@ -63,6 +69,7 @@ export const ProductService = {
   async searchProducts(query: string) {
     if (!query || query.trim().length < 2) return []
     const products = await ProductRepository.search(query.trim())
-    return products.map(sanitizePublicProduct)
+    const withStocks = await StockService.attachStocks(products)
+    return withStocks.map(sanitizePublicProduct)
   },
 }
