@@ -1,6 +1,6 @@
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 import prisma from '../src/config/database';
 import bcrypt from 'bcryptjs';
+import { encryptCredential } from '../src/utils/credential-crypto';
 
 async function main() {
   console.log('🌱 Seeding database...');
@@ -44,11 +44,19 @@ async function main() {
   console.log('✅ Developer user created: developer@cogna.store (Password: password123)');
 
   // 3. Create Reseller Provider
+  const rawKey = 'sk_live_dummy_akunding_api_key_xxxxxxxxxxxxxxxx';
+  let apiKey = rawKey;
+  try {
+    apiKey = encryptCredential(rawKey);
+  } catch {
+    // If encryption key is not set in dev, store plaintext
+  }
+
   const provider = await prisma.provider.create({
     data: {
       name: 'Akunding Reseller API',
       baseUrl: 'https://akunding.shop/api/v1',
-      apiKey: 'sk_live_dummy_akunding_api_key_xxxxxxxxxxxxxxxx',
+      apiKey,
       status: 'ACTIVE',
     },
   });
@@ -108,7 +116,7 @@ async function main() {
       currency: 'USD',
       deliveryTime: 'Instant',
       active: true,
-      paymentGateway: 'PAYSTACK',
+      paymentGateway: 'MONNIFY',
       providerId: provider.id,
       providerProductId: 'sub-gemini',
       categoryId: categoryCV.id,
@@ -142,7 +150,7 @@ async function main() {
       currency: 'USD',
       deliveryTime: 'Instant',
       active: true,
-      paymentGateway: 'PAYSTACK',
+      paymentGateway: 'MONNIFY',
       providerId: provider.id,
       providerProductId: 'sub-capcut',
       categoryId: categoryVoice.id,

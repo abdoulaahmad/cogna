@@ -3,7 +3,7 @@ import { createHash } from 'crypto';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import fp from 'fastify-plugin';
 import prisma from '@/config/database';
-import { UnauthorizedError } from '@/utils/errors';
+import { UnauthorizedError, ForbiddenError } from '@/utils/errors';
 
 export default fp(async function apiKeyAuthPlugin(app: FastifyInstance) {
   // Decorate fastify request with a startTime hook if not set
@@ -47,6 +47,23 @@ export default fp(async function apiKeyAuthPlugin(app: FastifyInstance) {
       scopes: parsedScopes,
     };
   });
+
+  // Require API key scope preHandler
+  app.decorate('requireScope', (requiredScope: string) => {
+    return async (req: FastifyRequest) => {
+      if (req.apiKeyContext) {
+        const scopes = req.apiKeyContext.scopes || []
+        const hasScope =
+          scopes.includes('*') ||
+          scopes.includes(requiredScope) ||
+          (requiredScope === 'write:orders' && scopes.includes('orders:write')) ||
+          (requiredScope === 'read:orders' && scopes.includes('orders:read'))
+        if (!hasScope) {
+          throw new ForbiddenError(`API key lacks required scope: ${requiredScope}`)
+        }
+      }
+    }
+  })
 
   // onResponse Hook: Log API requests with latency
   app.addHook('onResponse', async (req: FastifyRequest, reply: FastifyReply) => {

@@ -52,7 +52,9 @@ export default async function adminRoutes(app: FastifyInstance) {
   })
 
   // POST /api/v1/admin/products
-  app.post('/products', async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post('/products', {
+    preHandler: app.requireAdminRole([AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.OPERATIONS])
+  }, async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const body = createProductSchema.parse(req.body)
       // Auto-assign position to end of list if not explicitly provided
@@ -70,7 +72,9 @@ export default async function adminRoutes(app: FastifyInstance) {
   })
 
   // PATCH /api/v1/admin/products/reorder
-  app.patch('/products/reorder', async (req: FastifyRequest, reply: FastifyReply) => {
+  app.patch('/products/reorder', {
+    preHandler: app.requireAdminRole([AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.OPERATIONS])
+  }, async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const { items } = reorderProductsSchema.parse(req.body)
       await ProductRepository.reorderBatch(items)
@@ -79,7 +83,9 @@ export default async function adminRoutes(app: FastifyInstance) {
   })
 
   // PATCH /api/v1/admin/products/:id
-  app.patch('/products/:id', async (req: FastifyRequest, reply: FastifyReply) => {
+  app.patch('/products/:id', {
+    preHandler: app.requireAdminRole([AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.OPERATIONS])
+  }, async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const { id }  = req.params as { id: string }
       const existing = await ProductRepository.findById(id)
@@ -91,7 +97,9 @@ export default async function adminRoutes(app: FastifyInstance) {
   })
 
   // DELETE /api/v1/admin/products/:id  (soft delete)
-  app.delete('/products/:id', async (req: FastifyRequest, reply: FastifyReply) => {
+  app.delete('/products/:id', {
+    preHandler: app.requireAdminRole([AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.OPERATIONS])
+  }, async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const { id }  = req.params as { id: string }
       const existing = await ProductRepository.findById(id)
@@ -112,7 +120,9 @@ export default async function adminRoutes(app: FastifyInstance) {
   })
 
   // POST /api/v1/admin/categories
-  app.post('/categories', async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post('/categories', {
+    preHandler: app.requireAdminRole([AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.OPERATIONS])
+  }, async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const body     = createCategorySchema.parse(req.body)
       const category = await CategoryRepository.create(body)
@@ -121,7 +131,9 @@ export default async function adminRoutes(app: FastifyInstance) {
   })
 
   // PATCH /api/v1/admin/categories/:id
-  app.patch('/categories/:id', async (req: FastifyRequest, reply: FastifyReply) => {
+  app.patch('/categories/:id', {
+    preHandler: app.requireAdminRole([AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.OPERATIONS])
+  }, async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const { id }   = req.params as { id: string }
       const existing = await CategoryRepository.findById(id)
@@ -133,7 +145,9 @@ export default async function adminRoutes(app: FastifyInstance) {
   })
 
   // DELETE /api/v1/admin/categories/:id
-  app.delete('/categories/:id', async (req: FastifyRequest, reply: FastifyReply) => {
+  app.delete('/categories/:id', {
+    preHandler: app.requireAdminRole([AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.OPERATIONS])
+  }, async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const { id }   = req.params as { id: string }
       const existing = await CategoryRepository.findById(id)
@@ -218,7 +232,9 @@ export default async function adminRoutes(app: FastifyInstance) {
   })
 
   // POST /api/v1/admin/providers
-  app.post('/providers', async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post('/providers', {
+    preHandler: app.requireAdminRole([AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.OPERATIONS])
+  }, async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const body     = createProviderSchema.parse(req.body)
       const provider = await ProviderRepository.create(body)
@@ -228,7 +244,9 @@ export default async function adminRoutes(app: FastifyInstance) {
   })
 
   // PATCH /api/v1/admin/providers/:id
-  app.patch('/providers/:id', async (req: FastifyRequest, reply: FastifyReply) => {
+  app.patch('/providers/:id', {
+    preHandler: app.requireAdminRole([AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.OPERATIONS])
+  }, async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const { id }   = req.params as { id: string }
       const existing = await ProviderRepository.findById(id)
@@ -241,7 +259,9 @@ export default async function adminRoutes(app: FastifyInstance) {
   })
 
   // DELETE /api/v1/admin/providers/:id
-  app.delete('/providers/:id', async (req: FastifyRequest, reply: FastifyReply) => {
+  app.delete('/providers/:id', {
+    preHandler: app.requireAdminRole([AdminRole.SUPER_ADMIN, AdminRole.ADMIN, AdminRole.OPERATIONS])
+  }, async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const { id }   = req.params as { id: string }
       const existing = await ProviderRepository.findById(id)
@@ -664,13 +684,16 @@ export default async function adminRoutes(app: FastifyInstance) {
           }
         })
 
-        // 2. Update the Wallet
+        // 2. Update the Wallet atomically to prevent lost updates
         await tx.wallet.update({
           where: { id: request.walletId },
           data: {
-            availableBalance: balanceAfter,
-            lifetimeFunded: request.direction === 'CREDIT' ? wallet.lifetimeFunded.add(request.amount) : undefined,
-            lifetimeSpent: request.direction === 'DEBIT' ? wallet.lifetimeSpent.add(request.amount) : undefined
+            availableBalance: request.direction === 'CREDIT'
+              ? { increment: request.amount }
+              : { decrement: request.amount },
+            lifetimeFunded: request.direction === 'CREDIT' ? { increment: request.amount } : undefined,
+            lifetimeSpent: request.direction === 'DEBIT' ? { increment: request.amount } : undefined,
+            version: { increment: 1 },
           }
         })
 

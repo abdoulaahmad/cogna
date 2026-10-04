@@ -142,7 +142,10 @@ export const AuthService = {
     const userId = await VerificationTokenService.consumeToken(input.token, 'PASSWORD_RESET')
     const passwordHash = await bcrypt.hash(input.password, BCRYPT_ROUNDS)
     await UserRepository.updatePassword(userId, passwordHash)
-    
+
+    // Revoke all active refresh tokens for security on password reset (F-12)
+    await RefreshTokenRepository.deleteAllForUser(userId)
+
     // Also mark the email as verified since they proved ownership
     const user = await UserRepository.findById(userId)
     if (user && !user.emailVerified) {

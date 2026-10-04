@@ -33,7 +33,13 @@ export async function buildApp() {
   // ── Plugins ────────────────────────────────────────────────────────────
   await app.register(cors, {
     origin: (origin, cb) => {
-      if (!origin || origin === env.APP_URL || origin === 'http://localhost:3000' || origin.endsWith('.vercel.app') || origin.endsWith('cogna.store')) {
+      if (!origin) {
+        cb(null, true)
+        return
+      }
+      const allowed = [env.APP_URL, 'http://localhost:3000', 'http://127.0.0.1:3000']
+      const isApprovedSubdomain = /^https:\/\/([a-z0-9-]+\.)*cogna\.store$/.test(origin)
+      if (allowed.includes(origin) || isApprovedSubdomain) {
         cb(null, true)
         return
       }

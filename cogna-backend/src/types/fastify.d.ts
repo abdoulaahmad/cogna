@@ -25,6 +25,13 @@ declare module 'fastify' {
       request: import('fastify').FastifyRequest,
       reply: import('fastify').FastifyReply
     ) => Promise<void>
+    /** Enforce API key scope boundaries */
+    requireScope: (
+      requiredScope: string
+    ) => (
+      request: import('fastify').FastifyRequest,
+      reply: import('fastify').FastifyReply
+    ) => Promise<void>
     jwt: JWT
   }
 

@@ -10,7 +10,68 @@ export const CustomerRepository = {
   findOrderDetails: (id: string) => prisma.order.findUnique({ where:{id}, include:{product:true,payment:true,walletTransactions:true,statusEvents:{orderBy:{createdAt:'asc'}}} }),
   findOrder: (id: string) => prisma.order.findUnique({ where:{id} }),
   findOrderReceipt: (orderId: string) => prisma.receipt.findFirst({ where:{entityId:orderId,type:'PURCHASE'} }),
-  cancelOrder(userId: string, orderId: string) { return prisma.$transaction(async tx => { const order=await tx.order.findUnique({where:{id:orderId},include:{payment:true,walletTransactions:true}}); if(!order)return {kind:'NOT_FOUND' as const}; if(order.userId!==userId)return {kind:'FORBIDDEN' as const}; if(order.status!=='PENDING')return {kind:'INVALID_STATE' as const}; const debit=order.walletTransactions.find(e=>e.direction==='DEBIT'&&e.type==='PURCHASE'); if(debit){const wallet=await tx.wallet.findUnique({where:{userId}}); if(!wallet)return {kind:'WALLET_NOT_FOUND' as const}; const after=wallet.availableBalance.add(order.amount); await tx.walletTransaction.create({data:{walletId:wallet.id,orderId,type:'REFUND',direction:'CREDIT',amount:order.amount,balanceBefore:wallet.availableBalance,balanceAfter:after,reference:`REF-CANCEL-${orderId}`,idempotencyKey:`idemp-ref-cancel-${orderId}`,source:'ORDER_CANCEL'}}); await tx.wallet.update({where:{id:wallet.id},data:{availableBalance:after,lifetimeSpent:wallet.lifetimeSpent.sub(order.amount),version:{increment:1}}}); await tx.receipt.create({data:{reference:`REC-REF-${orderId.slice(0,8)}`,userId,type:'REFUND',amount:order.amount,entityId:orderId,metadata:{reason:'Order cancelled by customer'}}})} const updated=await tx.order.update({where:{id:orderId},data:{status:'CANCELLED'}}); await tx.orderStatusEvent.create({data:{orderId,status:'CANCELLED',note:'Cancelled by customer'}}); await tx.notification.create({data:{userId,title:'Order Cancelled',message:`Your order for product ID ${order.productId} has been cancelled${debit?' and refunded':''}.`,type:'REFUND'}}); return {kind:'OK' as const,order:updated} }) },
+  cancelOrder(userId: string, orderId: string) {
+    return prisma.$transaction(async (tx) => {
+      const order = await tx.order.findUnique({ where: { id: orderId }, include: { payment: true, walletTransactions: true } })
+      if (!order) return { kind: 'NOT_FOUND' as const }
+      if (order.userId !== userId) return { kind: 'FORBIDDEN' as const }
+      if (order.status !== 'PENDING') return { kind: 'INVALID_STATE' as const }
+
+      const alreadyRefunded = order.walletTransactions.some((e) => e.direction === 'CREDIT' && e.type === 'REFUND')
+      if (alreadyRefunded) return { kind: 'INVALID_STATE' as const }
+
+      const debit = order.walletTransactions.find((e) => e.direction === 'DEBIT' && e.type === 'PURCHASE')
+      if (debit) {
+        const wallet = await tx.wallet.findUnique({ where: { userId } })
+        if (!wallet) return { kind: 'WALLET_NOT_FOUND' as const }
+        const before = Number(wallet.availableBalance)
+        const amountNum = Number(order.amount)
+        await tx.walletTransaction.create({
+          data: {
+            walletId: wallet.id,
+            orderId,
+            type: 'REFUND',
+            direction: 'CREDIT',
+            amount: order.amount,
+            balanceBefore: before,
+            balanceAfter: before + amountNum,
+            reference: `REF-CANCEL-${orderId}`,
+            idempotencyKey: `idemp-ref-cancel-${orderId}`,
+            source: 'ORDER_CANCEL',
+          },
+        })
+        await tx.wallet.update({
+          where: { id: wallet.id },
+          data: {
+            availableBalance: { increment: order.amount },
+            lifetimeSpent: { decrement: order.amount },
+            version: { increment: 1 },
+          },
+        })
+        await tx.receipt.create({
+          data: {
+            reference: `REC-REF-${orderId.slice(0, 8)}`,
+            userId,
+            type: 'REFUND',
+            amount: order.amount,
+            entityId: orderId,
+            metadata: { reason: 'Order cancelled by customer' },
+          },
+        })
+      }
+      const updated = await tx.order.update({ where: { id: orderId }, data: { status: 'CANCELLED' } })
+      await tx.orderStatusEvent.create({ data: { orderId, status: 'CANCELLED', note: 'Cancelled by customer' } })
+      await tx.notification.create({
+        data: {
+          userId,
+          title: 'Order Cancelled',
+          message: `Your order for product ID ${order.productId} has been cancelled${debit ? ' and refunded' : ''}.`,
+          type: 'REFUND',
+        },
+      })
+      return { kind: 'OK' as const, order: updated }
+    })
+  },
   findReceipt: (reference: string) => prisma.receipt.findUnique({where:{reference},include:{user:{select:{email:true,fullName:true}}}}),
   async listTickets(userId:string,page:number,limit:number){const [items,total]=await Promise.all([prisma.supportTicket.findMany({where:{userId},orderBy:{updatedAt:'desc'},skip:(page-1)*limit,take:limit}),prisma.supportTicket.count({where:{userId}})]);return {items,total,page,limit}},
   createTicket(userId:string,subject:string,message:string,orderId?:string){return prisma.$transaction(async tx=>{const ticket=await tx.supportTicket.create({data:{userId,orderId:orderId??null,subject,status:'OPEN'}});await tx.supportMessage.create({data:{ticketId:ticket.id,senderId:userId,message}});return ticket})},

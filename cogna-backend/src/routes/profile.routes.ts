@@ -8,6 +8,7 @@ import { NotFoundError, UnauthorizedError } from '@/utils/errors';
 import { successResponse } from '@/utils/response';
 import { handleRouteError } from '@/utils/handle-error';
 import { EmailService } from '@/services/email.service';
+import { RefreshTokenRepository } from '@/repositories/refresh-token.repository';
 
 const BCRYPT_ROUNDS = 12;
 
@@ -128,6 +129,9 @@ export default async function profileRoutes(app: FastifyInstance) {
         data: { passwordHash }
       });
 
+      // Revoke all active sessions on password reset (F-12)
+      await RefreshTokenRepository.deleteAllForUser(userId);
+
       await AuditLogService.recordAuditEvent(userId, 'PASSWORD_RESET_COMPLETED', 'users', userId, null, {
         reason: 'User completed password reset flow'
       });
@@ -140,10 +144,13 @@ export default async function profileRoutes(app: FastifyInstance) {
   app.post('/profile/verify-email-request', { onRequest: [app.authenticate] }, async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const { sub } = req.user as { sub: string };
+      const user = await prisma.user.findUnique({ where: { id: sub } });
+      if (!user) throw new NotFoundError('User');
 
       const rawToken = await VerificationTokenService.createToken(sub, 'EMAIL_VERIFICATION');
+      await EmailService.sendVerificationEmail(user.email, rawToken);
 
-      return reply.send(successResponse({ token: rawToken }, 'Verification token generated'));
+      return reply.send(successResponse(null, 'Verification token sent to your email'));
     } catch (error) { return handleRouteError(error, reply); }
   });
 

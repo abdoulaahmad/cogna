@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto'
+import { createHash, randomUUID } from 'crypto'
 import { PaymentRepository } from '@/repositories/payment.repository'
 import { OrderRepository } from '@/repositories/order.repository'
 import { ProductRepository } from '@/repositories/product.repository'
@@ -121,14 +121,34 @@ export const PaymentService = {
     if (!gateway.validateWebhook(rawBody, signature)) return false
 
     let reference: string
+    let eventId: string
+    let eventType = 'charge.success'
+    let parsed: Record<string, unknown> = {}
     try {
-      const parsed = JSON.parse(rawBody) as { data?: { reference?: string } }
-      reference = parsed.data?.reference ?? ''
+      parsed = JSON.parse(rawBody) as Record<string, unknown>
+      const data = parsed.data as Record<string, unknown> | undefined
+      reference = (data?.reference as string) || (parsed.reference as string) || ''
+      eventId = data?.id ? String(data.id) : (parsed.id ? String(parsed.id) : reference)
+      eventType = (parsed.event as string) || (parsed.eventType as string) || 'charge.success'
     } catch {
       return false
     }
 
     if (!reference) return false
+
+    const payloadHash = createHash('sha256').update(rawBody).digest('hex')
+    const recorded = (await PaymentRepository.recordEvent({
+      gateway: gatewayType as any,
+      eventId: eventId || reference,
+      reference,
+      payloadHash,
+      eventType,
+      payload: parsed,
+    })) ?? { isDuplicate: false }
+
+    if (recorded.isDuplicate) {
+      return true
+    }
 
     const payment = await PaymentRepository.findByReference(reference)
     if (!payment || payment.gateway !== gatewayType) return false

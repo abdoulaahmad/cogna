@@ -1,6 +1,7 @@
 import prisma from '@/config/database'
 import type { Prisma } from '@prisma/client'
 import type { PaymentGatewayType } from '@/types/payment-gateway.types'
+import { ConflictError } from '@/utils/errors'
 
 export const WalletRepository = {
   findByUserId(userId: string) {
@@ -65,10 +66,28 @@ export const WalletRepository = {
       if (!wallet || Number(wallet.availableBalance) < input.amount) return null
       const existing = await tx.walletTransaction.findUnique({ where: { idempotencyKey: input.idempotencyKey }, include: { order: true } })
       if (existing?.order) return existing.order
+
+      // Enforce Compare-And-Swap (CAS) optimistic concurrency control
+      const updatedWallet = await tx.wallet.updateMany({
+        where: {
+          id: wallet.id,
+          version: wallet.version,
+          availableBalance: { gte: input.amount },
+        },
+        data: {
+          availableBalance: { decrement: input.amount },
+          lifetimeSpent: { increment: input.amount },
+          version: { increment: 1 },
+        },
+      })
+
+      if (updatedWallet.count === 0) {
+        throw new ConflictError('Concurrent wallet modification detected or insufficient balance')
+      }
+
       const order = await tx.order.create({ data: { userId: input.userId, productId: input.productId, providerId: input.providerId, amount: input.amount, currency: input.currency, customerEmail: input.customerEmail } })
       const before = Number(wallet.availableBalance)
       await tx.walletTransaction.create({ data: { walletId: wallet.id, orderId: order.id, type: 'PURCHASE', direction: 'DEBIT', amount: input.amount, currency: input.currency, balanceBefore: before, balanceAfter: before - input.amount, reference: `purchase_${order.id}`, idempotencyKey: input.idempotencyKey, source: 'WALLET' } })
-      await tx.wallet.update({ where: { id: wallet.id }, data: { availableBalance: { decrement: input.amount }, lifetimeSpent: { increment: input.amount }, version: { increment: 1 } } })
       return order
     })
   },
@@ -76,12 +95,27 @@ export const WalletRepository = {
     return prisma.$transaction(async (tx) => {
       const existing = await tx.refund.findUnique({ where: { idempotencyKey: input.idempotencyKey } })
       if (existing) return existing
+
+      // Verify order eligibility and prevent double refunds
+      const order = await tx.order.findUnique({ where: { id: input.orderId } })
+      if (!order || order.status === 'CANCELLED') {
+        throw new ConflictError('Order is not eligible for refund')
+      }
+
+      const existingRefundTx = await tx.walletTransaction.findFirst({
+        where: { orderId: input.orderId, type: 'REFUND' },
+      })
+      if (existingRefundTx) {
+        throw new ConflictError('Order has already been refunded')
+      }
+
       const purchase = await tx.walletTransaction.findFirst({ where: { orderId: input.orderId, type: 'PURCHASE', direction: 'DEBIT' }, include: { wallet: true, order: true } })
       if (!purchase || purchase.order?.userId !== input.userId) return null
       const before = Number(purchase.wallet.availableBalance)
       const refund = await tx.refund.create({ data: { userId: input.userId, orderId: input.orderId, walletId: purchase.walletId, amount: purchase.amount, currency: purchase.currency, reason: input.reason, status: 'COMPLETED', reference: `refund_${input.orderId}`, idempotencyKey: input.idempotencyKey } })
       const ledger = await tx.walletTransaction.create({ data: { walletId: purchase.walletId, orderId: input.orderId, type: 'REFUND', direction: 'CREDIT', amount: purchase.amount, currency: purchase.currency, balanceBefore: before, balanceAfter: before + Number(purchase.amount), reference: `refund_ledger_${refund.id}`, idempotencyKey: `refund_credit_${input.idempotencyKey}`, source: 'REFUND' } })
       await tx.wallet.update({ where: { id: purchase.walletId }, data: { availableBalance: { increment: purchase.amount }, lifetimeSpent: { decrement: purchase.amount }, version: { increment: 1 } } })
+      await tx.order.update({ where: { id: input.orderId }, data: { status: 'CANCELLED' } })
       return tx.refund.update({ where: { id: refund.id }, data: { walletTransactionId: ledger.id } })
     })
   },

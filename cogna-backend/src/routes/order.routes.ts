@@ -13,6 +13,7 @@ export default async function orderRoutes(app: FastifyInstance) {
   app.post(
     '/',
     {
+      preHandler: [app.requireScope('write:orders')],
       schema: {
         tags: ['Orders'],
         security: [{ bearerAuth: [] }, { apiKey: [] }],
@@ -33,6 +34,7 @@ export default async function orderRoutes(app: FastifyInstance) {
   app.get(
     '/',
     {
+      preHandler: [app.requireScope('read:orders')],
       schema: {
         tags: ['Orders'],
         security: [{ bearerAuth: [] }, { apiKey: [] }],
@@ -53,6 +55,7 @@ export default async function orderRoutes(app: FastifyInstance) {
   app.get(
     '/:id',
     {
+      preHandler: [app.requireScope('read:orders')],
       schema: {
         tags: ['Orders'],
         security: [{ bearerAuth: [] }, { apiKey: [] }],

@@ -1,4 +1,4 @@
-import { createHash, createHmac } from 'crypto';
+import { createHash, createHmac, timingSafeEqual } from 'crypto';
 import { ProviderRepository } from '@/repositories/provider.repository';
 import { ProviderWebhookRepository } from '@/repositories/provider-webhook.repository';
 import { OrderRepository } from '@/repositories/order.repository';
@@ -6,6 +6,14 @@ import { decryptCredential } from '@/utils/credential-crypto';
 type ProviderWebhookPayload = Record<string, unknown> & { event_id?: string; id?: string; event_type?: string; type?: string; provider_order_id?: string; order_id?: string; status?: string; data?: { orderId?: string; status?: string } }
 
 import { UnauthorizedError, NotFoundError, ValidationError } from '@/utils/errors';
+import { redactSensitiveData } from '@/utils/redact';
+
+function timingSafeMatch(a: string, b: string): boolean {
+  if (!a || !b || typeof a !== 'string' || typeof b !== 'string') return false;
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  return bufA.length === bufB.length && timingSafeEqual(bufA, bufB);
+}
 
 /**
  * Verifies the signature of incoming webhooks based on provider-specific rules.
@@ -34,21 +42,21 @@ export function verifyProviderWebhookSignature(
     if (!signature) return false;
 
     const computed = createHmac('sha256', secret).update(rawBody).digest('hex');
-    return computed === signature;
+    return timingSafeMatch(computed, signature);
   }
 
   // Generic custom signature header check
   const genericSignature = getHeader('x-provider-signature');
   if (genericSignature) {
     const computed = createHmac('sha256', secret).update(rawBody).digest('hex');
-    return computed === genericSignature;
+    return timingSafeMatch(computed, genericSignature);
   }
 
   // If no signature header is supplied, check for pre-shared static auth token
   const authHeader = getHeader('authorization');
   if (authHeader) {
     const token = authHeader.replace(/^Bearer\s+/i, '');
-    return token === secret;
+    return timingSafeMatch(token, secret);
   }
 
   return false;
@@ -143,13 +151,8 @@ export const ProviderWebhookService = {
     // 7. Update order status and raw response diagnostics (redacted)
     await OrderRepository.updateStatus(order.id, targetStatus);
 
-    // Redact sensitive credentials if any exist in payload
-    const diagnostics = { ...payload };
-    delete diagnostics.apiKey;
-    delete diagnostics.secret;
-    delete diagnostics.api_key;
-    delete diagnostics.api_secret;
-
+    // Redact sensitive credentials recursively from payload
+    const diagnostics = redactSensitiveData(payload);
     await OrderRepository.setProviderResponse(order.id, diagnostics);
 
     // 8. Mark Webhook as PROCESSED

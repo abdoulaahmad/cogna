@@ -6,6 +6,7 @@ import { ProductRepository } from '@/repositories/product.repository'
 import { FulfillmentService } from '@/services/fulfillment.service'
 import type { FulfillmentJobData, FulfillmentJobResult } from '@/types/fulfillment-job.types'
 import { FULFILLMENT_QUEUE_NAME } from '@/types/fulfillment-job.types'
+import { redactSensitiveData } from '@/utils/redact'
 
 async function processFulfillmentJob(
   job: Job<FulfillmentJobData, FulfillmentJobResult>
@@ -41,7 +42,7 @@ async function processFulfillmentJob(
   if (result.providerOrderId) {
     await OrderRepository.setProviderOrderId(orderId, result.providerOrderId)
   }
-  await OrderRepository.setProviderResponse(orderId, result)
+  await OrderRepository.setProviderResponse(orderId, redactSensitiveData(result as unknown as Record<string, unknown>))
   await OrderRepository.updateStatus(orderId, result.status)
   await job.updateProgress(100)
 
@@ -56,7 +57,7 @@ export function startFulfillmentWorker(): Worker<FulfillmentJobData, Fulfillment
   )
 
   worker.on('completed', (job, result) => {
-    console.log(`[fulfillment] completed job ${job.id} for order ${job.data.orderId}`, result)
+    console.log(`[fulfillment] completed job ${job.id} for order ${job.data.orderId}`, redactSensitiveData(result))
   })
 
   worker.on('failed', (job, err) => {

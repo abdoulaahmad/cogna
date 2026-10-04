@@ -32,18 +32,50 @@ async function assertIdentity(
   throw new UnauthorizedError('No credential provided to verify identity')
 }
 
+// Failed PIN attempt tracking to prevent brute-force attacks (F-18)
+const failedPinAttempts = new Map<string, { count: number; lockedUntil: number }>();
+
+function checkPinAttemptThrottling(userId: string) {
+  const record = failedPinAttempts.get(userId);
+  if (record && record.lockedUntil > Date.now()) {
+    const remainingSeconds = Math.ceil((record.lockedUntil - Date.now()) / 1000);
+    throw new UnauthorizedError(`Account PIN verification locked due to too many failed attempts. Try again in ${remainingSeconds} seconds.`);
+  }
+}
+
+function recordFailedPinAttempt(userId: string) {
+  const now = Date.now();
+  const record = failedPinAttempts.get(userId) || { count: 0, lockedUntil: 0 };
+  record.count += 1;
+  if (record.count >= 5) {
+    record.lockedUntil = now + 30 * 60 * 1000; // 30-minute lockout after 5 consecutive failures
+    record.count = 0;
+  }
+  failedPinAttempts.set(userId, record);
+}
+
+function clearFailedPinAttempts(userId: string) {
+  failedPinAttempts.delete(userId);
+}
+
 export const TransactionPinService = {
   /**
    * Verifies the PIN at checkout.  Used by WalletService.purchase().
    */
   async verifyPin(userId: string, pin: string): Promise<void> {
+    checkPinAttemptThrottling(userId)
+
     const user = await UserRepository.findById(userId)
     if (!user) throw new NotFoundError('User')
     if (!user.transactionPinHash) {
       throw new UnauthorizedError('Transaction PIN is not set. Please configure your PIN in Security settings.')
     }
     const ok = await bcrypt.compare(pin, user.transactionPinHash)
-    if (!ok) throw new UnauthorizedError('Incorrect transaction PIN')
+    if (!ok) {
+      recordFailedPinAttempt(userId)
+      throw new UnauthorizedError('Incorrect transaction PIN')
+    }
+    clearFailedPinAttempts(userId)
   },
 
   /**
@@ -77,7 +109,7 @@ export const TransactionPinService = {
   /**
    * Enables or disables the transaction PIN requirement.
    * - Enabling: no proof required (always safe).
-   * - Disabling: caller must provide current PIN or account password.
+   * - Disabling: caller must provide current PIN to prevent session takeover bypass.
    */
   async setPinStatus(
     userId: string,
@@ -92,8 +124,19 @@ export const TransactionPinService = {
         throw new ConflictError('You must set a transaction PIN before enabling PIN protection')
       }
     } else {
-      // Disabling requires proof of identity
-      await assertIdentity(user, { currentPin: input.currentPin, password: input.password })
+      // Disabling requires current PIN (F-15)
+      if (!input.currentPin) {
+        throw new UnauthorizedError('Current transaction PIN is required to disable PIN protection')
+      }
+      if (!user.transactionPinHash) {
+        throw new UnauthorizedError('No transaction PIN is set on this account')
+      }
+      const pinOk = await bcrypt.compare(input.currentPin, user.transactionPinHash)
+      if (!pinOk) {
+        recordFailedPinAttempt(userId)
+        throw new UnauthorizedError('Incorrect transaction PIN')
+      }
+      clearFailedPinAttempts(userId)
     }
     await UserRepository.updateTransactionPinStatus(userId, input.enabled)
   },

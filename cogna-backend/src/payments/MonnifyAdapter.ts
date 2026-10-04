@@ -117,14 +117,14 @@ export class MonnifyAdapter implements IPaymentGateway {
   }
 
   /**
-   * Validate Monnify webhook using HMAC-SHA512.
+   * Validate Monnify webhook using HMAC-SHA512 with timing-safe comparison.
    * Monnify sends monnify-signature in request headers.
    */
   validateWebhook(payload: string, signature: string): boolean {
-    const hash = crypto
-      .createHmac('sha512', this.secretKey)
-      .update(payload)
-      .digest('hex')
-    return hash === signature
+    if (!this.secretKey || !signature || typeof signature !== 'string') return false
+    if (!/^[a-f0-9]{128}$/i.test(signature)) return false
+    const expected = crypto.createHmac('sha512', this.secretKey).update(payload).digest()
+    const provided = Buffer.from(signature, 'hex')
+    return expected.length === provided.length && crypto.timingSafeEqual(expected, provided)
   }
 }

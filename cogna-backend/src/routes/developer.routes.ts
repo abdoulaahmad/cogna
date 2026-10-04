@@ -1,4 +1,5 @@
 import type { Prisma } from '@prisma/client'
+import { createHmac } from 'crypto'
 import { getErrorMessage } from '@/utils/error-message';
 import { z }               from 'zod'
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
@@ -8,6 +9,56 @@ import { successResponse } from '@/utils/response'
 import { handleRouteError } from '@/utils/handle-error'
 import { ValidationError, NotFoundError } from '@/utils/errors'
 import prisma from '@/config/database'
+
+function validateWebhookUrl(rawUrl: string): void {
+  let parsed: URL
+  try {
+    parsed = new URL(rawUrl)
+  } catch {
+    throw new ValidationError('Invalid webhook URL format')
+  }
+
+  if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+    throw new ValidationError('Webhook URL must use HTTP or HTTPS protocol')
+  }
+
+  const hostname = parsed.hostname.toLowerCase()
+
+  // Block localhost and loopback addresses
+  if (
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1' ||
+    hostname === '::1' ||
+    hostname === '0.0.0.0' ||
+    hostname.endsWith('.localhost')
+  ) {
+    throw new ValidationError('Webhook URL cannot target localhost or loopback addresses')
+  }
+
+  // Block link-local and cloud metadata (AWS / GCP / Azure)
+  if (
+    hostname === '169.254.169.254' ||
+    hostname === 'metadata.google.internal' ||
+    hostname.startsWith('169.254.')
+  ) {
+    throw new ValidationError('Webhook URL cannot target cloud metadata endpoints')
+  }
+
+  // Block private IPv4 ranges: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16
+  const ipParts = hostname.split('.').map(Number)
+  if (ipParts.length === 4 && ipParts.every(p => !isNaN(p) && p >= 0 && p <= 255)) {
+    const [a, b] = ipParts
+    if (
+      a === 10 ||
+      (a === 172 && b >= 16 && b <= 31) ||
+      (a === 192 && b === 168) ||
+      a === 0 ||
+      a === 127
+    ) {
+      throw new ValidationError('Webhook URL cannot target private network IP ranges')
+    }
+  }
+}
 
 const createApiKeySchema = z.object({
   name: z.string().min(1).max(100),
@@ -59,6 +110,7 @@ export default async function developerRoutes(app: FastifyInstance) {
       if (!url || !secret) {
         throw new ValidationError('url and secret are required')
       }
+      validateWebhookUrl(url)
 
       const existing = await prisma.developerWebhookEndpoint.findFirst({
         where: { userId: sub }
@@ -121,15 +173,22 @@ export default async function developerRoutes(app: FastifyInstance) {
         throw new NotFoundError('Delivery log not found')
       }
 
-      // Trigger actual POST request to simulated target
+      validateWebhookUrl(delivery.endpoint.url)
+
+      // Trigger actual POST request to target
       try {
+        const payloadStr = JSON.stringify(delivery.payload)
+        const signature = createHmac('sha256', delivery.endpoint.secret)
+          .update(payloadStr)
+          .digest('hex')
+
         const res = await fetch(delivery.endpoint.url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-Cogna-Signature': delivery.endpoint.secret,
+            'X-Cogna-Signature': signature,
           },
-          body: JSON.stringify(delivery.payload),
+          body: payloadStr,
         })
         const text = await res.text()
         const newDelivery = await prisma.developerWebhookDelivery.create({

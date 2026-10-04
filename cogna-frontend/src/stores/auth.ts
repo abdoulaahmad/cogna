@@ -32,23 +32,31 @@ export const useAuthStore = create<AuthState>()(
       error: null,
       hasHydrated: false,
 
-      setAuth: (data) =>
+      setAuth: (data) => {
+        if (typeof document !== 'undefined') {
+          document.cookie = 'cogna-session=1; path=/; SameSite=Lax';
+        }
         set({
           user: data.user,
           accessToken: data.accessToken,
           refreshToken: data.refreshToken,
           isAuthenticated: true,
           error: null,
-        }),
+        });
+      },
 
-      clearAuth: () =>
+      clearAuth: () => {
+        if (typeof document !== 'undefined') {
+          document.cookie = 'cogna-session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+        }
         set({
           user: null,
           accessToken: null,
           refreshToken: null,
           isAuthenticated: false,
           error: null,
-        }),
+        });
+      },
 
       updateUser: (updatedFields) =>
         set((state) => ({
@@ -71,6 +79,9 @@ export const useAuthStore = create<AuthState>()(
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHydrated(true);
+        if (typeof document !== 'undefined' && state?.isAuthenticated) {
+          document.cookie = 'cogna-session=1; path=/; SameSite=Lax';
+        }
       },
     }
   )

@@ -1,6 +1,7 @@
-import { randomUUID } from 'crypto'
+import { createHash, randomUUID } from 'crypto'
 import { PaymentGatewayConfigurationService } from '@/services/payment-gateway-configuration.service'
 import { WalletRepository } from '@/repositories/wallet.repository'
+import { PaymentRepository } from '@/repositories/payment.repository'
 import { ConflictError, ForbiddenError, NotFoundError, UnauthorizedError } from '@/utils/errors'
 import type { PaymentGatewayType } from '@/types/payment-gateway.types'
 import prisma from '@/config/database'
@@ -198,6 +199,14 @@ export const WalletService = {
       if (Number(funding.amount) !== result.amount || funding.currency !== result.currency) {
         throw new ConflictError('Gateway funding amount or currency does not match')
       }
+    } else {
+      if (funding.cryptoAmountUsdt && result.amount) {
+        const receivedUsdt = Number(result.amount)
+        const expectedUsdt = Number(funding.cryptoAmountUsdt)
+        if (Math.abs(receivedUsdt - expectedUsdt) > 0.001) {
+          throw new ConflictError(`Plisio crypto underpayment detected: received ${receivedUsdt}, expected ${expectedUsdt}`)
+        }
+      }
     }
     return WalletRepository.creditFunding(funding.id, result.gatewayReference, result.metadata)
   },
@@ -225,11 +234,30 @@ export const WalletService = {
         return false
       }
 
-      // Only credit the wallet for terminal success statuses
-      const shouldCredit = status === 'completed' || status === 'mismatch'
+      const eventId = txnId || reference
+      const payloadHash = createHash('sha256').update(rawBody).digest('hex')
+      const recorded = (await PaymentRepository.recordEvent({
+        gateway: 'PLISIO',
+        eventId,
+        reference,
+        payloadHash,
+        eventType: 'plisio.webhook',
+        payload: fields,
+      })) ?? { isDuplicate: false }
+
+      if (recorded.isDuplicate) {
+        console.log(`[Plisio webhook] Duplicate event ignored for reference=${reference}`)
+        return true
+      }
+
+      // Only credit the wallet for terminal success statuses ('completed' strictly)
+      const shouldCredit = status === 'completed'
       if (!shouldCredit) {
-        // Non-final status (pending, new, etc.) — acknowledge but do not credit
-        console.log(`[Plisio webhook] Non-creditable status "${status}", skipping credit`)
+        if (status === 'mismatch') {
+          console.warn(`[Plisio webhook] Underpayment mismatch status received for reference=${reference}, rejecting credit`)
+        } else {
+          console.log(`[Plisio webhook] Non-creditable status "${status}", skipping credit`)
+        }
         return true  // Return true so Plisio knows we received it
       }
 
@@ -255,9 +283,25 @@ export const WalletService = {
     // ── Fiat gateways (Paystack / Monnify) ───────────────────────────────────
     if (!gateway.validateWebhook(rawBody, signature)) return false
     try {
-      const parsed = JSON.parse(rawBody) as { data?: { reference?: string } }
+      const parsed = JSON.parse(rawBody) as { data?: { id?: number | string; reference?: string }; id?: number | string; event?: string }
       const reference = parsed.data?.reference
       if (!reference) return false
+
+      const eventId = parsed.data?.id ? String(parsed.data.id) : (parsed.id ? String(parsed.id) : reference)
+      const payloadHash = createHash('sha256').update(rawBody).digest('hex')
+      const recorded = (await PaymentRepository.recordEvent({
+        gateway: gatewayType as any,
+        eventId,
+        reference,
+        payloadHash,
+        eventType: parsed.event || 'charge.success',
+        payload: parsed,
+      })) ?? { isDuplicate: false }
+
+      if (recorded.isDuplicate) {
+        return true
+      }
+
       await this.verifyFunding(reference, gatewayType)
       return true
     } catch (err) {

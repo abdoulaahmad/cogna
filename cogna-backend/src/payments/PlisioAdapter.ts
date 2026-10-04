@@ -162,9 +162,9 @@ export class PlisioAdapter implements IPaymentGateway {
 
     const opStatus = body.data.status ?? 'pending'
     const mapped: 'success' | 'failed' | 'pending' =
-      opStatus === 'completed' || opStatus === 'mismatch'
+      opStatus === 'completed'
         ? 'success'
-        : opStatus === 'expired' || opStatus === 'cancelled'
+        : opStatus === 'mismatch' || opStatus === 'expired' || opStatus === 'cancelled'
           ? 'failed'
           : 'pending'
 

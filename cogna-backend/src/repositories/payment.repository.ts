@@ -1,8 +1,42 @@
 import { prisma } from '@/config/database'
-import type { Payment, Prisma } from '@prisma/client'
+import type { Payment, PaymentEvent, PaymentGateway, Prisma } from '@prisma/client'
 import type { PaymentCreateInput } from '@/types/payment.types'
 
 export const PaymentRepository = {
+
+  /**
+   * Persist a raw inbound webhook event for deduplication and audit trail.
+   * If a duplicate event exists (by unique gateway + eventId or gateway + payloadHash),
+   * returns isDuplicate: true.
+   */
+  async recordEvent(data: {
+    gateway: PaymentGateway
+    eventId: string
+    reference?: string | null
+    payloadHash: string
+    eventType: string
+    payload?: unknown
+  }): Promise<{ isDuplicate: boolean; event?: PaymentEvent }> {
+    try {
+      const event = await prisma.paymentEvent.create({
+        data: {
+          gateway: data.gateway,
+          eventId: data.eventId,
+          reference: data.reference ?? null,
+          payloadHash: data.payloadHash,
+          eventType: data.eventType,
+          payload: (data.payload as Prisma.InputJsonValue) ?? undefined,
+          status: 'RECEIVED',
+        },
+      })
+      return { isDuplicate: false, event }
+    } catch (err: unknown) {
+      if ((err as { code?: string }).code === 'P2002') {
+        return { isDuplicate: true }
+      }
+      throw err
+    }
+  },
 
   /**
    * Persist a new payment record with PENDING status.

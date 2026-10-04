@@ -47,3 +47,5 @@ coverage/
 *.db-shm
 dev.db
 test.db
+
+.agents/

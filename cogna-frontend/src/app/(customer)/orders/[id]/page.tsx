@@ -40,6 +40,15 @@ const money = (amount: string, currency: string) =>
     currency,
     minimumFractionDigits: 2,
   }).format(Number(amount));
+
+function escapeHtml(text: string): string {
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [order, setOrder] = useState<Order | null>(null);
@@ -163,20 +172,22 @@ export default function OrderDetailPage() {
                           container.style.padding = "40px";
                           container.style.fontFamily = "sans-serif";
                           container.style.color = "#000";
-                          let itemsHtml = order.deliveryItems.map(item => 
-                            item.startsWith("http") 
-                              ? `<a href="${item}" style="word-break: break-all; color: #18B88A;">${item}</a>`
-                              : `<code style="display: block; padding: 10px; background: #f4f4f4; border-radius: 4px; word-break: break-all;">${item}</code>`
-                          ).join("<br/><br/>");
+                          let itemsHtml = order.deliveryItems.map(item => {
+                            const escaped = escapeHtml(item);
+                            const isUrl = item.startsWith("http://") || item.startsWith("https://");
+                            return isUrl
+                              ? `<a href="${encodeURI(item)}" target="_blank" rel="noopener noreferrer" style="word-break: break-all; color: #18B88A;">${escaped}</a>`
+                              : `<code style="display: block; padding: 10px; background: #f4f4f4; border-radius: 4px; word-break: break-all;">${escaped}</code>`;
+                          }).join("<br/><br/>");
                           container.innerHTML = `
                             <div style="text-align: center; margin-bottom: 30px;">
                               <h1 style="color: #062C23; margin-bottom: 5px;">Cogna Order Receipt</h1>
-                              <p style="color: #666; font-size: 14px;">Order ID: ${order.id}</p>
-                              <p style="color: #666; font-size: 14px;">Date: ${new Date(order.createdAt).toLocaleString()}</p>
+                              <p style="color: #666; font-size: 14px;">Order ID: ${escapeHtml(order.id)}</p>
+                              <p style="color: #666; font-size: 14px;">Date: ${escapeHtml(new Date(order.createdAt).toLocaleString())}</p>
                             </div>
                             <div style="margin-bottom: 30px; border-bottom: 1px solid #ccc; padding-bottom: 20px;">
-                              <h2 style="margin-bottom: 10px;">${order.product.name}</h2>
-                              <p style="font-size: 18px; font-weight: bold;">Amount: ${money(order.amount, order.currency)}</p>
+                              <h2 style="margin-bottom: 10px;">${escapeHtml(order.product.name)}</h2>
+                              <p style="font-size: 18px; font-weight: bold;">Amount: ${escapeHtml(money(order.amount, order.currency))}</p>
                             </div>
                             <div>
                               <h3 style="margin-bottom: 15px; color: #D4AF37;">Delivery Content</h3>
