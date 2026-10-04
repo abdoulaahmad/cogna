@@ -4,7 +4,7 @@ import { FormEvent, useState, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowRight, CheckCircle2, KeyRound, Loader2, LockKeyhole } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Eye, EyeOff, KeyRound, Loader2, LockKeyhole } from 'lucide-react';
 import axios from 'axios';
 import { api } from '@/lib/api';
 
@@ -15,6 +15,7 @@ function ResetPasswordContent() {
 
   const [token, setToken] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -63,7 +64,23 @@ function ResetPasswordContent() {
             <label className="block text-xs font-bold text-emerald-100/75">New Password
               <span className="relative mt-2 block">
                 <LockKeyhole className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-100/40" size={16} />
-                <input required autoComplete="new-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} className="w-full rounded-2xl border border-emerald-100/15 bg-[#062C23]/70 py-3 pl-11 pr-4 text-sm outline-none focus:border-[#D4AF37]" placeholder="At least 8 chars, 1 uppercase, 1 number" />
+                <input
+                  required
+                  autoComplete="new-password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  className="w-full rounded-2xl border border-emerald-100/15 bg-[#062C23]/70 py-3 pl-11 pr-11 text-sm outline-none focus:border-[#D4AF37]"
+                  placeholder="At least 8 chars, 1 uppercase, 1 number"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-100/40 hover:text-white transition-colors"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </span>
             </label>
             

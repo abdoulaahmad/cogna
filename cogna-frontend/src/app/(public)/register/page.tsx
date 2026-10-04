@@ -4,7 +4,7 @@ import { FormEvent, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Loader2, LockKeyhole, Mail, UserRound } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, Loader2, LockKeyhole, Mail, UserRound } from 'lucide-react';
 import axios from 'axios';
 import { api } from '@/lib/api';
 import PinInput from '@/components/ui/PinInput';
@@ -68,13 +68,34 @@ export default function RegisterPage() {
           <Image src="/logo-cogna.png" alt="Cogna" width={110} height={30} className="h-6 w-auto" priority />
         </Link>
         <h1 className="mt-5 font-display text-3xl font-bold">Create your account.</h1>
-        <p className="mt-2 text-sm leading-6 text-emerald-100/65">One account gives you customer tools first, with developer access available when you need it.</p>
-        {error && <p role="alert" className="mt-6 rounded-2xl border border-rose-200/25 bg-rose-950/30 px-4 py-3 text-sm text-rose-100">{error}</p>}
+        <p className="mt-2 text-sm leading-6 text-emerald-100/65">
+          One account gives you customer tools first, with developer access available when you need it.
+        </p>
+        {error && (
+          <p role="alert" className="mt-6 rounded-2xl border border-rose-200/25 bg-rose-950/30 px-4 py-3 text-sm text-rose-100">
+            {error}
+          </p>
+        )}
         <form onSubmit={submit} className="mt-7 space-y-4">
           <Field label="Full name" icon={<UserRound size={16} />} value={fullName} onChange={setFullName} autoComplete="name" />
           <Field label="Email address" icon={<Mail size={16} />} value={email} onChange={setEmail} type="email" autoComplete="email" />
-          <Field label="Password" icon={<LockKeyhole size={16} />} value={password} onChange={setPassword} type="password" autoComplete="new-password" hint="At least 8 characters, including an uppercase letter and number." />
-          <Field label="Confirm Password" icon={<LockKeyhole size={16} />} value={confirmPassword} onChange={setConfirmPassword} type="password" autoComplete="new-password" />
+          <Field
+            label="Password"
+            icon={<LockKeyhole size={16} />}
+            value={password}
+            onChange={setPassword}
+            type="password"
+            autoComplete="new-password"
+            hint="At least 8 characters, including an uppercase letter and number."
+          />
+          <Field
+            label="Confirm Password"
+            icon={<LockKeyhole size={16} />}
+            value={confirmPassword}
+            onChange={setConfirmPassword}
+            type="password"
+            autoComplete="new-password"
+          />
 
           {/* Transaction PIN */}
           <div className="pt-2">
@@ -108,18 +129,62 @@ export default function RegisterPage() {
             {loading ? <Loader2 className="animate-spin" size={17} /> : <>Create account <ArrowRight size={17} /></>}
           </button>
         </form>
-        <p className="mt-7 text-center text-sm text-emerald-100/60">Already registered? <Link href="/login" className="font-bold text-[#F8D56B] hover:text-white">Sign in</Link></p>
+        <p className="mt-7 text-center text-sm text-emerald-100/60">
+          Already registered?{' '}
+          <Link href="/login" className="font-bold text-[#F8D56B] hover:text-white">
+            Sign in
+          </Link>
+        </p>
       </section>
     </main>
   );
 }
 
-function Field({ label, icon, value, onChange, type = 'text', autoComplete, hint }: { label: string; icon: React.ReactNode; value: string; onChange: (value: string) => void; type?: string; autoComplete: string; hint?: string }) {
+function Field({
+  label,
+  icon,
+  value,
+  onChange,
+  type = 'text',
+  autoComplete,
+  hint,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  value: string;
+  onChange: (value: string) => void;
+  type?: string;
+  autoComplete: string;
+  hint?: string;
+}) {
+  const isPassword = type === 'password';
+  const [show, setShow] = useState(false);
+
   return (
-    <label className="block text-xs font-bold text-emerald-100/75">{label}
+    <label className="block text-xs font-bold text-emerald-100/75">
+      {label}
       <span className="relative mt-2 block">
         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-100/40">{icon}</span>
-        <input required type={type} autoComplete={autoComplete} value={value} onChange={(event) => onChange(event.target.value)} className="w-full rounded-2xl border border-emerald-100/15 bg-[#062C23]/70 py-3 pl-11 pr-4 text-sm outline-none focus:border-[#D4AF37]" />
+        <input
+          required
+          type={isPassword ? (show ? 'text' : 'password') : type}
+          autoComplete={autoComplete}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className={`w-full rounded-2xl border border-emerald-100/15 bg-[#062C23]/70 py-3 pl-11 ${
+            isPassword ? 'pr-11' : 'pr-4'
+          } text-sm outline-none focus:border-[#D4AF37]`}
+        />
+        {isPassword && (
+          <button
+            type="button"
+            onClick={() => setShow(!show)}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-100/40 hover:text-white transition-colors"
+            aria-label={show ? 'Hide password' : 'Show password'}
+          >
+            {show ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+        )}
       </span>
       {hint && <span className="mt-2 block text-[11px] font-medium leading-5 text-emerald-100/45">{hint}</span>}
     </label>

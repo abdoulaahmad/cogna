@@ -6,7 +6,7 @@ import { useAuthStore } from '@/stores/auth';
 import { api } from '@/lib/api';
 import {
   KeyRound, ShieldCheck, AlertTriangle, CheckCircle2, ShieldAlert,
-  ShieldOff, ToggleLeft, ToggleRight, RefreshCw,
+  ShieldOff, ToggleLeft, ToggleRight, RefreshCw, Eye, EyeOff,
 } from 'lucide-react';
 import CustomerPortalNav from '@/components/layout/customer-portal-nav';
 import PinInput from '@/components/ui/PinInput';
@@ -20,6 +20,8 @@ export default function SecurityPage() {
   // ── Password change ──────────────────────────────────────────────────────
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [pwLoading, setPwLoading] = useState(false);
   const [pwMessage, setPwMessage] = useState<string | null>(null);
   const [pwError, setPwError] = useState<string | null>(null);
@@ -38,6 +40,7 @@ export default function SecurityPage() {
   // Change/reset PIN form
   const [proofPin, setProofPin] = useState('');     // current PIN proof
   const [proofPw, setProofPw] = useState('');       // password proof
+  const [showProofPw, setShowProofPw] = useState(false);
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [pinFormMsg, setPinFormMsg] = useState<string | null>(null);
@@ -47,6 +50,7 @@ export default function SecurityPage() {
   // Toggle PIN requirement
   const [toggleProofPin, setToggleProofPin] = useState('');
   const [toggleProofPw, setToggleProofPw] = useState('');
+  const [showToggleProofPw, setShowToggleProofPw] = useState(false);
   const [toggleMode, setToggleMode] = useState<PinMode>('current-pin');
   const [toggleMsg, setToggleMsg] = useState<string | null>(null);
   const [toggleErr, setToggleErr] = useState<string | null>(null);
@@ -190,12 +194,42 @@ export default function SecurityPage() {
               </div>
               <form onSubmit={handleChangePassword} className="mt-6 space-y-4">
                 <label className="block text-xs font-bold text-emerald-100/70">Current Password
-                  <input type="password" required value={oldPassword} onChange={(e) => setOldPassword(e.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-emerald-100/15 bg-black/20 px-4 py-3 text-sm outline-none focus:border-[#D4AF37] transition-colors" />
+                  <span className="relative mt-2 block">
+                    <input
+                      type={showOldPassword ? 'text' : 'password'}
+                      required
+                      value={oldPassword}
+                      onChange={(e) => setOldPassword(e.target.value)}
+                      className="w-full rounded-2xl border border-emerald-100/15 bg-black/20 pl-4 pr-11 py-3 text-sm outline-none focus:border-[#D4AF37] transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowOldPassword((prev) => !prev)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-100/40 hover:text-white transition-colors"
+                      aria-label={showOldPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showOldPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </span>
                 </label>
                 <label className="block text-xs font-bold text-emerald-100/70">New Password
-                  <input type="password" required value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
-                    className="mt-2 w-full rounded-2xl border border-emerald-100/15 bg-black/20 px-4 py-3 text-sm outline-none focus:border-[#D4AF37] transition-colors" />
+                  <span className="relative mt-2 block">
+                    <input
+                      type={showNewPassword ? 'text' : 'password'}
+                      required
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full rounded-2xl border border-emerald-100/15 bg-black/20 pl-4 pr-11 py-3 text-sm outline-none focus:border-[#D4AF37] transition-colors"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword((prev) => !prev)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-100/40 hover:text-white transition-colors"
+                      aria-label={showNewPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </span>
                 </label>
                 <button type="submit" disabled={pwLoading || !oldPassword || !newPassword}
                   className="rounded-full bg-[#D4AF37] px-5 py-3 text-sm font-bold text-[#062C23] hover:bg-[#F8D56B] disabled:opacity-50 transition-colors w-full sm:w-auto mt-2">
@@ -329,9 +363,25 @@ export default function SecurityPage() {
                       <PinInput id="proof-pin" label="Current PIN" value={proofPin} onChange={setProofPin} disabled={pinFormLoading} />
                     ) : (
                       <label className="block text-xs font-bold text-emerald-100/70">Account Password
-                        <input type="password" required value={proofPw} onChange={(e) => setProofPw(e.target.value)} disabled={pinFormLoading}
-                          placeholder="Your login password"
-                          className="mt-2 w-full rounded-2xl border border-emerald-100/15 bg-black/20 px-4 py-3 text-sm outline-none focus:border-[#D4AF37] transition-colors disabled:opacity-50" />
+                        <span className="relative mt-2 block">
+                          <input
+                            type={showProofPw ? 'text' : 'password'}
+                            required
+                            value={proofPw}
+                            onChange={(e) => setProofPw(e.target.value)}
+                            disabled={pinFormLoading}
+                            placeholder="Your login password"
+                            className="w-full rounded-2xl border border-emerald-100/15 bg-black/20 pl-4 pr-11 py-3 text-sm outline-none focus:border-[#D4AF37] transition-colors disabled:opacity-50"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowProofPw((prev) => !prev)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-100/40 hover:text-white transition-colors"
+                            aria-label={showProofPw ? 'Hide password' : 'Show password'}
+                          >
+                            {showProofPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
+                        </span>
                       </label>
                     )}
                     <PinInput id="new-pin" label="New PIN" value={newPin} onChange={setNewPin} disabled={pinFormLoading} />
@@ -384,9 +434,24 @@ export default function SecurityPage() {
                         <PinInput id="toggle-proof-pin" label="Current PIN" value={toggleProofPin} onChange={setToggleProofPin} disabled={toggleLoading} />
                       ) : (
                         <label className="block text-xs font-bold text-emerald-100/70">Account Password
-                          <input type="password" value={toggleProofPw} onChange={(e) => setToggleProofPw(e.target.value)} disabled={toggleLoading}
-                            placeholder="Your login password"
-                            className="mt-2 w-full rounded-2xl border border-emerald-100/15 bg-black/20 px-4 py-3 text-sm outline-none focus:border-[#D4AF37] transition-colors disabled:opacity-50" />
+                          <span className="relative mt-2 block">
+                            <input
+                              type={showToggleProofPw ? 'text' : 'password'}
+                              value={toggleProofPw}
+                              onChange={(e) => setToggleProofPw(e.target.value)}
+                              disabled={toggleLoading}
+                              placeholder="Your login password"
+                              className="w-full rounded-2xl border border-emerald-100/15 bg-black/20 pl-4 pr-11 py-3 text-sm outline-none focus:border-[#D4AF37] transition-colors disabled:opacity-50"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowToggleProofPw((prev) => !prev)}
+                              className="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-100/40 hover:text-white transition-colors"
+                              aria-label={showToggleProofPw ? 'Hide password' : 'Show password'}
+                            >
+                              {showToggleProofPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                          </span>
                         </label>
                       )}
                     </div>
