@@ -12,8 +12,8 @@ async function main() {
   await prisma.user.deleteMany({});
 
   // 1. Create Admin User
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@cogna.store';
-  const adminPassword = process.env.ADMIN_PASSWORD || 'password123';
+  const adminEmail = process.env.ADMIN_EMAIL || 'abdullahiabbaahmad39@gmail.com';
+  const adminPassword = process.env.ADMIN_PASSWORD || '@Asufakcogna';
   const adminPasswordHash = await bcrypt.hash(adminPassword, 12);
   
   await prisma.user.create({
