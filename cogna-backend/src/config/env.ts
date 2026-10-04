@@ -39,6 +39,9 @@ const envSchema = z.object({
 
   REDIS_URL:             z.string().default('redis://localhost:6379'),
 
+  MAILHIVE_API_KEY:      z.string().default('mhs_7ZRWCkgDTj85YJK0ElAq-ICUftp-rG8-zK8zSbJe'),
+  MAILHIVE_FROM:         z.string().default('Cogna <hello@cogna.store>'),
+
   SMTP_HOST:             z.string().optional(),
   SMTP_PORT:             z.coerce.number().default(587),
   SMTP_USER:             z.string().optional(),

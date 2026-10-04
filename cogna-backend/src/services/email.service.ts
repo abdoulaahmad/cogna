@@ -1,15 +1,7 @@
-import nodemailer from 'nodemailer';
+import { Mailhive } from '@mailhive/send';
 import { env } from '@/config/env';
 
-const transporter = nodemailer.createTransport({
-  host: env.SMTP_HOST || 'smtp-relay.brevo.com',
-  port: env.SMTP_PORT || 587,
-  secure: env.SMTP_PORT === 465,
-  auth: {
-    user: env.SMTP_USER || 'brevo-smtp-user',
-    pass: env.SMTP_PASSWORD || '',
-  },
-});
+const mailhive = new Mailhive(env.MAILHIVE_API_KEY);
 
 const generateOtpTemplate = (title: string, description: string, token: string) => `<!DOCTYPE html>
 <html lang="en">
@@ -31,7 +23,7 @@ const generateOtpTemplate = (title: string, description: string, token: string) 
       <!-- Icon -->
       <div style="margin-bottom: 24px;">
         <div style="display: inline-block; width: 64px; height: 64px; border-radius: 50%; border: 1px solid #18B88A33; background-color: #030a08; line-height: 64px; font-size: 28px;">
-          <span style="color: #18B88A;">✉️</span>
+          <span style="color: #18B88A;">🔒</span>
         </div>
       </div>
 
@@ -101,62 +93,58 @@ const generateOtpTemplate = (title: string, description: string, token: string) 
 
 export const EmailService = {
   /**
-   * Send a password reset OTP email.
+   * Send a password reset OTP email via Mailhive.
    */
   async sendPasswordResetEmail(email: string, token: string) {
-    if (!env.SMTP_PASSWORD) {
-      console.warn('⚠️ SMTP_PASSWORD not set. Logging email to console instead of sending.');
+    if (env.APP_ENV === 'test' || !env.MAILHIVE_API_KEY) {
+      console.warn('⚠️ Test environment or MAILHIVE_API_KEY not set. Logging email to console instead of sending.');
       console.log(`\n\n--- MOCK EMAIL TO: ${email} ---\nPassword Reset OTP: ${token}\n----------------------------------\n\n`);
       return;
     }
 
-    const mailOptions = {
-      from: `"${env.APP_NAME}" <${env.SMTP_FROM}>`,
-      to: email,
-      subject: 'Password Reset Request',
-      text: `Your password reset code is: ${token}\n\nThis code is valid for 15 minutes.\nIf you did not request this, please ignore this email.`,
-      html: generateOtpTemplate(
-        'Password Reset',
-        'You recently requested to reset your password. Use the following 6-digit code to complete the process:',
-        token
-      ),
-    };
-
     try {
-      await transporter.sendMail(mailOptions);
+      await mailhive.emails.send({
+        from: env.MAILHIVE_FROM,
+        to: email,
+        subject: 'Password Reset Request',
+        text: `Your password reset code is: ${token}\n\nThis code is valid for 15 minutes.\nIf you did not request this, please ignore this email.`,
+        html: generateOtpTemplate(
+          'Password Reset',
+          'You recently requested to reset your password. Use the following 6-digit code to complete the process:',
+          token
+        ),
+      });
     } catch (error) {
-      console.error('Failed to send email:', error);
-      throw new Error('Failed to send email. Please check SMTP configuration.', { cause: error });
+      console.error('Failed to send email via Mailhive:', error);
+      throw new Error('Failed to send email. Please check email configuration.', { cause: error });
     }
   },
 
   /**
-   * Send an email verification OTP.
+   * Send an email verification OTP via Mailhive.
    */
   async sendVerificationEmail(email: string, token: string) {
-    if (!env.SMTP_PASSWORD) {
-      console.warn('⚠️ SMTP_PASSWORD not set. Logging email to console instead of sending.');
+    if (env.APP_ENV === 'test' || !env.MAILHIVE_API_KEY) {
+      console.warn('⚠️ Test environment or MAILHIVE_API_KEY not set. Logging email to console instead of sending.');
       console.log(`\n\n--- MOCK EMAIL TO: ${email} ---\nEmail Verification OTP: ${token}\n----------------------------------\n\n`);
       return;
     }
 
-    const mailOptions = {
-      from: `"${env.APP_NAME}" <${env.SMTP_FROM}>`,
-      to: email,
-      subject: 'Verify your email address',
-      text: `Your email verification code is: ${token}\n\nThis code is valid for 15 minutes.`,
-      html: generateOtpTemplate(
-        'Verify Your Email',
-        'Use the verification code below to verify your email address and continue securing your Cogna account.',
-        token
-      ),
-    };
-
     try {
-      await transporter.sendMail(mailOptions);
+      await mailhive.emails.send({
+        from: env.MAILHIVE_FROM,
+        to: email,
+        subject: 'Verify your email address',
+        text: `Your email verification code is: ${token}\n\nThis code is valid for 15 minutes.`,
+        html: generateOtpTemplate(
+          'Verify Your Email',
+          'Use the verification code below to verify your email address and continue securing your Cogna account.',
+          token
+        ),
+      });
     } catch (error) {
-      console.error('Failed to send email:', error);
-      throw new Error('Failed to send email. Please check SMTP configuration.', { cause: error });
+      console.error('Failed to send email via Mailhive:', error);
+      throw new Error('Failed to send email. Please check email configuration.', { cause: error });
     }
   },
 };
