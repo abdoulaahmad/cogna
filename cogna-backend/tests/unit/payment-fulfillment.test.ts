@@ -60,8 +60,38 @@ describe('PaymentService + FulfillmentQueue integration', () => {
           productId: mockOrder.productId,
           userId:    mockOrder.userId,
         },
-        { jobId: `fulfill:${mockOrder.id}` }
+        { jobId: `fulfill_${mockOrder.id}` }
       )
+    })
+
+    it('recovers dispatch after payment was saved but the queue failed', async () => {
+      vi.mocked(PaymentRepository.findByReference).mockResolvedValueOnce(mockPayment).mockResolvedValueOnce(paidPayment)
+      vi.mocked(OrderRepository.findById).mockResolvedValue(mockOrder)
+      vi.mocked(PaymentRepository.updateStatus).mockResolvedValue(paidPayment)
+      vi.mocked(fulfillmentQueue.add).mockRejectedValueOnce(new Error('Redis unavailable'))
+      await expect(PaymentService.verifyPayment(mockPayment.reference)).rejects.toThrow('Redis unavailable')
+      await expect(PaymentService.verifyPayment(mockPayment.reference)).resolves.toEqual(paidPayment)
+      expect(PaymentRepository.updateStatus).toHaveBeenCalledOnce()
+      expect(fulfillmentQueue.add).toHaveBeenCalledTimes(2)
+      expect(vi.mocked(fulfillmentQueue.add).mock.calls[0][2]).toEqual({ jobId: `fulfill_${mockOrder.id}` })
+      expect(vi.mocked(fulfillmentQueue.add).mock.calls[1][2]).toEqual({ jobId: `fulfill_${mockOrder.id}` })
+    })
+
+    it('retries a signed duplicate webhook whose first attempt was interrupted', async () => {
+      vi.mocked(PaymentRepository.recordEvent).mockResolvedValue({ isDuplicate: true })
+      vi.mocked(PaymentRepository.findByReference).mockResolvedValue(paidPayment)
+      vi.mocked(OrderRepository.findById).mockResolvedValue(mockOrder)
+      await expect(PaymentService.handleWebhook('PAYSTACK', JSON.stringify({
+        event: 'charge.success', data: { id: 12, reference: mockPayment.reference },
+      }), 'valid-sig')).resolves.toBe(true)
+      expect(fulfillmentQueue.add).toHaveBeenCalledOnce()
+    })
+
+    it('does not redispatch an already completed order', async () => {
+      vi.mocked(PaymentRepository.findByReference).mockResolvedValue(paidPayment)
+      vi.mocked(OrderRepository.findById).mockResolvedValue({ ...mockOrder, status: 'COMPLETED' })
+      await PaymentService.verifyPayment(mockPayment.reference)
+      expect(fulfillmentQueue.add).not.toHaveBeenCalled()
     })
 
     it('should NOT enqueue a fulfillment job when payment is FAILED', async () => {

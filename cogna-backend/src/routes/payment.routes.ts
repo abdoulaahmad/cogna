@@ -9,7 +9,8 @@ import type { PaymentGatewayType } from '@/types/payment-gateway.types'
 export default async function paymentRoutes(app: FastifyInstance) {
   app.post('/initialize', { onRequest: [app.authenticate] }, async (req: FastifyRequest, reply: FastifyReply) => {
     try {
-      let { sub, email } = req.user as { sub: string; email?: string }
+      const { sub } = req.user as { sub: string }
+      let { email } = req.user as { email?: string }
       if (!email) {
         const user = await (await import('@/repositories/user.repository')).UserRepository.findById(sub)
         if (!user) return reply.status(401).send({ ok: false, message: 'Unauthorized' })
@@ -23,7 +24,16 @@ export default async function paymentRoutes(app: FastifyInstance) {
     }
   })
 
-  app.get('/verify/:reference', { onRequest: [app.authenticate] }, async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get('/verify/:reference', {
+    onRequest: [app.authenticate],
+    schema: {
+      tags: ['Payments'],
+      security: [{ bearerAuth: [] }],
+      summary: 'Verify an owned order payment with its gateway',
+      description: 'Returns the persisted payment status (PENDING, PAID, FAILED, REFUNDED). Pending confirmations may be retried. Repeated verification of a paid payment retries interrupted fulfillment dispatch using a stable job ID. Gateway confirmation, amount and currency checks are required before PAID.',
+      params: { type: 'object', required: ['reference'], properties: { reference: { type: 'string', minLength: 1 } } },
+    },
+  }, async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const { reference } = req.params as { reference: string }
       const { sub } = req.user as { sub: string }

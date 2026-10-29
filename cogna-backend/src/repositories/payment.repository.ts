@@ -77,14 +77,19 @@ export const PaymentRepository = {
     status: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED',
     extras: { gatewayReference?: string; paidAt?: Date; metadata?: Record<string, unknown> } = {}
   ): Promise<Payment> {
-    return prisma.payment.update({
-      where: { id: paymentId },
-      data:  {
-        status,
-        ...(extras.gatewayReference !== undefined && { gatewayReference: extras.gatewayReference }),
-        ...(extras.paidAt            !== undefined && { paidAt:            extras.paidAt }),
-        ...(extras.metadata          !== undefined && { metadata:          extras.metadata as Prisma.InputJsonValue }),
-      },
+    return prisma.$transaction(async (tx) => {
+      // A slower pending/failed gateway response must never overwrite a paid
+      // payment committed by a concurrent callback or webhook.
+      await tx.payment.updateMany({
+        where: { id: paymentId, status: 'PENDING' },
+        data: {
+          status,
+          ...(extras.gatewayReference !== undefined && { gatewayReference: extras.gatewayReference }),
+          ...(extras.paidAt !== undefined && { paidAt: extras.paidAt }),
+          ...(extras.metadata !== undefined && { metadata: extras.metadata as Prisma.InputJsonValue }),
+        },
+      })
+      return tx.payment.findUniqueOrThrow({ where: { id: paymentId } })
     })
   },
 }

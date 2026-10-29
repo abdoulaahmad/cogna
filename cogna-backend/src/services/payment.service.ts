@@ -78,14 +78,25 @@ export const PaymentService = {
     if (!payment) throw new NotFoundError('Payment')
     if (userId && payment.userId !== userId) throw new ForbiddenError('Access denied')
 
-    // Terminal payments are immutable. Returning the stored state makes customer
-    // callbacks and repeated gateway webhooks safe to retry.
-    if (payment.status === 'PAID' || payment.status === 'FAILED' || payment.status === 'REFUNDED') {
+    if (payment.status === 'FAILED' || payment.status === 'REFUNDED') {
       return payment
     }
 
     const order = await OrderRepository.findById(payment.orderId)
     if (!order) throw new NotFoundError('Order')
+
+    // A prior verification may have saved PAID before Redis became unavailable.
+    // Retry dispatch with the same job ID so callbacks/webhooks can recover it.
+    if (payment.status === 'PAID') {
+      if (order.status === 'PENDING') {
+        await fulfillmentQueue.add(
+          'fulfill-order',
+          { orderId: order.id, productId: order.productId, userId: order.userId },
+          { jobId: `fulfill_${order.id}` }
+        )
+      }
+      return payment
+    }
 
     const gateway = await PaymentGatewayConfigurationService.getGateway(payment.gateway)
     const verifyResult = await gateway.verifyPayment(reference, payment.gatewayReference ?? undefined)
@@ -101,11 +112,11 @@ export const PaymentService = {
       metadata: verifyResult.metadata,
     })
 
-    if (newStatus === 'PAID') {
+    if (updatedPayment.status === 'PAID' && order.status === 'PENDING') {
       await fulfillmentQueue.add(
         'fulfill-order',
         { orderId: order.id, productId: order.productId, userId: order.userId },
-        { jobId: `fulfill:${order.id}` }
+        { jobId: `fulfill_${order.id}` }
       )
     }
 
@@ -122,13 +133,14 @@ export const PaymentService = {
 
     let reference: string
     let eventId: string
-    let eventType = 'charge.success'
-    let parsed: Record<string, unknown> = {}
+    let eventType: string
+    let parsed: Record<string, unknown>
     try {
       parsed = JSON.parse(rawBody) as Record<string, unknown>
       const data = parsed.data as Record<string, unknown> | undefined
       reference = (data?.reference as string) || (parsed.reference as string) || ''
-      eventId = data?.id ? String(data.id) : (parsed.id ? String(parsed.id) : reference)
+      const id = data?.id ?? parsed.id
+      eventId = typeof id === 'string' || typeof id === 'number' ? String(id) : reference
       eventType = (parsed.event as string) || (parsed.eventType as string) || 'charge.success'
     } catch {
       return false
@@ -137,18 +149,17 @@ export const PaymentService = {
     if (!reference) return false
 
     const payloadHash = createHash('sha256').update(rawBody).digest('hex')
-    const recorded = (await PaymentRepository.recordEvent({
-      gateway: gatewayType as any,
+    await PaymentRepository.recordEvent({
+      gateway: gatewayType,
       eventId: eventId || reference,
       reference,
       payloadHash,
       eventType,
       payload: parsed,
-    })) ?? { isDuplicate: false }
+    })
 
-    if (recorded.isDuplicate) {
-      return true
-    }
+    // Recording receipt is not proof that verification/dispatch succeeded.
+    // Signed duplicate deliveries must be able to retry interrupted processing.
 
     const payment = await PaymentRepository.findByReference(reference)
     if (!payment || payment.gateway !== gatewayType) return false

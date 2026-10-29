@@ -71,12 +71,14 @@ export default function OrderDetailPage() {
   }, [id]);
   
   useEffect(() => {
-    void load(false);
+    const timer = window.setTimeout(() => { void load(false); }, 0);
+    return () => window.clearTimeout(timer);
   }, [load]);
 
+  const orderStatus = order?.status;
   useEffect(() => {
     let interval: number;
-    if (order && (order.status === "PENDING" || order.status === "PROCESSING")) {
+    if (orderStatus === "PENDING" || orderStatus === "PROCESSING") {
       interval = window.setInterval(() => {
         void load(true);
       }, 3000);
@@ -84,7 +86,7 @@ export default function OrderDetailPage() {
     return () => {
       if (interval) window.clearInterval(interval);
     };
-  }, [order?.status, load]);
+  }, [orderStatus, load]);
   async function cancel() {
     if (
       !confirm(
@@ -166,13 +168,12 @@ export default function OrderDetailPage() {
                       <button
                         type="button"
                         onClick={async () => {
-                          // @ts-ignore
                           const html2pdf = (await import("html2pdf.js")).default;
                           const container = document.createElement("div");
                           container.style.padding = "40px";
                           container.style.fontFamily = "sans-serif";
                           container.style.color = "#000";
-                          let itemsHtml = order.deliveryItems.map(item => {
+                          const itemsHtml = order.deliveryItems.map(item => {
                             const escaped = escapeHtml(item);
                             const isUrl = item.startsWith("http://") || item.startsWith("https://");
                             return isUrl
@@ -304,6 +305,17 @@ export default function OrderDetailPage() {
                     <p className="mt-3 text-xs text-emerald-100/60">
                       {order.payment?.reference || "Payment reference pending"}
                     </p>
+                    {order.payment && (
+                      <p className="mt-2 text-xs text-emerald-100/60">Payment: {order.payment.status}</p>
+                    )}
+                    {order.payment && (order.payment.status === "PENDING" || (order.payment.status === "PAID" && order.status === "PENDING")) && (
+                      <Link
+                        href={`/verify?reference=${encodeURIComponent(order.payment.reference)}`}
+                        className="mt-5 flex items-center justify-center gap-2 rounded-full border border-emerald-100/15 px-4 py-3 text-xs font-bold text-emerald-100 hover:border-[#D4AF37]"
+                      >
+                        <RefreshCw size={15} /> Check payment status
+                      </Link>
+                    )}
                     {printUrl && (
                       <a
                         href={printUrl}

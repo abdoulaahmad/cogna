@@ -12,6 +12,7 @@ import PinInput from '@/components/ui/PinInput';
 import Paystack from '@paystack/inline-js';
 
 type PinStatus = { transactionPinEnabled: boolean; hasPinSet: boolean };
+type CheckoutPayment = { authorizationUrl: string; reference: string; accessCode?: string };
 
 export default function PayPage() {
   const router = useRouter();
@@ -32,6 +33,10 @@ export default function PayPage() {
   // Prevents the !cartItem guard from redirecting to /catalog after a
   // successful purchase clears the cart.
   const purchasedRef = useRef(false);
+  const checkoutInProgress = useRef(false);
+  const attemptRef = useRef<{
+    productId: string; userId: string; orderId: string; payment?: CheckoutPayment;
+  } | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) { router.replace('/login?redirect=/pay'); return; }
@@ -79,6 +84,8 @@ export default function PayPage() {
   }
 
   async function checkout(walletPin?: string) {
+    if (checkoutInProgress.current) return;
+    checkoutInProgress.current = true;
     setLoading(true);
     setError(null);
     try {
@@ -99,34 +106,47 @@ export default function PayPage() {
         return;
       }
 
-      // Gateway flow — unchanged
-      const orderResponse = await api.post('/orders', {
-        productId:     cartItem!.id,
-        customerEmail: user!.email,
-      });
-      if (!orderResponse.data.success) throw new Error(orderResponse.data.message || 'Order could not be created.');
-
-      const paymentResponse = await api.post('/payments/initialize', {
-        orderId:     orderResponse.data.data.id,
-        callbackUrl: `${window.location.origin}/verify`,
-      });
-      if (!paymentResponse.data.success || !paymentResponse.data.data?.authorizationUrl) {
-        throw new Error(paymentResponse.data.message || 'Payment could not be initialized.');
+      let attempt = attemptRef.current;
+      if (!attempt || attempt.productId !== cartItem!.id || attempt.userId !== user!.id) {
+        const orderResponse = await api.post('/orders', {
+          productId: cartItem!.id,
+          customerEmail: user!.email,
+        });
+        if (!orderResponse.data.success) throw new Error(orderResponse.data.message || 'Order could not be created.');
+        attempt = { productId: cartItem!.id, userId: user!.id, orderId: orderResponse.data.data.id };
+        attemptRef.current = attempt;
       }
 
-      const { authorizationUrl, reference, accessCode } = paymentResponse.data.data;
-      purchasedRef.current = true;
-      clearCart();
+      if (!attempt.payment) {
+        const paymentResponse = await api.post('/payments/initialize', {
+          orderId: attempt.orderId,
+          callbackUrl: `${window.location.origin}/verify`,
+        });
+        if (!paymentResponse.data.success || !paymentResponse.data.data?.authorizationUrl) {
+          throw new Error(paymentResponse.data.message || 'Payment could not be initialized.');
+        }
+        attempt.payment = paymentResponse.data.data as CheckoutPayment;
+      }
+
+      const { authorizationUrl, reference, accessCode } = attempt.payment;
 
       if (cartItem!.paymentGateway === 'PAYSTACK') {
         if (!accessCode) throw new Error('Paystack access code was not returned from the server.');
         const popup = new Paystack();
         popup.resumeTransaction(accessCode, {
-          onSuccess: () => { router.push(`/verify?reference=${encodeURIComponent(reference)}`); },
-          onCancel:  () => { setLoading(false); },
+          onSuccess: () => {
+            purchasedRef.current = true;
+            router.push(`/verify?reference=${encodeURIComponent(reference)}`);
+          },
+          onCancel: () => {
+            checkoutInProgress.current = false;
+            setLoading(false);
+            setError('Payment window closed. You can continue the same checkout below.');
+          },
           onError:   (err: unknown) => {
             console.error('Paystack Inline Error:', err);
             setError('Payment checkout failed. Please try again.');
+            checkoutInProgress.current = false;
             setLoading(false);
           },
         });
@@ -134,6 +154,7 @@ export default function PayPage() {
         window.location.assign(authorizationUrl);
       }
     } catch (requestError: unknown) {
+      checkoutInProgress.current = false;
       setError(getErrorMessage(requestError, 'Unable to complete checkout.'));
       setLoading(false);
     }
@@ -145,7 +166,6 @@ export default function PayPage() {
       return;
     }
     setShowPinPrompt(false);
-    let checkoutError: string | null = null;
     setError(null);
     try {
       await checkout(pin);
