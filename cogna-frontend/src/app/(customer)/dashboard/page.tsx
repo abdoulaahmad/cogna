@@ -11,6 +11,7 @@ import CustomerPortalNav from '@/components/layout/customer-portal-nav';
 import type { Product } from '@/components/product/product-card';
 import { useCartStore } from '@/stores/cart';
 import { useAuthStore } from '@/stores/auth';
+import { isProductAvailable } from '@/lib/product-availability';
 
 type Dashboard = {
   wallet: { availableBalance: number; pendingBalance: number; lifetimeFunded: number; lifetimeSpent: number; currency?: string };
@@ -45,7 +46,11 @@ export default function CustomerDashboardPage() {
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { const timer = window.setTimeout(() => void load(), 0); return () => window.clearTimeout(timer); }, [load]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => void load(), 0);
+    const interval = window.setInterval(() => void load(), 60000);
+    return () => { window.clearTimeout(timer); window.clearInterval(interval); };
+  }, [load]);
   const currency = dashboard?.wallet.currency || 'NGN';
   const firstName = user?.fullName?.split(/\s+/)[0] || 'there';
 
@@ -73,8 +78,7 @@ function Metric({icon,label,value,action,href,tone}:{icon:ReactNode;label:string
 function DashboardProduct({ product, onPurchase }: { product: Product; onPurchase: () => void }) {
   const price = money(product.price, product.currency || 'NGN');
   const hasStockInfo = product.stock !== undefined && product.stock !== null;
-  const isOutOfStock = hasStockInfo && (product.stock as number) <= 0;
-  const available = product.active !== false && !isOutOfStock;
+  const available = isProductAvailable(product);
 
   return (
     <article className="group relative overflow-hidden rounded-2xl border border-emerald-100/10 bg-[linear-gradient(140deg,rgba(7,55,43,.82),rgba(3,25,21,.96))] p-5">
@@ -93,7 +97,7 @@ function DashboardProduct({ product, onPurchase }: { product: Product; onPurchas
           (product.stock as number) <= 0 ? (
             <span className="inline-flex items-center gap-1.5 rounded-lg border border-rose-400/30 bg-rose-500/15 px-2 py-1 text-[9px] font-black uppercase tracking-[.12em] text-rose-300">
               <span className="h-1.5 w-1.5 rounded-full bg-rose-400" />
-              Out of stock
+              Unavailable
             </span>
           ) : (product.stock as number) <= 5 ? (
             <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/30 bg-amber-500/15 px-2 py-1 text-[9px] font-black uppercase tracking-[.12em] text-amber-300">
@@ -132,7 +136,7 @@ function DashboardProduct({ product, onPurchase }: { product: Product; onPurchas
           className="inline-flex items-center gap-2 rounded-xl bg-[#D4AF37] px-3.5 py-2 text-[11px] font-black text-[#062C23] hover:bg-[#F8D56B] disabled:cursor-not-allowed disabled:opacity-45"
         >
           <ShoppingBag size={14} />
-          {available ? 'Purchase' : isOutOfStock ? 'Out of stock' : 'Unavailable'}
+          {available ? 'Purchase' : 'Unavailable'}
         </button>
       </div>
     </article>

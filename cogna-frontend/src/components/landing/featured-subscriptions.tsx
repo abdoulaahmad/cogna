@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Star, Check, Shield, Zap, RefreshCw, Headphones, Gift, ArrowRight, ImageIcon, MessageSquare, Mic, Code2, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { Product } from '@/components/product/product-card';
+import { isProductAvailable } from '@/lib/product-availability';
 
 export default function FeaturedSubscriptions() {
   const [activeTab, setActiveTab] = useState<'popular' | 'all'>('popular');
@@ -24,7 +25,9 @@ export default function FeaturedSubscriptions() {
         setLoading(false);
       }
     }
-    load();
+    void load();
+    const interval = window.setInterval(() => { void load(); }, 60000);
+    return () => window.clearInterval(interval);
   }, []);
 
   const trustItems = [
@@ -80,7 +83,7 @@ export default function FeaturedSubscriptions() {
           </h2>
           
           <p className="text-sm font-medium text-[#C6D6D1] leading-relaxed max-w-[650px] text-center">
-            Access the world's best AI models and tools through one unified subscription.
+            Access the world&apos;s best AI models and tools through one unified subscription.
           </p>
 
           {/* FILTER TABS */}
@@ -148,7 +151,7 @@ export default function FeaturedSubscriptions() {
                         prod.stock <= 0 ? (
                           <span className="inline-flex items-center gap-1 rounded-full border border-rose-400/30 bg-rose-500/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-rose-300">
                             <span className="h-1.5 w-1.5 rounded-full bg-rose-400" />
-                            Out of stock
+                            Unavailable
                           </span>
                         ) : prod.stock <= 5 ? (
                           <span className="inline-flex items-center gap-1 rounded-full border border-amber-400/30 bg-amber-500/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-300">
@@ -201,12 +204,12 @@ export default function FeaturedSubscriptions() {
                   </div>
 
                   {/* CTA */}
-                  <Link
+                  {isProductAvailable(prod) ? <Link
                     href={`/catalog`}
                     className="w-full mt-6 py-3 rounded-full bg-[#D4AF37] hover:bg-[#B8860B] text-slate-950 font-bold text-xs transition-all duration-300 shadow-[0_4px_25px_rgba(212,175,55,0.18)] hover:shadow-[0_8px_30px_rgba(212,175,55,0.35)] hover:-translate-y-[1px] flex items-center justify-center gap-1 group-hover:scale-[1.01]"
                   >
                     Subscribe Now <ArrowRight size={13} className="transition-transform group-hover:translate-x-0.5" />
-                  </Link>
+                  </Link> : <button disabled className="mt-6 flex w-full cursor-not-allowed items-center justify-center rounded-full bg-white/10 py-3 text-xs font-bold text-emerald-100/50">Unavailable</button>}
                 </div>
 
               </div>

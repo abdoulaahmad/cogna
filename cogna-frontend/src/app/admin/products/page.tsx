@@ -2,6 +2,7 @@
 import React from 'react'
 import { api } from '@/lib/api'
 import { getErrorMessage } from '@/lib/error-message'
+import { updateProductName } from '@/lib/admin-product-form'
 import type { Product } from '@/components/product/product-card'
 import type { Category } from '@/components/product/category-selector'
 import {
@@ -225,11 +226,12 @@ export default function AdminProductsPage() {
               Product name
               <input
                 required
+                minLength={2}
+                maxLength={200}
                 value={form.name}
                 onChange={e => {
-                  update('name', e.target.value)
-                  if (!form.slug && !editId)
-                    update('slug', e.target.value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''))
+                  const name = e.target.value
+                  setForm(current => updateProductName(current, name, editId !== null))
                 }}
                 className={fieldClass}
                 placeholder="ChatGPT Plus"
@@ -237,7 +239,7 @@ export default function AdminProductsPage() {
             </label>
             <label className="text-xs font-bold text-emerald-100/60">
               URL slug
-              <input required value={form.slug} onChange={e => update('slug', e.target.value)} className={fieldClass} placeholder="chatgpt-plus" />
+              <input required minLength={2} maxLength={200} pattern="[a-z0-9-]+" title="Use at least two lowercase letters, numbers or hyphens." value={form.slug} onChange={e => update('slug', e.target.value)} className={fieldClass} placeholder="chatgpt-plus" />
             </label>
             <label className="text-xs font-bold text-emerald-100/60">
               Provider product ID
@@ -245,11 +247,11 @@ export default function AdminProductsPage() {
             </label>
             <label className="text-xs font-bold text-emerald-100/60">
               Price
-              <input required min="0" step="0.01" type="number" value={form.price} onChange={e => update('price', e.target.value)} className={fieldClass} placeholder="5000" />
+              <input required min="0.01" step="0.01" type="number" value={form.price} onChange={e => update('price', e.target.value)} className={fieldClass} placeholder="5000" />
             </label>
             <label className="text-xs font-bold text-emerald-100/60">
               Currency
-              <input required value={form.currency} onChange={e => update('currency', e.target.value.toUpperCase())} className={fieldClass} maxLength={3} />
+              <input required minLength={3} value={form.currency} onChange={e => update('currency', e.target.value.toUpperCase())} className={fieldClass} maxLength={3} />
             </label>
             <label className="text-xs font-bold text-emerald-100/60">
               Delivery time
@@ -284,8 +286,9 @@ export default function AdminProductsPage() {
               <input type="url" value={form.image} onChange={e => update('image', e.target.value)} className={fieldClass} placeholder="https://example.com/image.png" />
             </label>
             <label className="text-xs font-bold text-emerald-100/60 md:col-span-2 xl:col-span-3">
-              Description
-              <textarea value={form.description} onChange={e => update('description', e.target.value)} className={`${fieldClass} min-h-24 resize-y`} placeholder="What the customer receives" />
+              Description &amp; setup instructions
+              <textarea value={form.description} onChange={e => update('description', e.target.value)} className={`${fieldClass} min-h-24 resize-y`} placeholder={'Describe the product, then write the setup steps.\n1. Open the service website.\n2. Follow the activation steps provided for this product.'} />
+              <span className="mt-2 block text-xs font-normal leading-5 text-emerald-100/45">Shown on the product page, purchased order and downloaded order PDF. Use a new line for each setup step.</span>
             </label>
             <div className="md:col-span-2 xl:col-span-3">
               <button disabled={creating || !categories.length || !providers.some(p => p.status === 'ACTIVE')} className={primaryButton}>

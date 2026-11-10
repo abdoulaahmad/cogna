@@ -16,6 +16,7 @@ import {
 import { api } from "@/lib/api";
 import { getErrorMessage } from "@/lib/error-message";
 import CustomerPortalNav from "@/components/layout/customer-portal-nav";
+import { buildOrderPdfHtml } from "@/lib/order-pdf";
 
 type Order = {
   id: string;
@@ -41,14 +42,6 @@ const money = (amount: string, currency: string) =>
     minimumFractionDigits: 2,
   }).format(Number(amount));
 
-function escapeHtml(text: string): string {
-  return String(text)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [order, setOrder] = useState<Order | null>(null);
@@ -56,6 +49,8 @@ export default function OrderDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
   const load = useCallback(async (background = false) => {
     if (!background) setLoading(true);
     if (!background) setError(null);
@@ -144,10 +139,7 @@ export default function OrderDetailPage() {
                     <h1 className="font-display text-3xl font-bold">
                       {order.product.name}
                     </h1>
-                    <p className="mt-2 text-sm text-emerald-100/65">
-                      {order.product.description ||
-                        "Your order is managed through Cogna’s verified payment and fulfillment process."}
-                    </p>
+                    <p className="mt-2 text-sm text-emerald-100/65">Your order details and delivery are available below.</p>
                   </div>
                   <p className="text-2xl font-bold">
                     {money(order.amount, order.currency)}
@@ -167,49 +159,34 @@ export default function OrderDetailPage() {
                     <div className="flex gap-2">
                       <button
                         type="button"
+                        disabled={downloadingPdf}
                         onClick={async () => {
-                          const html2pdf = (await import("html2pdf.js")).default;
-                          const container = document.createElement("div");
-                          container.style.padding = "40px";
-                          container.style.fontFamily = "sans-serif";
-                          container.style.color = "#000";
-                          const itemsHtml = order.deliveryItems.map(item => {
-                            const escaped = escapeHtml(item);
-                            const isUrl = item.startsWith("http://") || item.startsWith("https://");
-                            return isUrl
-                              ? `<a href="${encodeURI(item)}" target="_blank" rel="noopener noreferrer" style="word-break: break-all; color: #18B88A;">${escaped}</a>`
-                              : `<code style="display: block; padding: 10px; background: #f4f4f4; border-radius: 4px; word-break: break-all;">${escaped}</code>`;
-                          }).join("<br/><br/>");
-                          container.innerHTML = `
-                            <div style="text-align: center; margin-bottom: 30px;">
-                              <h1 style="color: #062C23; margin-bottom: 5px;">Cogna Order Receipt</h1>
-                              <p style="color: #666; font-size: 14px;">Order ID: ${escapeHtml(order.id)}</p>
-                              <p style="color: #666; font-size: 14px;">Date: ${escapeHtml(new Date(order.createdAt).toLocaleString())}</p>
-                            </div>
-                            <div style="margin-bottom: 30px; border-bottom: 1px solid #ccc; padding-bottom: 20px;">
-                              <h2 style="margin-bottom: 10px;">${escapeHtml(order.product.name)}</h2>
-                              <p style="font-size: 18px; font-weight: bold;">Amount: ${escapeHtml(money(order.amount, order.currency))}</p>
-                            </div>
-                            <div>
-                              <h3 style="margin-bottom: 15px; color: #D4AF37;">Delivery Content</h3>
-                              ${itemsHtml}
-                            </div>
-                            <div style="margin-top: 50px; text-align: center; font-size: 12px; color: #888; border-top: 1px solid #eee; padding-top: 20px;">
-                              <p>Thank you for using Cogna. For support, contact support@cogna.store</p>
-                            </div>
-                          `;
-                          const opt = {
-                            margin:       1,
-                            filename:     `order_${order.id}.pdf`,
-                            image:        { type: 'jpeg' as const, quality: 0.98 },
-                            html2canvas:  { scale: 2 },
-                            jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' as const }
-                          };
-                          html2pdf().set(opt).from(container).save();
+                          setDownloadingPdf(true);
+                          setPdfError(null);
+                          try {
+                            const html2pdf = (await import("html2pdf.js")).default;
+                            const container = document.createElement("div");
+                            container.style.padding = "16px";
+                            container.style.fontFamily = "sans-serif";
+                            container.style.color = "#000";
+                            container.innerHTML = buildOrderPdfHtml(order);
+                            const opt = {
+                              margin: 1,
+                              filename: `order_${order.id}.pdf`,
+                              image: { type: 'jpeg' as const, quality: 0.98 },
+                              html2canvas: { scale: 2 },
+                              jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' as const }
+                            };
+                            await html2pdf().set(opt).from(container).save();
+                          } catch (requestError: unknown) {
+                            setPdfError(getErrorMessage(requestError, 'Unable to download your order PDF. Please try again.'));
+                          } finally {
+                            setDownloadingPdf(false);
+                          }
                         }}
                         className="flex items-center gap-1.5 rounded-full bg-[#D4AF37]/20 px-3 py-1.5 text-xs font-bold text-[#F8D56B] hover:bg-[#D4AF37]/30 transition-colors"
                       >
-                        <Download size={14} /> Download .pdf
+                        <Download size={14} /> {downloadingPdf ? 'Preparing PDF…' : 'Download .pdf'}
                       </button>
                       <button
                         type="button"
@@ -245,6 +222,7 @@ export default function OrderDetailPage() {
                       </button>
                     </div>
                   </div>
+                  {pdfError && <p role="alert" className="mt-4 text-sm text-rose-200">{pdfError}</p>}
                   <div className="mt-4 space-y-3">
                     {order.deliveryItems.map((item, index) =>
                       item.startsWith("http") ? (
@@ -266,6 +244,12 @@ export default function OrderDetailPage() {
                         </code>
                       ),
                     )}
+                  </div>
+                  <div className="mt-6 border-t border-[#D4AF37]/25 pt-5">
+                    <h2 className="font-bold text-[#F8D56B]">Description &amp; setup instructions</h2>
+                    <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-7 text-emerald-100/80">
+                      {order.product.description?.trim() || 'Setup instructions have not been added for this product. Please contact support for assistance.'}
+                    </p>
                   </div>
                 </section>
               )}

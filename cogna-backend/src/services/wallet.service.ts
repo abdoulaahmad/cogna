@@ -5,6 +5,7 @@ import { PaymentRepository } from '@/repositories/payment.repository'
 import { ConflictError, ForbiddenError, NotFoundError, UnauthorizedError } from '@/utils/errors'
 import type { PaymentGatewayType } from '@/types/payment-gateway.types'
 import prisma from '@/config/database'
+import { StockService } from '@/services/product-stock.service'
 
 const USDT_RATE_KEY = 'usdt_rate_ngn'
 const PLISIO_WALLET_KEY = 'plisio_wallet_address'
@@ -42,6 +43,14 @@ export const WalletService = {
     }
     // ──────────────────────────────────────────────────────────────────────
 
+    const existingPurchase = await WalletRepository.findPurchaseByIdempotencyKey(input.idempotencyKey)
+    if (existingPurchase) {
+      if (existingPurchase.userId !== input.userId || existingPurchase.productId !== input.productId) {
+        throw new ConflictError('Idempotency key is already used for another purchase')
+      }
+      return existingPurchase
+    }
+    await StockService.assertAvailable(product)
     const order = await WalletRepository.purchase({ ...input, providerId: product.providerId, amount: Number(product.price), currency: product.currency })
     if (!order) throw new ConflictError('Insufficient wallet balance')
     
@@ -271,7 +280,7 @@ export const WalletService = {
           console.log(`[Plisio webhook] Funding ${reference} already completed, skipping`)
           return true
         }
-        await WalletRepository.creditFunding(funding.id, txnId || reference, fields as Record<string, unknown>)
+        await WalletRepository.creditFunding(funding.id, txnId || reference, fields)
         console.log(`[Plisio webhook] Wallet credited for reference=${reference}`)
         return true
       } catch (err) {
@@ -290,7 +299,7 @@ export const WalletService = {
       const eventId = parsed.data?.id ? String(parsed.data.id) : (parsed.id ? String(parsed.id) : reference)
       const payloadHash = createHash('sha256').update(rawBody).digest('hex')
       const recorded = (await PaymentRepository.recordEvent({
-        gateway: gatewayType as any,
+        gateway: gatewayType,
         eventId,
         reference,
         payloadHash,

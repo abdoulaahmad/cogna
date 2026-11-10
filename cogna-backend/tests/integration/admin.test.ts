@@ -151,6 +151,23 @@ describe('Admin API Integration', () => {
 
       expect(res.status).toBe(400)
     })
+
+    it('reports the invalid slug and zero price as field errors without writing a product', async () => {
+      const res = await request(app.server)
+        .post('/api/v1/admin/products')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({
+          categoryId: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
+          providerId: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33',
+          providerProductId: 'ext-1', name: 'ChatGPT Plus', slug: 'c', price: 0,
+        })
+      expect(res.status).toBe(400)
+      expect(res.body.errors).toEqual(expect.arrayContaining([
+        expect.objectContaining({ field: 'slug', message: expect.any(String) }),
+        expect.objectContaining({ field: 'price', message: expect.any(String) }),
+      ]))
+      expect(ProductRepository.create).not.toHaveBeenCalled()
+    })
   })
 
   describe('PATCH /api/v1/admin/products/:id', () => {

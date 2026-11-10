@@ -1,5 +1,6 @@
 import { getProvider } from '@/providers/provider.factory'
 import type { ProductStockInfo } from '@/providers/provider.interface'
+import { ConflictError } from '@/utils/errors'
 
 interface CachedProviderStocks {
   timestamp: number
@@ -11,6 +12,13 @@ export const STOCK_CACHE_TTL_MS = 10 * 60 * 1000
 
 class ProductStockService {
   private cache = new Map<string, CachedProviderStocks>()
+
+  async assertAvailable(product: { active?: boolean; providerId?: string; providerProductId?: string }): Promise<void> {
+    const { stock } = await this.attachStock(product)
+    if (product.active === false || (stock !== null && stock <= 0)) {
+      throw new ConflictError('Product is unavailable')
+    }
+  }
 
   /**
    * Clear the in-memory cache (useful for testing or manual refreshes).

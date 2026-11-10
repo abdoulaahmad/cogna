@@ -2,6 +2,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/stores/cart';
 import { useAuthStore } from '@/stores/auth';
+import { isProductAvailable } from '@/lib/product-availability';
 import { X, ShoppingBag, CreditCard, ArrowRight } from 'lucide-react';
 import GlassCard from '../ui/glass-card';
 
@@ -18,6 +19,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   if (!isOpen) return null;
 
   const handleCheckout = () => {
+    if (!isProductAvailable(cartItem)) return;
     onClose();
     if (!isAuthenticated) {
       router.push('/login?redirect=/pay');
@@ -73,7 +75,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 </div>
                 
                 <p className="text-xs font-semibold text-emerald-100/60 mt-3">
-                  Checkout: <span className="text-[#F8D56B] font-bold">Secure payment required</span>
+                  Checkout: <span className="text-[#F8D56B] font-bold">{isProductAvailable(cartItem) ? 'Secure payment required' : 'Unavailable'}</span>
                 </p>
               </GlassCard>
 
@@ -123,9 +125,10 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             <>
               <button
                 onClick={handleCheckout}
+                disabled={!isProductAvailable(cartItem)}
                 className="w-full flex items-center justify-center gap-2 bg-[#D4AF37] hover:bg-[#F8D56B] text-[#062C23] py-4 px-4 rounded-full text-sm font-bold transition focus:outline-none"
               >
-                Proceed to Checkout
+                {isProductAvailable(cartItem) ? 'Proceed to Checkout' : 'Unavailable'}
                 <ArrowRight size={16} />
               </button>
               <button

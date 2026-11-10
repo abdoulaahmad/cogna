@@ -3,6 +3,7 @@ import { ProductRepository } from '@/repositories/product.repository'
 import { NotFoundError, ForbiddenError } from '@/utils/errors'
 import type { CreateOrderInput } from '@/validators/order.validator'
 import { toCustomerOrderView } from '@/utils/order-delivery'
+import { StockService } from '@/services/product-stock.service'
 
 export const OrderService = {
 
@@ -14,6 +15,7 @@ export const OrderService = {
     const product = await ProductRepository.findById(input.productId)
     if (!product) throw new NotFoundError('Product')
     if (!product.active) throw new NotFoundError('Product')
+    await StockService.assertAvailable(product)
 
     const order = await OrderRepository.create({
       userId,

@@ -36,10 +36,15 @@ export default function CatalogPage() {
       const response = await api.get<ProductListResponse>('/products', { params: { page, limit: pageSize, ...(category ? { category } : {}), ...(debouncedSearch ? { search: debouncedSearch } : {}) } });
       if (!response.data.success) throw new Error(response.data.message || 'The catalog could not be loaded.');
       setProducts(response.data.data); setTotal(response.data.meta.total); setTotalPages(Math.max(response.data.meta.totalPages, 1));
+      setSelectedProduct(current => current ? response.data.data.find(product => product.id === current.id) ?? null : null);
     } catch (requestError: unknown) { setProducts([]); setTotal(0); setTotalPages(1); setError(getErrorMessage(requestError, 'Unable to load the live catalog. Please try again.')); }
     finally { setLoading(false); }
   }, [category, debouncedSearch, page]);
-  useEffect(() => { const timer = window.setTimeout(() => { void loadCatalog(); }, 0); return () => window.clearTimeout(timer); }, [loadCatalog]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => { void loadCatalog(); }, 0);
+    const interval = window.setInterval(() => { void loadCatalog(); }, 60000);
+    return () => { window.clearTimeout(timer); window.clearInterval(interval); };
+  }, [loadCatalog]);
   useEffect(() => { let active = true; const timer = window.setTimeout(() => { void api.get<ProductListResponse>('/products', { params: { page: 1, limit: 100 } }).then((response) => { if (!active || !response.data.success) return; const unique = new Map<string, Category>(); response.data.data.forEach((product) => unique.set(product.category.id, product.category)); setCategories([...unique.values()]); }).catch(() => undefined); }, 0); return () => { active = false; window.clearTimeout(timer); }; }, []);
   const chooseCategory = (value: string | null) => { setCategory(value); setPage(1); };
 

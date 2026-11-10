@@ -1,5 +1,6 @@
 import { ArrowUpRight, ShieldCheck, ShoppingBag, X } from 'lucide-react';
 import type { Product } from './product-card';
+import { isProductAvailable } from '@/lib/product-availability';
 
 interface ProductDetailModalProps {
   product: Product | null;
@@ -23,8 +24,7 @@ export default function ProductDetailModal({
   }).format(Number(product.price));
 
   const hasStock = product.stock !== undefined && product.stock !== null;
-  const isOutOfStock = hasStock && (product.stock as number) <= 0;
-  const available = product.active !== false && !isOutOfStock;
+  const available = isProductAvailable(product);
 
   return (
     <div
@@ -58,7 +58,7 @@ export default function ProductDetailModal({
               }`}
             >
               {(product.stock as number) <= 0
-                ? 'Out of stock'
+                ? 'Unavailable'
                 : (product.stock as number) <= 5
                 ? `Only ${product.stock} left`
                 : `${(product.stock as number).toLocaleString()} in stock`}
@@ -107,7 +107,7 @@ export default function ProductDetailModal({
             className="inline-flex items-center justify-center gap-2 rounded-full bg-[#D4AF37] px-5 py-3 text-xs font-bold text-[#062C23] hover:bg-[#F8D56B] disabled:opacity-45"
           >
             <ShoppingBag size={15} />
-            {available ? 'Add to checkout' : isOutOfStock ? 'Out of stock' : 'Unavailable'}
+            {available ? 'Add to checkout' : 'Unavailable'}
             <ArrowUpRight size={14} />
           </button>
         </div>

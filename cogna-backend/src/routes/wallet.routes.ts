@@ -81,7 +81,10 @@ export default async function walletRoutes(app: FastifyInstance) {
       } catch (error) { return handleRouteError(error, reply) }
     })
 
-    child.post('/purchase', async (req: FastifyRequest, reply: FastifyReply) => {
+    child.post('/purchase', { schema: {
+      tags: ['Wallet'], security: [{ bearerAuth: [] }],
+      description: 'Purchases a product atomically from the wallet. New purchases return 409 without a debit if cached provider stock is zero or negative. Replays of an owned completed purchase return its existing order.',
+    } }, async (req: FastifyRequest, reply: FastifyReply) => {
       try {
         const { sub } = req.user as { sub: string }
         const body = walletPurchaseSchema.parse(req.body)
@@ -92,7 +95,8 @@ export default async function walletRoutes(app: FastifyInstance) {
     /** POST /api/v1/wallet/fund — fiat funding via Paystack/Monnify */
     child.post('/fund', async (req: FastifyRequest, reply: FastifyReply) => {
       try {
-        let { sub, email } = req.user as { sub: string; email?: string }
+        const { sub } = req.user as { sub: string }
+        let { email } = req.user as { email?: string }
         if (!email) {
           const user = await (await import('@/repositories/user.repository')).UserRepository.findById(sub)
           if (!user) return reply.status(401).send({ ok: false, message: 'Unauthorized' })
@@ -113,7 +117,8 @@ export default async function walletRoutes(app: FastifyInstance) {
      */
     child.post('/fund/crypto', async (req: FastifyRequest, reply: FastifyReply) => {
       try {
-        let { sub, email } = req.user as { sub: string; email?: string }
+        const { sub } = req.user as { sub: string }
+        let { email } = req.user as { email?: string }
         if (!email) {
           const user = await (await import('@/repositories/user.repository')).UserRepository.findById(sub)
           if (!user) return reply.status(401).send({ ok: false, message: 'Unauthorized' })

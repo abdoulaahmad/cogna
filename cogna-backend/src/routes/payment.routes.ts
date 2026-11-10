@@ -7,7 +7,10 @@ import { handleRouteError } from '@/utils/handle-error'
 import type { PaymentGatewayType } from '@/types/payment-gateway.types'
 
 export default async function paymentRoutes(app: FastifyInstance) {
-  app.post('/initialize', { onRequest: [app.authenticate] }, async (req: FastifyRequest, reply: FastifyReply) => {
+  app.post('/initialize', { onRequest: [app.authenticate], schema: {
+    tags: ['Payments'], security: [{ bearerAuth: [] }],
+    description: 'Initializes payment for an owned pending order. Returns 409 before contacting the gateway when the product is inactive or cached provider stock is zero or negative.',
+  } }, async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const { sub } = req.user as { sub: string }
       let { email } = req.user as { email?: string }

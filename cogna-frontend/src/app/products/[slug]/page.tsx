@@ -10,6 +10,7 @@ import type { Product } from '@/components/product/product-card';
 import { api } from '@/lib/api';
 import { getErrorMessage } from '@/lib/error-message';
 import { useCartStore } from '@/stores/cart';
+import { isProductAvailable } from '@/lib/product-availability';
 
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -35,8 +36,10 @@ export default function ProductDetailPage() {
       }
     }
     void load();
+    const interval = window.setInterval(() => { void load(); }, 60000);
     return () => {
       active = false;
+      window.clearInterval(interval);
     };
   }, [slug]);
 
@@ -49,8 +52,7 @@ export default function ProductDetailPage() {
     : '';
 
   const hasStock = product?.stock !== undefined && product?.stock !== null;
-  const isOutOfStock = hasStock && (product?.stock as number) <= 0;
-  const isAvailable = product?.active !== false && !isOutOfStock;
+  const isAvailable = isProductAvailable(product);
 
   return (
     <PublicLayout>
@@ -104,7 +106,7 @@ export default function ProductDetailPage() {
                         }`}
                       >
                         {(product.stock as number) <= 0
-                          ? 'Out of stock'
+                          ? 'Unavailable'
                           : (product.stock as number) <= 5
                           ? `Only ${product.stock} left`
                           : `${(product.stock as number).toLocaleString()} in stock`}
@@ -140,7 +142,7 @@ export default function ProductDetailPage() {
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-[#D4AF37] px-6 py-3.5 text-sm font-bold text-[#062C23] hover:bg-[#F8D56B] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <ShoppingBag size={17} />
-                  {isAvailable ? 'Add to checkout' : isOutOfStock ? 'Out of stock' : 'Unavailable'}
+                  {isAvailable ? 'Add to checkout' : 'Unavailable'}
                 </button>
               </div>
 

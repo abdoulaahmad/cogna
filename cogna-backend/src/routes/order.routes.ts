@@ -16,6 +16,7 @@ export default async function orderRoutes(app: FastifyInstance) {
       preHandler: [app.requireScope('write:orders')],
       schema: {
         tags: ['Orders'],
+        description: 'Creates an order for an active product. Returns 409 when the latest cached provider stock is zero or negative.',
         security: [{ bearerAuth: [] }, { apiKey: [] }],
       },
     },

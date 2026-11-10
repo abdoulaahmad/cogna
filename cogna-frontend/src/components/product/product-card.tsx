@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { isProductAvailable } from '@/lib/product-availability';
 import { ArrowUpRight, Code2, ImageIcon, MessageSquare, Mic, ShoppingBag } from 'lucide-react';
 
 export interface Product {
@@ -37,8 +38,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
   }).format(Number(product.price));
 
   const hasStockInfo = product.stock !== undefined && product.stock !== null;
-  const isOutOfStock = hasStockInfo && (product.stock as number) <= 0;
-  const available = product.active !== false && !isOutOfStock;
+  const available = isProductAvailable(product);
 
   return (
     <article className="group flex min-h-[335px] flex-col rounded-3xl border border-emerald-100/15 bg-white/[0.07] p-5 shadow-premium-dark backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-[#D4AF37]/45 hover:bg-white/[0.10]">
@@ -60,7 +60,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
           (product.stock as number) <= 0 ? (
             <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-400/30 bg-rose-500/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[.14em] text-rose-300">
               <span className="h-1.5 w-1.5 rounded-full bg-rose-400" />
-              Out of stock
+              Unavailable
             </span>
           ) : (product.stock as number) <= 5 ? (
             <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-500/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[.14em] text-amber-300">
@@ -113,7 +113,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
           className="inline-flex items-center gap-2 rounded-full bg-[#D4AF37] px-4 py-2.5 text-xs font-bold text-[#062C23] transition hover:bg-[#F8D56B] disabled:cursor-not-allowed disabled:opacity-45"
         >
           <ShoppingBag size={15} />
-          {available ? 'Purchase' : isOutOfStock ? 'Out of stock' : 'Unavailable'}
+          {available ? 'Purchase' : 'Unavailable'}
           <ArrowUpRight size={14} />
         </button>
       </div>

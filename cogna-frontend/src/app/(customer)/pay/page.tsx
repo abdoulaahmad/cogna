@@ -10,6 +10,8 @@ import { api } from '@/lib/api';
 import { getErrorMessage } from '@/lib/error-message';
 import PinInput from '@/components/ui/PinInput';
 import Paystack from '@paystack/inline-js';
+import { isProductAvailable } from '@/lib/product-availability';
+import type { Product } from '@/components/product/product-card';
 
 type PinStatus = { transactionPinEnabled: boolean; hasPinSet: boolean };
 type CheckoutPayment = { authorizationUrl: string; reference: string; accessCode?: string };
@@ -89,6 +91,11 @@ export default function PayPage() {
     setLoading(true);
     setError(null);
     try {
+      if (!isProductAvailable(cartItem)) throw new Error('Product is unavailable.');
+      const currentProduct = await api.get<{ success: boolean; data: Product }>(`/products/${encodeURIComponent(cartItem!.id)}`);
+      if (!currentProduct.data.success) throw new Error('Unable to check product availability.');
+      useCartStore.setState({ cartItem: currentProduct.data.data });
+      if (!isProductAvailable(currentProduct.data.data)) throw new Error('Product is unavailable.');
       if (paymentMethod === 'WALLET') {
         if (!canUseWallet) throw new Error('Insufficient wallet balance.');
 
@@ -277,7 +284,7 @@ export default function PayPage() {
 
             <button
               type="button"
-              disabled={loading || pin.length !== 6}
+              disabled={loading || pin.length !== 6 || !isProductAvailable(cartItem)}
               onClick={() => void submitPin()}
               className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-[#D4AF37] px-5 py-3.5 text-sm font-bold text-[#062C23] hover:bg-[#F8D56B] disabled:opacity-50 transition-colors"
             >
@@ -289,12 +296,12 @@ export default function PayPage() {
         {!showPinPrompt && (
           <button
             type="button"
-            disabled={loading || (paymentMethod === 'WALLET' && !canUseWallet)}
+            disabled={loading || !isProductAvailable(cartItem) || (paymentMethod === 'WALLET' && !canUseWallet)}
             onClick={handlePayClick}
             className="mt-7 flex w-full items-center justify-center gap-2 rounded-full bg-[#D4AF37] px-5 py-4 text-sm font-bold text-[#062C23] hover:bg-[#F8D56B] disabled:opacity-50"
           >
             {loading ? <Loader2 className="animate-spin" size={18}/> : paymentMethod === 'WALLET' ? <Wallet size={18}/> : <CreditCard size={18}/>}
-            {loading ? 'Processing checkout…' : `Pay ${priceFormatted}`}
+            {!isProductAvailable(cartItem) ? 'Unavailable' : loading ? 'Processing checkout…' : `Pay ${priceFormatted}`}
           </button>
         )}
 

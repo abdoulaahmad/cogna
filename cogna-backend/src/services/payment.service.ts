@@ -4,6 +4,7 @@ import { OrderRepository } from '@/repositories/order.repository'
 import { ProductRepository } from '@/repositories/product.repository'
 import { PaymentGatewayConfigurationService } from '@/services/payment-gateway-configuration.service'
 import { fulfillmentQueue } from '@/queue/fulfillment.queue'
+import { StockService } from '@/services/product-stock.service'
 import { ConflictError, ForbiddenError, NotFoundError } from '@/utils/errors'
 import type { PaymentGatewayType } from '@/types/payment-gateway.types'
 import type { PaymentVerifyResult } from '@/types/payment-verify-result.types'
@@ -41,6 +42,7 @@ export const PaymentService = {
 
     const product = await ProductRepository.findById(order.productId)
     if (!product) throw new NotFoundError('Product')
+    await StockService.assertAvailable(product)
 
     const existing = await PaymentRepository.findByOrderId(orderId)
     if (existing) throw new ConflictError('A payment has already been initiated for this order')

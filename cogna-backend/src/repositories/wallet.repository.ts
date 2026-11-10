@@ -60,6 +60,11 @@ export const WalletRepository = {
     })
   },
 
+  async findPurchaseByIdempotencyKey(idempotencyKey: string) {
+    const transaction = await prisma.walletTransaction.findUnique({ where: { idempotencyKey }, include: { order: true } })
+    return transaction?.order ?? null
+  },
+
   async purchase(input: { userId: string; productId: string; providerId: string; customerEmail: string; amount: number; currency: string; idempotencyKey: string }) {
     return prisma.$transaction(async (tx) => {
       const wallet = await tx.wallet.findUnique({ where: { userId: input.userId } })
