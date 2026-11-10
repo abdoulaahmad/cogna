@@ -93,7 +93,7 @@ function DashboardProduct({ product, onPurchase }: { product: Product; onPurchas
         )}
 
         {/* Stock / Availability Badge */}
-        {hasStockInfo ? (
+        {hasStockInfo && available ? (
           (product.stock as number) <= 0 ? (
             <span className="inline-flex items-center gap-1.5 rounded-lg border border-rose-400/30 bg-rose-500/15 px-2 py-1 text-[9px] font-black uppercase tracking-[.12em] text-rose-300">
               <span className="h-1.5 w-1.5 rounded-full bg-rose-400" />

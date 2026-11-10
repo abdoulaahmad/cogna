@@ -9,6 +9,16 @@ afterEach(() => { vi.unstubAllGlobals() })
 
 describe('AkudingAdapter', () => {
   const adapter = new AkudingAdapter(CONFIG)
+
+  it.each([[0, 0, false], ['0', 0, false], ['12', 12, true], [undefined, null, false]] as const)('normalizes stock %s without inventing availability', async (raw, stock, available) => {
+    fetchMock.mockResolvedValueOnce({ ok: true, json: async () => ({ data: { id: 91, stock: raw } }) })
+    await expect(adapter.getProductStock('91')).resolves.toEqual({ stock, available })
+  })
+
+  it('keeps a provider-unavailable product unavailable despite a positive count', async () => {
+    fetchMock.mockResolvedValueOnce({ ok: true, json: async () => [{ id: 91, stock: '8', available: false }] })
+    await expect(adapter.getProductStocks()).resolves.toEqual({ '91': { stock: 8, available: false } })
+  })
   const input = {
     orderId: 'cogna-order-1', providerProductId: '27', customerEmail: 'customer@test.com',
     amount: 5000, currency: 'NGN', quantity: 1, idempotencyKey: 'cogna-order-cogna-order-1',

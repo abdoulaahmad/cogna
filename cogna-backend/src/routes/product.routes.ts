@@ -7,7 +7,7 @@ import { handleRouteError } from '@/utils/handle-error'
 export default async function productRoutes(app: FastifyInstance) {
 
   // GET /api/v1/products
-  app.get('/', { schema: { tags: ['Catalog'] } }, async (req: FastifyRequest, reply: FastifyReply) => {
+  app.get('/', { schema: { tags: ['Catalog'], description: 'Returns products with stock (number or null when unverified) and available (boolean). Products missing from bulk inventory are checked individually. Only active products with confirmed positive stock and no provider restriction are available.' } }, async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const query = listProductsSchema.parse(req.query)
       const { items, total, page, limit } = await ProductService.listProducts(query)

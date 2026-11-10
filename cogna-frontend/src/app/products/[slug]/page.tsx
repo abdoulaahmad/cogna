@@ -95,17 +95,17 @@ export default function ProductDetailPage() {
                     <p className="text-xs font-bold uppercase tracking-[.22em] text-[#F8D56B]">
                       {product.category.name}
                     </p>
-                    {hasStock && (
+                    {(hasStock || !isAvailable) && (
                       <span
                         className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                          (product.stock as number) <= 0
+                          !isAvailable
                             ? 'border border-rose-400/30 bg-rose-500/20 text-rose-300'
                             : (product.stock as number) <= 5
                             ? 'border border-amber-400/30 bg-amber-500/20 text-amber-300'
                             : 'border border-emerald-400/30 bg-emerald-500/20 text-emerald-300'
                         }`}
                       >
-                        {(product.stock as number) <= 0
+                        {!isAvailable
                           ? 'Unavailable'
                           : (product.stock as number) <= 5
                           ? `Only ${product.stock} left`

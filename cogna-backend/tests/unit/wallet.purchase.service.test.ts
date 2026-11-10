@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ConflictError } from '@/utils/errors'
+vi.mock('@/services/product-stock.service', () => ({ StockService: { assertAvailable: vi.fn().mockResolvedValue(undefined) } }))
 vi.mock('@/repositories/wallet.repository', () => ({ WalletRepository: { purchase: vi.fn(), findPurchaseByIdempotencyKey: vi.fn().mockResolvedValue(null) } }))
 vi.mock('@/repositories/product.repository', () => ({ ProductRepository: { findById: vi.fn() } }))
 import { WalletRepository } from '@/repositories/wallet.repository'

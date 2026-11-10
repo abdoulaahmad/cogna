@@ -9,7 +9,7 @@ import type { PaymentGatewayType } from '@/types/payment-gateway.types'
 export default async function paymentRoutes(app: FastifyInstance) {
   app.post('/initialize', { onRequest: [app.authenticate], schema: {
     tags: ['Payments'], security: [{ bearerAuth: [] }],
-    description: 'Initializes payment for an owned pending order. Returns 409 before contacting the gateway when the product is inactive or cached provider stock is zero or negative.',
+    description: 'Initializes payment for an owned pending order. Returns 409 before contacting the gateway unless the product is active with confirmed positive provider stock and no provider availability restriction.',
   } }, async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const { sub } = req.user as { sub: string }

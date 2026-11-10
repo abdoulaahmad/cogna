@@ -52,7 +52,7 @@ describe('Zero stock availability', () => {
     await expect(StockService.assertAvailable(product)).resolves.toBeUndefined()
     vi.mocked(StockService.getStocksForProvider).mockResolvedValue({})
     expect((await StockService.attachStock(product)).stock).toBeNull()
-    await expect(StockService.assertAvailable(product)).resolves.toBeUndefined()
+    await expect(StockService.assertAvailable(product)).rejects.toThrow('Product is unavailable')
     await expect(StockService.assertAvailable({ ...product, active: false })).rejects.toThrow('Product is unavailable')
   })
 })

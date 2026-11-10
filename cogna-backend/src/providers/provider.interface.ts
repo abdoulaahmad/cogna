@@ -1,7 +1,7 @@
 import type { FulfillOrderInput, FulfillOrderResult } from '@/types/provider.types'
 
 export interface ProductStockInfo {
-  stock: number
+  stock: number | null
   available: boolean
 }
 

@@ -2,129 +2,83 @@ import { getProvider } from '@/providers/provider.factory'
 import type { ProductStockInfo } from '@/providers/provider.interface'
 import { ConflictError } from '@/utils/errors'
 
-interface CachedProviderStocks {
-  timestamp: number
-  stocks: Record<string, ProductStockInfo>
-}
-
-// 10-minute cache TTL as requested by the user
 export const STOCK_CACHE_TTL_MS = 10 * 60 * 1000
+type ProductMapping = { active?: boolean; providerId?: string; providerProductId?: string }
+type StockView = { stock: number | null; available: boolean }
 
 class ProductStockService {
-  private cache = new Map<string, CachedProviderStocks>()
+  private cache = new Map<string, { timestamp: number; stocks: Record<string, ProductStockInfo> }>()
+  private detailCache = new Map<string, { timestamp: number; info: ProductStockInfo | null }>()
+  private detailRequests = new Map<string, Promise<ProductStockInfo | null>>()
 
-  async assertAvailable(product: { active?: boolean; providerId?: string; providerProductId?: string }): Promise<void> {
-    const { stock } = await this.attachStock(product)
-    if (product.active === false || (stock !== null && stock <= 0)) {
-      throw new ConflictError('Product is unavailable')
-    }
+  async assertAvailable(product: ProductMapping): Promise<void> {
+    if (!(await this.attachStock(product)).available) throw new ConflictError('Product is unavailable')
   }
 
-  /**
-   * Clear the in-memory cache (useful for testing or manual refreshes).
-   */
   clearCache(): void {
     this.cache.clear()
+    this.detailCache.clear()
+    this.detailRequests.clear()
   }
 
-  /**
-   * Fetch stocks for a given provider with 10-minute TTL caching.
-   */
   async getStocksForProvider(providerId: string): Promise<Record<string, ProductStockInfo>> {
-    if (process.env.NODE_ENV === 'test' || process.env.VITEST) {
-      return this.cache.get(providerId)?.stocks ?? {}
-    }
-
-    const now = Date.now()
+    if (process.env.NODE_ENV === 'test' || process.env.VITEST) return this.cache.get(providerId)?.stocks ?? {}
     const cached = this.cache.get(providerId)
-
-    if (cached && now - cached.timestamp < STOCK_CACHE_TTL_MS) {
-      return cached.stocks
-    }
-
+    if (cached && Date.now() - cached.timestamp < STOCK_CACHE_TTL_MS) return cached.stocks
     try {
       const provider = await getProvider(providerId)
-      if (typeof provider.getProductStocks === 'function') {
+      if (provider.getProductStocks) {
         const stocks = await provider.getProductStocks()
-        this.cache.set(providerId, { timestamp: now, stocks })
+        this.cache.set(providerId, { timestamp: Date.now(), stocks })
         return stocks
       }
-    } catch (error) {
-      console.warn(`[ProductStockService] Failed to refresh stocks for provider ${providerId}:`, error)
-      // Return stale cache if available upon network failure
-      if (cached) return cached.stocks
-    }
-
-    return cached?.stocks ?? {}
-  }
-
-  /**
-   * Attach available stock to a single product record.
-   */
-  async attachStock<T extends { providerId?: string; providerProductId?: string }>(
-    product: T
-  ): Promise<T & { stock: number | null }> {
-    if (!product || !product.providerId || !product.providerProductId) {
-      return { ...product, stock: null }
-    }
-
-    try {
-      const stocks = await this.getStocksForProvider(product.providerId)
-      const stockInfo = stocks[product.providerProductId]
-      return {
-        ...product,
-        stock: stockInfo && typeof stockInfo.stock === 'number' ? stockInfo.stock : null,
-      }
     } catch {
-      return { ...product, stock: null }
+      // Expired positive stock is not proof that a product can still be sold.
+      this.cache.delete(providerId)
     }
+    return {}
   }
 
-  /**
-   * Attach available stocks in bulk to a list of products.
-   */
-  async attachStocks<T extends { providerId?: string; providerProductId?: string }>(
-    products: T[]
-  ): Promise<Array<T & { stock: number | null }>> {
-    if (!Array.isArray(products) || products.length === 0) {
-      return []
-    }
+  private async resolveStock(providerId: string, productId: string, stocks: Record<string, ProductStockInfo>): Promise<ProductStockInfo | null> {
+    if (stocks[productId]) return stocks[productId]
+    const key = JSON.stringify([providerId, productId])
+    const cached = this.detailCache.get(key)
+    if (cached && Date.now() - cached.timestamp < STOCK_CACHE_TTL_MS) return cached.info
+    const pending = this.detailRequests.get(key)
+    if (pending) return pending
+    const request = (async () => {
+      let info: ProductStockInfo | null = null
+      try {
+        const provider = await getProvider(providerId)
+        info = provider.getProductStock ? await provider.getProductStock(productId) : null
+      } catch { /* Unconfirmed stock must stay unavailable. */ }
+      this.detailCache.set(key, { timestamp: Date.now(), info })
+      return info
+    })()
+    this.detailRequests.set(key, request)
+    try { return await request } finally { this.detailRequests.delete(key) }
+  }
 
-    // Collect unique provider IDs
-    const providerIds = Array.from(
-      new Set(
-        products
-          .map((p) => p.providerId)
-          .filter((id): id is string => Boolean(id))
-      )
-    )
+  private stockView(product: ProductMapping, info: ProductStockInfo | null): StockView {
+    const stock = typeof info?.stock === 'number' && Number.isFinite(info.stock) ? info.stock : null
+    return { stock, available: product.active !== false && stock !== null && stock > 0 && info?.available !== false }
+  }
 
-    // Fetch stocks for all providers in parallel
-    const stocksByProvider = new Map<string, Record<string, ProductStockInfo>>()
-    await Promise.all(
-      providerIds.map(async (pId) => {
-        try {
-          const stocks = await this.getStocksForProvider(pId)
-          stocksByProvider.set(pId, stocks)
-        } catch {
-          stocksByProvider.set(pId, {})
-        }
-      })
-    )
+  async attachStock<T extends ProductMapping>(product: T): Promise<T & StockView> {
+    if (!product.providerId || !product.providerProductId) return { ...product, stock: null, available: false }
+    const stocks = await this.getStocksForProvider(product.providerId)
+    const info = await this.resolveStock(product.providerId, product.providerProductId, stocks)
+    return { ...product, ...this.stockView(product, info) }
+  }
 
-    return products.map((product) => {
-      if (!product.providerId || !product.providerProductId) {
-        return { ...product, stock: null }
-      }
-
-      const providerStocks = stocksByProvider.get(product.providerId)
-      const stockInfo = providerStocks ? providerStocks[product.providerProductId] : undefined
-
-      return {
-        ...product,
-        stock: stockInfo && typeof stockInfo.stock === 'number' ? stockInfo.stock : null,
-      }
-    })
+  async attachStocks<T extends ProductMapping>(products: T[]): Promise<Array<T & StockView>> {
+    const providerIds = [...new Set(products.map(p => p.providerId).filter((id): id is string => Boolean(id)))]
+    const providerStocks = new Map(await Promise.all(providerIds.map(async id => [id, await this.getStocksForProvider(id)] as const)))
+    return Promise.all(products.map(async product => {
+      if (!product.providerId || !product.providerProductId) return { ...product, stock: null, available: false }
+      const info = await this.resolveStock(product.providerId, product.providerProductId, providerStocks.get(product.providerId) ?? {})
+      return { ...product, ...this.stockView(product, info) }
+    }))
   }
 }
 

@@ -11,7 +11,10 @@ test('restocked products become available, while manually inactive products rema
   assert.equal(isProductAvailable({ active: false, stock: 10 }), false);
 });
 test('unknown stock remains distinct from zero and missing products cannot be purchased', () => {
-  assert.equal(isProductAvailable({ stock: null }), true);
-  assert.equal(isProductAvailable({}), true);
+  assert.equal(isProductAvailable({ stock: null }), false);
+  assert.equal(isProductAvailable({}), false);
+  assert.equal(isProductAvailable({ stock: NaN }), false);
+  assert.equal(isProductAvailable({ stock: Infinity }), false);
+  assert.equal(isProductAvailable({ stock: 10, available: false }), false);
   assert.equal(isProductAvailable(null), false);
 });

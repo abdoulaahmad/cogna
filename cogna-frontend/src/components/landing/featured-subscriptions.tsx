@@ -147,7 +147,8 @@ export default function FeaturedSubscriptions() {
                           Popular
                         </span>
                       )}
-                      {prod.stock !== undefined && prod.stock !== null && (
+                      {!isProductAvailable(prod) && <span className="rounded-full border border-rose-400/30 bg-rose-500/15 px-2 py-0.5 text-[9px] font-bold text-rose-300">Unavailable</span>}
+                      {isProductAvailable(prod) && prod.stock !== undefined && prod.stock !== null && (
                         prod.stock <= 0 ? (
                           <span className="inline-flex items-center gap-1 rounded-full border border-rose-400/30 bg-rose-500/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-rose-300">
                             <span className="h-1.5 w-1.5 rounded-full bg-rose-400" />

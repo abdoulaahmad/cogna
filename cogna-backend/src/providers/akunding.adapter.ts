@@ -1,4 +1,4 @@
-import type { IProvider } from './provider.interface'
+import type { IProvider, ProductStockInfo } from './provider.interface'
 import type { FulfillOrderInput, FulfillOrderResult } from '@/types/provider.types'
 
 interface AkundingConfig {
@@ -16,6 +16,13 @@ type AkundingOrder = {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function stockInfo(value: Record<string, unknown>): ProductStockInfo {
+  const raw = value.stock
+  const count = typeof raw === 'number' ? raw : typeof raw === 'string' && /^\d+(\.\d+)?$/.test(raw.trim()) ? Number(raw) : null
+  const stock = count !== null && Number.isFinite(count) ? count : null
+  return { stock, available: stock !== null && stock > 0 && value.available !== false && value.available !== 'false' }
 }
 
 /** Map Akunding's documented status values to Cogna's order lifecycle. */
@@ -118,20 +125,18 @@ export class AkudingAdapter implements IProvider {
   /**
    * Fetch bulk stock for all products from Akunding in a single call.
    */
-  async getProductStocks(): Promise<Record<string, { stock: number; available: boolean }>> {
+  async getProductStocks(): Promise<Record<string, ProductStockInfo>> {
     try {
       const res = await fetch(`${this.baseUrl}/products`, {
         headers: { Authorization: `Bearer ${this.apiKey}` },
       })
       if (!res.ok) return {}
       const body: unknown = await res.json()
-      if (!Array.isArray(body)) return {}
-      const stocks: Record<string, { stock: number; available: boolean }> = {}
-      for (const item of body) {
-        if (isRecord(item) && item.id !== undefined) {
-          const stock = typeof item.stock === 'number' ? item.stock : 0
-          const available = typeof item.available === 'boolean' ? item.available : stock > 0
-          stocks[String(item.id)] = { stock, available }
+      const items = Array.isArray(body) ? body : isRecord(body) && Array.isArray(body.data) ? body.data : []
+      const stocks: Record<string, ProductStockInfo> = {}
+      for (const item of items) {
+        if (isRecord(item) && (typeof item.id === 'string' || typeof item.id === 'number')) {
+          stocks[String(item.id)] = stockInfo(item)
         }
       }
       return stocks
@@ -143,7 +148,7 @@ export class AkudingAdapter implements IProvider {
   /**
    * Fetch stock for a specific Akunding product.
    */
-  async getProductStock(providerProductId: string): Promise<{ stock: number; available: boolean } | null> {
+  async getProductStock(providerProductId: string): Promise<ProductStockInfo | null> {
     try {
       const res = await fetch(`${this.baseUrl}/products/${encodeURIComponent(providerProductId)}`, {
         headers: { Authorization: `Bearer ${this.apiKey}` },
@@ -151,9 +156,7 @@ export class AkudingAdapter implements IProvider {
       if (!res.ok) return null
       const body: unknown = await res.json()
       if (!isRecord(body)) return null
-      const stock = typeof body.stock === 'number' ? body.stock : 0
-      const available = typeof body.available === 'boolean' ? body.available : stock > 0
-      return { stock, available }
+      return stockInfo(isRecord(body.data) ? body.data : body)
     } catch {
       return null
     }

@@ -15,6 +15,7 @@ export interface Product {
   deliveryTime?: string | null;
   active?: boolean;
   stock?: number | null;
+  available?: boolean;
 }
 
 interface ProductCardProps {
@@ -56,7 +57,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
         )}
 
         {/* Stock / Availability Badge */}
-        {hasStockInfo ? (
+        {hasStockInfo && available ? (
           (product.stock as number) <= 0 ? (
             <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-400/30 bg-rose-500/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[.14em] text-rose-300">
               <span className="h-1.5 w-1.5 rounded-full bg-rose-400" />

@@ -7,6 +7,7 @@ import { buildOrder, buildProduct } from '../fixtures/factories'
 
 vi.mock('@/repositories/order.repository')
 vi.mock('@/repositories/product.repository')
+vi.mock('@/services/product-stock.service', () => ({ StockService: { assertAvailable: vi.fn().mockResolvedValue(undefined) } }))
 
 const mockProduct = buildProduct({ active: true })
 const mockOrder   = buildOrder({ userId: 'user-1', productId: mockProduct.id })

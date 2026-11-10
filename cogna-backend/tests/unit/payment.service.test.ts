@@ -9,6 +9,7 @@ import { buildOrder, buildPayment, buildProduct } from '../fixtures/factories'
 vi.mock('@/repositories/payment.repository')
 vi.mock('@/repositories/order.repository')
 vi.mock('@/repositories/product.repository')
+vi.mock('@/services/product-stock.service', () => ({ StockService: { assertAvailable: vi.fn().mockResolvedValue(undefined) } }))
 vi.mock('@/queue/fulfillment.queue', () => ({
   fulfillmentQueue: { add: vi.fn().mockResolvedValue({ id: 'job-1' }) },
 }))

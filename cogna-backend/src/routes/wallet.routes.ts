@@ -83,7 +83,7 @@ export default async function walletRoutes(app: FastifyInstance) {
 
     child.post('/purchase', { schema: {
       tags: ['Wallet'], security: [{ bearerAuth: [] }],
-      description: 'Purchases a product atomically from the wallet. New purchases return 409 without a debit if cached provider stock is zero or negative. Replays of an owned completed purchase return its existing order.',
+      description: 'Purchases a product atomically from the wallet. New purchases require confirmed positive provider stock and no provider availability restriction; otherwise return 409 without a debit. Replays of an owned completed purchase return its existing order.',
     } }, async (req: FastifyRequest, reply: FastifyReply) => {
       try {
         const { sub } = req.user as { sub: string }
